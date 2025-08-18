@@ -1,0 +1,22 @@
+services:
+    ubuntu-system:
+        # image: ubuntu:25.04
+        container_name: ubuntu-system
+        user: root
+        working_dir: /home/ubuntu
+        build:
+            context: .
+            dockerfile: ubuntu-system.dockerfile
+        volumes:
+            - ../:/home/ubuntu
+            - /home/:/home/
+        command: >
+            bash -c "
+                mkdir -p build &&
+                cd build &&
+                cmake -DCMAKE_BUILD_TYPE=Release .. &&
+                make &&
+                make install &&
+                bash
+            "
+        tty: true
