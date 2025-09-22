@@ -16,3 +16,4 @@ sudo docker compose -f ubuntu-system.yml run --rm ubuntu-system
 xhost +local:docker
 sudo docker compose -f ubuntu-system.yml run --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ubuntu-system
 ```
+

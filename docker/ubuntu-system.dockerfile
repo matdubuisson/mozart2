@@ -1,5 +1,5 @@
 FROM ubuntu:25.04
-WORKDIR /home/ubuntu
+WORKDIR /root/
 ENV DISPLAY=:0
 
 RUN apt update
@@ -11,4 +11,4 @@ RUN apt install -y sudo git \
     tcl-dev tk-dev \
     emacs
 
-USER ubuntu
+USER root

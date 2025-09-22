@@ -3,20 +3,22 @@ services:
         # image: ubuntu:25.04
         container_name: ubuntu-system
         user: root
-        working_dir: /home/ubuntu
+        working_dir: /mozart/
         build:
             context: .
             dockerfile: ubuntu-system.dockerfile
         volumes:
-            - ../:/home/ubuntu
-            - /home/:/home/
+            - ../:/mozart/
+            - ${HOME}:${HOME}
         command: >
             bash -c "
-                mkdir -p build &&
-                cd build &&
+                cd /mozart/ &&
+                mkdir -p build/ &&
+                cd build/ &&
                 cmake -DCMAKE_BUILD_TYPE=Release .. &&
                 make &&
                 make install &&
+                cd /root/ &&
                 bash
             "
         tty: true
