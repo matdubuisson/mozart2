@@ -94,6 +94,7 @@
 functor
 import
    Property(get)
+   Ansi
    System(printName printError)
    ErrorFormatters(kernel:  KernelFormatter
                    object:  ObjectFormatter

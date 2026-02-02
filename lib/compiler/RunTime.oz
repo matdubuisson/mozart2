@@ -208,7 +208,7 @@ prepare
       end
       proc {Minimize C N} Old New in
          {Exchange C Old New}
-         if Old==NONE orelse N<Old then New=N  else New=Old end
+         if Old==NONE orelse N<Old then New=N else New=Old end
       end
       proc {Count C B}
          if B then Old New in

@@ -148,7 +148,7 @@ define
          end
       end
 
-      fun{TranslateRule G}
+      fun {TranslateRule G}
          case G
          of raw(P) then
             P

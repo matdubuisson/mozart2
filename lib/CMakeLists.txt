@@ -24,6 +24,7 @@ set(SYS_FUNCTORS
     "${MOZART_LIB_DIR}/sys/Property.oz"
     "${MOZART_LIB_DIR}/sys/Space.oz"
     "${MOZART_LIB_DIR}/sys/Pickle.oz"
+    "${MOZART_LIB_DIR}/sys/Ansi.oz"
     "${MOZART_LIB_DIR}/support/CompilerSupport.oz"
     "${MOZART_LIB_DIR}/support/ErrorListener.oz"
     "${MOZART_LIB_DIR}/support/Listener.oz"

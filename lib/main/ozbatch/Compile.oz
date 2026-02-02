@@ -23,6 +23,7 @@ functor
 import
    Module
    Property(get put)
+   Ansi
    System(printInfo printError)
    Error(messageToVirtualString)
    OS(putEnv getEnv system)
@@ -378,7 +379,7 @@ in
         end}}
       if FileNames == nil then
          {Report error(kind: UsageError
-                       msg: 'no input files given'
+                       msg: {Ansi.makeError 'no input files given'}
                        items: [hint(l: 'Hint'
                                     m: ('Use --help to obtain '#
                                         'usage information'))])}
