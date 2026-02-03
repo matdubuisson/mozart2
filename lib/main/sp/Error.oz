@@ -325,7 +325,7 @@ define
                    elseof K then K
                    end
          in
-            case Kind of call then
+            {Ansi.makeDebug case Kind of call then
                if {HasFeature X data} then Data in
                   Data = X.data
                   if {IsDet Data} then
@@ -351,9 +351,9 @@ define
                else 'procedure'
                end
             else Kind
-            end#
+            end}#
             if Pos == "" then ""
-            else ' in '#Pos
+            else {Ansi.makeSuccess ' in '#Pos}
             end|{GetStack Xr N - 1}
          else ['...']
          end
@@ -398,19 +398,21 @@ define
                 of unit then
                    EmptyLine
                 [] line(H) then
-                   {StarLine {ExtendedVSToVS H}}
+                   {StarLine {Ansi.makeSuccess {ExtendedVSToVS H}}}
                 [] pos(_ _ _) then
-                   {StarLine 'in '#{ExtendedVSToVS X}}
+                   {StarLine {Ansi.makeSuccess 'in '#{ExtendedVSToVS X}}}
                 [] hint then
                    EmptyLine
                 [] hint(l:Left) then
-                   {StarLine {ExtendedVSToVS Left}}
+                   {StarLine {Ansi.makeInfo {ExtendedVSToVS Left}}}
                 [] hint(m:Mid) then
-                   {StarLine {Spaces Align - L + 2}#{ExtendedVSToVS Mid}}
+                   {StarLine {Spaces Align - L + 2}#{Ansi.makeInfo {ExtendedVSToVS Mid}}}
                 [] hint(l:Left m:Mid) then
                    {StarLine
-                    {ExtendedVSToVS Left}#':'#{Spaces Align - L + 1}#
-                    {ExtendedVSToVS Mid}}
+                    {Ansi.makeInfo {ExtendedVSToVS Left}}#
+                    ':'#
+                    {Spaces Align - L + 1}#
+                    {Ansi.makeInfo {ExtendedVSToVS Mid}}}
                 end#In
              end ""}
          end
@@ -424,14 +426,21 @@ define
          NumStars1 = NumStars div 2
          NumStars2 = (NumStars + 1) div 2
       in
-         Stars#{Repeat NumStars1 &*}#Kind#{Repeat NumStars2 &*}#'\n'#
+         Stars#{Repeat NumStars1 &*}#{Ansi.makeError Kind}#{Repeat NumStars2 &*}#'\n'#
          EmptyLine
       end
 
       fun {ErrorMsg Message}
          case {CondSelect Message msg unit} of unit then ""
-         elseof Msg then
-            {StarLine {ExtendedVSToVS Msg}}#
+         elseof Msg then NewMsg in
+            case {Record.label Message} of error then
+               NewMsg = {Ansi.makeError Msg}
+            [] warn then
+               NewMsg = {Ansi.makeWarning Msg}
+            else
+               NewMsg = Msg
+            end
+            {StarLine {ExtendedVSToVS NewMsg}}#
             EmptyLine
          end
       end
@@ -455,7 +464,7 @@ define
             N = {Property.get 'errors.thread'}
             if N > 0 then
                EmptyLine#
-               {StarLine 'Call Stack:'}#
+               {StarLine {Ansi.makeInfo 'Call Stack:'}}#
                {FoldR {GetStack Frames N}
                 fun {$ Frame In} {StarLine Frame}#In end ""}
             else ""

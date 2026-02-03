@@ -8,56 +8,37 @@ export
     makeError: MakeError
     makeDebug: MakeDebug
 define
-    ESC = "\033"
-    CSI = {List.append ESC "[" $}
-    RESET = {List.append CSI "0m"}
+    ESC = '\033'
+    CSI = ESC#'['
+    RESET = CSI#'0m'
 
-    RED = {List.append CSI "38;5;1m"}
-    GREEN = {List.append CSI "38;5;2m"}
-    ORANGE = {List.append CSI "38;5;3m"}
-    BLUE = {List.append CSI "38;5;4m"}
-    PURPLE = {List.append CSI "38;5;5m"}
-    CYAN = {List.append CSI "38;5;6m"}
-    WHITE = {List.append CSI "38;5;7m"}
-    BLACK = {List.append CSI "38;5;8m"}
+    RED = CSI#'38;5;1m'
+    GREEN = CSI#'38;5;2m'
+    ORANGE = CSI#'38;5;3m'
+    BLUE = CSI#'38;5;4m'
+    PURPLE = CSI#'38;5;5m'
+    CYAN = CSI#'38;5;6m'
+    WHITE = CSI#'38;5;7m'
+    BLACK = CSI#'38;5;8m'
 
-    proc {MakeColoredString InputString Color ?OutputString}
-        OutputString={List.flatten [Color InputString RESET] $}
+    proc {MakeInfo Input ?Output}
+        Output = BLUE#Input#RESET
     end
 
-    proc {MakeInfo InputAtom ?OutputAtom}
-        InputString = {Atom.toString InputAtom $}
-        OutputString = {MakeColoredString InputString BLUE $}
-    in
-        OutputAtom = {String.toAtom OutputString $}
+    proc {MakeSuccess Input ?Output}
+        Output = GREEN#Input#RESET
     end
 
-    proc {MakeSuccess InputAtom ?OutputAtom}
-        InputString = {Atom.toString InputAtom $}
-        OutputString = {MakeColoredString InputString GREEN $}
-    in
-        OutputAtom = {String.toAtom OutputString $}
+    proc {MakeWarning Input ?Output}
+        Output = ORANGE#Input#RESET
     end
 
-    proc {MakeWarning InputAtom ?OutputAtom}
-        InputString = {Atom.toString InputAtom $}
-        OutputString = {MakeColoredString InputString ORANGE $}
-    in
-        OutputAtom = {String.toAtom OutputString $}
+    proc {MakeError Input ?Output}
+        Output = RED#Input#RESET
     end
 
-    proc {MakeError InputAtom ?OutputAtom}
-        InputString = {Atom.toString InputAtom $}
-        OutputString = {MakeColoredString InputString RED $}
-    in
-        OutputAtom = {String.toAtom OutputString $}
-    end
-
-    proc {MakeDebug InputAtom ?OutputAtom}
-        InputString = {Atom.toString InputAtom $}
-        OutputString = {MakeColoredString InputString PURPLE $}
-    in
-        OutputAtom = {String.toAtom OutputString $}
+    proc {MakeDebug Input ?Output}
+        Output = PURPLE#Input#RESET
     end
 in
     skip
