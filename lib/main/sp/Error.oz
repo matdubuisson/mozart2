@@ -426,20 +426,20 @@ define
          NumStars1 = NumStars div 2
          NumStars2 = (NumStars + 1) div 2
       in
-         Stars#{Repeat NumStars1 &*}#{Ansi.makeError Kind}#{Repeat NumStars2 &*}#'\n'#
+         Stars#{Repeat NumStars1 &*}#
+         case {Record.label Message} of error then {Ansi.makeError Kind}
+         else {Ansi.makeWarning Kind} end#
+         {Repeat NumStars2 &*}#'\n'#
          EmptyLine
       end
 
       fun {ErrorMsg Message}
          case {CondSelect Message msg unit} of unit then ""
-         elseof Msg then NewMsg in
-            case {Record.label Message} of error then
-               NewMsg = {Ansi.makeError Msg}
-            [] warn then
-               NewMsg = {Ansi.makeWarning Msg}
-            else
-               NewMsg = Msg
-            end
+         elseof Msg then
+            NewMsg = case {Record.label Message} of error then
+               {Ansi.makeError Msg}
+            else {Ansi.makeWarning Msg} end
+         in
             {StarLine {ExtendedVSToVS NewMsg}}#
             EmptyLine
          end
