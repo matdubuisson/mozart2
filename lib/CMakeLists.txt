@@ -47,7 +47,9 @@ set(COMPILER_FUNCTORS_0
     "StaticAnalysis.oz" "Unnester.oz" "WhileLoop.oz"
     )
 
-set(COMPILER_FUNCTORS "${MOZART_LIB_DIR}/ozbatch/Compile.oz")
+set(COMPILER_FUNCTORS
+    "${MOZART_LIB_DIR}/ozbatch/Compile.oz"
+    "${MOZART_LIB_DIR}/ozbatch/Decompile.oz")
 foreach(FUNCTOR ${COMPILER_FUNCTORS_0})
   set(COMPILER_FUNCTORS ${COMPILER_FUNCTORS} "${MOZART_COMPILER_DIR}/${FUNCTOR}")
 endforeach()
