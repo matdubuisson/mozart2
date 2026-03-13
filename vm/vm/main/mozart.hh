@@ -32,6 +32,7 @@
 #include "builtins.hh"
 #include "coreatoms.hh"
 #include "datatype.hh"
+#include "debugger.hh"
 #include "dynbuilders.hh"
 #include "exceptions.hh"
 #include "exchelpers.hh"

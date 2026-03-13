@@ -73,8 +73,9 @@ VirtualMachine::run_return_type VirtualMachine::run() {
     _currentThread = nullptr;
 
     // Schedule the thread anew if it is still runnable
-    if (currentThread->isRunnable())
+    if (currentThread->isRunnable()) {
       threadPool.schedule(currentThread);
+    }
   }
 
   // Before giving control to the external world, restore the top-level space

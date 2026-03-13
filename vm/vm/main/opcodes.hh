@@ -40,7 +40,7 @@ typedef const ByteCode* ProgramCounter;
  *        for local computation. They are dynamically allocated on need, they
  *        are invalidated after a procedure call and are destroyed on thread death.
  *    - Y registers are mutable, temporary storage allocated owned by the stack frame.
- *        They are explictly (de)allocated based on byte-code instructions.
+ *        They are explicitly (de)allocated based on byte-code instructions.
  *    - G registers are immutable and contain environment values.
  *    - K registers are immutable and contain defined constant values.
  */
@@ -64,7 +64,14 @@ const OpCode OpSkip = 0x00;
  * @param RegisterDestination a register of type X or Y
  * @remark As G and K registers are immutable, there are no instructions to output something inside these register types
  */
-const OpCode OpMoveXX = 0x01, OpMoveXY = 0x02, OpMoveYX = 0x03, OpMoveYY = 0x04, OpMoveGX = 0x05, OpMoveGY = 0x06, OpMoveKX = 0x07, OpMoveKY = 0x08;
+const OpCode OpMoveXX = 0x01,
+OpMoveXY = 0x02,
+OpMoveYX = 0x03,
+OpMoveYY = 0x04,
+OpMoveGX = 0x05,
+OpMoveGY = 0x06,
+OpMoveKX = 0x07,
+OpMoveKY = 0x08;
 
 /**
  * Execute simultaneously two mode instructions
@@ -74,12 +81,16 @@ const OpCode OpMoveXX = 0x01, OpMoveXY = 0x02, OpMoveYX = 0x03, OpMoveYY = 0x04,
  * @param RegisterDestination2 a register of type X or Y
  * @remark It has been developed for an optimization purpose
  */
-const OpCode OpMoveMoveXYXY = 0x09, OpMoveMoveYXYX = 0x0A, OpMoveMoveYXXY = 0x0B, OpMoveMoveXYYX = 0x0C;
+const OpCode OpMoveMoveXYXY = 0x09,
+OpMoveMoveYXYX = 0x0A,
+OpMoveMoveYXXY = 0x0B,
+OpMoveMoveXYYX = 0x0C;
 
 /**
  * Allocates a specified number of Y registers
  * @param Count the number of allocated Y registers
  * @remark Deallocation is automatically done by the garbage collector
+ * @remark This call should be called only once by thread
  */
 const OpCode OpAllocateY = 0x0D;
 
@@ -167,6 +178,7 @@ const OpCode OpCallBuiltin5 = 0x25;
 /**
  * Call a C++ builtin abstraction with an arity of N arguments
  * @param KRegister the address of the code space
+ * @param ArgumentsCount the number of arguments
  * @param XRegister1 an argument value
  * @param XRegister2 an argument value
  * ....
@@ -180,7 +192,10 @@ const OpCode OpCallBuiltinN = 0x26;
  * @param Arity the number of arguments taken by the procedure
  * @remark Arguments are provided through X registers indexed from 0 to Arity - 1
  */
-const OpCode OpCallX = 0x27, OpCallY = 0x28, OpCallG = 0x29, OpCallK = 0x2A;
+const OpCode OpCallX = 0x27,
+OpCallY = 0x28,
+OpCallG = 0x29,
+OpCallK = 0x2A;
 
 /**
  * Equivalent to OpCall operations + OpReturn. It doesn't consume stack space
@@ -188,20 +203,38 @@ const OpCode OpCallX = 0x27, OpCallY = 0x28, OpCallG = 0x29, OpCallK = 0x2A;
  * @param Arity the number of arguments taken by the procedure
  * @remark Arguments are provided through X registers indexed from 0 to Arity - 1
  */
-const OpCode OpTailCallX = 0x2B, OpTailCallY = 0x2C, OpTailCallG = 0x2D, OpTailCallK = 0x2E;
+const OpCode OpTailCallX = 0x2B,
+OpTailCallY = 0x2C,
+OpTailCallG = 0x2D,
+OpTailCallK = 0x2E;
 
-const OpCode OpSendMsgX = 0x30;
-const OpCode OpSendMsgY = 0x31;
-const OpCode OpSendMsgG = 0x32;
-const OpCode OpSendMsgK = 0x33;
-const OpCode OpTailSendMsgX = 0x34;
-const OpCode OpTailSendMsgY = 0x35;
-const OpCode OpTailSendMsgG = 0x36;
-const OpCode OpTailSendMsgK = 0x37;
+/**
+ * Send a message of a certain size to a specified target
+ * @param XRegister the target reference
+ * @param KRegister the actual message value
+ * @param MessageWidth
+ */
+const OpCode OpSendMsgX = 0x30,
+OpSendMsgY = 0x31,
+OpSendMsgG = 0x32,
+OpSendMsgK = 0x33;
+
+/**
+ * Send a message of a certain size to a specified target
+ * @param XRegister the target reference
+ * @param KRegister the actual message value
+ * @param MessageWidth
+ * @remark It's a tail call
+ */
+const OpCode OpTailSendMsgX = 0x34,
+OpTailSendMsgY = 0x35,
+OpTailSendMsgG = 0x36,
+OpTailSendMsgK = 0x37;
 
 /**
  * Pops a stack frame off the stack and installs it in other words returns from the current invocation of a procedure
- * @remark The current stack frale has no allocated Y registers and this is a regular stack frame
+ * @remark The current stack frame has no allocated Y registers and this is a regular stack frame
+ * @remark The current thread is preempted
  */
 const OpCode OpReturn = 0x40;
 /**
@@ -213,8 +246,8 @@ const OpCode OpBranch = 0x41, OpBranchBackward = 0x42;
  * Jumps to the right specified address label according to the value of a X register
  * @param XRegister the condition value
  * @param FalseOffset the jump to do if the condition is false
- * @param TrueOffset the jump to do if the condition is true
  * @param ErrorOffset the jump to do if there is an error
+ * @remark TrueOffset = current PC + 1
  */
 const OpCode OpCondBranch = 0x43, OpCondBranchFB = 0x44, OpCondBranchBF = 0x45, OpCondBranchBB = 0x46;
 
@@ -376,11 +409,23 @@ const OpCode OpInlineMinus1 = 0x84;
 
 const OpCode OpInlineGetClass = 0x90;
 
-const OpCode OpDebugEntry = 0xa0;
-const OpCode OpDebugExit = 0xa1;
-const OpCode OpLocalVarname = 0xa2;
-const OpCode OpGlobalVarname = 0xa3;
-const OpCode OpClearY = 0xa4;
+/**
+ * Debug instruction TODO
+ * @param KRegister File descriptor
+ * @param LineNumber Line number
+ * @param ColumnNumber Column number
+ * @param KRegister Kind of file
+ */
+const OpCode OpDebugEntry = 0xa0,
+OpDebugExit = 0xa1;
+
+/**
+ * Debug instruction TODO
+ * No effect
+ */
+const OpCode OpLocalVarname = 0xa2,
+OpGlobalVarname = 0xa3,
+OpClearY = 0xa4;
 
 }
 

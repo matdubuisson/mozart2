@@ -26,6 +26,7 @@
 #define MOZART_EMULATE_H
 
 #include "mozartcore.hh"
+#include "debugger.hh"
 
 #include <utility>
 #include <stack>

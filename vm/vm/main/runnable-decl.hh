@@ -28,6 +28,7 @@
 #include "core-forward-decl.hh"
 #include "store-decl.hh"
 #include "vmallocatedlist-decl.hh"
+#include "debugger.hh"
 
 #include <cassert>
 

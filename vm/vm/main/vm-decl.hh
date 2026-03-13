@@ -46,6 +46,8 @@
 #include "coreatoms-decl.hh"
 #include "properties-decl.hh"
 
+#include "debugger.hh"
+
 namespace mozart {
 
 ///////////////////
@@ -155,6 +157,9 @@ private:
     std::int64_t expiration;
     StableNode* wakeable;
   };
+
+protected:
+  DebuggerPipe *debuggerPipe = nullptr;
 public:
   inline
   VirtualMachine(VirtualMachineEnvironment& environment,
@@ -193,6 +198,14 @@ public:
     node->handler = handler;
     node->next = _cleanupList;
     _cleanupList = node;
+  }
+
+  void setDebuggerPipe(DebuggerPipe *debuggerPipe) {
+    this->debuggerPipe = debuggerPipe;
+  }
+
+  DebuggerPipe* getDebuggerPipe(void) {
+    return this->debuggerPipe;
   }
 
   run_return_type run();

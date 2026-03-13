@@ -310,6 +310,7 @@ void Thread::run() {
   // Local variable cache of fields
 
   VM const vm = this->vm;
+  DebuggerPipe *debuggerPipe = vm->getDebuggerPipe();
   XRegArray* const xregs = &this->xregs;
 
   // Where were we left?
@@ -361,6 +362,10 @@ void Thread::run() {
 
     while (!preempted) {
       OpCode op = *PC;
+
+      if (debuggerPipe) {
+        //debuggerPipe->wait(op);
+      }
 
       switch (op) {
         // SKIP
@@ -453,7 +458,7 @@ void Thread::run() {
           assert(count != 0);
           assert(yregs == nullptr); // Duplicate AllocateY
           yregCount = count;
-          yregs = vm->newStaticArray<UnstableNode>(count);
+          yregs = vm->newStaticArray<UnstableNode>(count); // Y registers are mutable
           for (size_t i = 0; i < count; i++)
             yregs[i].init(vm);
           advancePC(1); break;
@@ -490,11 +495,10 @@ void Thread::run() {
         // Exception handlers
 
         case OpSetupExceptionHandler: {
-          int distance = IntPC(1);
+          int distance = IntPC(1); // Get exception handler size
           advancePC(1);
 
-          stack.pushExceptionHandler(vm, PC, std::move(debugEntry));
-
+          stack.pushExceptionHandler(vm, PC, std::move(debugEntry)); // Push it then advance program counter to the end
           PC += distance;
           break;
         }

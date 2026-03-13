@@ -71,6 +71,7 @@ public:
       // Small block - use free list
       void* list = freeListBuckets[bucket];
       if (list != nullptr) {
+        // Dereference list to get pointer on next block
         freeListBuckets[bucket] = *static_cast<void**>(list);
         return list;
       } else {
