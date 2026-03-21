@@ -15,6 +15,23 @@
 <!-- ====================================================== -->
 ## arrays.hh
 
+### Purpose
+
+Defines a static array potentially sized.
+
+### Key Classes
+
+- class StaticArray;
+
+### Important Functions
+### Dependencies
+
+- core-forward-decl.hh
+- cassert : Runtime debugging checks
+- cstdint : Fixed-size integer types
+
+### Notes
+
 <!-- ====================================================== -->
 ## atom-decl.hh
 
@@ -290,12 +307,32 @@ Memory allocation and deallocation :
 <!-- ====================================================== -->
 ## memmanlist.hh
 
+### Purpose
+
+The memory management list is defined as a linked list with a complete set of operations for insertions, deletions, aggregations and getters.
+
+### Key Classes
+
+- struct ListNode;
+- struct iterator;
+- struct removable_iterator;
+- class MemManagedList;
+
+### Important Functions
+### Dependencies
+
+- "memmanager.hh" : source code
+- utility : move/forward/helpers functions
+- cassert : runtime assertions
+
+### Notes
+
 <!-- ====================================================== -->
 ## memword.hh
 
 ### Purpose
 
-Defines the structure of a memory word.
+Defines the structure of a memory word. A memory word is a type which is defined as having the size of a void* and behaving as the union of a number of other types. If they are small enough, they are actually stored in the MemWord. If not, they are stored as a pointer to external memory.
 
 ### Key Classes
 
@@ -314,6 +351,9 @@ Defines the structure of a memory word.
 - constexpr bool MWU*::requiresExternalMemory(....)
 
 ### Dependencies
+
+- core-forward-decl.hh : source file
+
 ### Notes
 
 <!-- ====================================================== -->
@@ -418,6 +458,16 @@ Defines the structure of a memory word.
 <!-- ====================================================== -->
 ## runnable-decl.hh
 
+### Purpose
+### Key Classes
+### Important Functions
+### Dependencies
+
+- "core-forward-decl.hh" : source file
+- "store-decl.hh" : source file
+
+### Notes
+
 <!-- ====================================================== -->
 ## runnable.hh
 
@@ -454,11 +504,94 @@ Defines the structure of a memory word.
 <!-- ====================================================== -->
 ## storage-decl.hh
 
+### Purpose
+
+There are two types of storage : the default storage (TODO complete more) and the implementation with arrays. Accessors are provided also allowing to initiate a storage and to get memory words from it.
+
+### Key Classes
+
+- struct have_cxx11_trait_helper;
+- struct have_cxx11_trait;
+- struct ImplAndCleanupListNode;
+- struct DerefPotentialImplAndCleanup;
+- struct DerefPotentialImplAndCleanup<ImplAndCleanupListNode<T>>;
+- class ImplWithArray;
+- class DefaultStorage;
+- class Storage;
+- class AccessorHelper;
+- class AccessorHelper<T, DefaultStorage<T>>;
+- class AccessorHelper<T, ImplWithArray<T, E>>;
+- class DataTypeStorageHelper;
+- class DataTypeStorageHelper<T, DefaultStorage<T>>;
+- class DataTypeStorageHelper<T, ImplWithArray<T, E>>;
+
+### Important Functions
+### Dependencies
+
+- core-forward-decl.hh : source file
+- type-decl.hh : source file
+- memword.hh : source file
+- arrays.hh : source file
+- type_traits : template metaprogramming
+
+### Notes
+
 <!-- ====================================================== -->
 ## storage.hh
 
 <!-- ====================================================== -->
 ## store-decl.hh
+
+### Purpose
+
+A value node in the store.
+The store is entirely made of nodes. A node is basically a typed value.
+Non-atomic values, such as records, contain references to other nodes in the
+store, hence forming a graph, and the name "node".
+There are two kinds of node: stable and unstable node. A stable node is
+guaranteed never to change, whereas unstable node can change. In order to
+maintain consistency in the store, non-atomic values are only allowed to
+reference stable nodes. Unstable nodes are used for working data, and
+inherently mutable data (such as the contents of a cell).
+
+#### Nodes
+
+A node is essentially used for regular data structure consisting of one describing type and one memory word as value or pointer, however it can be user for graph replicators (TODO complete this). A node is copyable and can be seen as stable (immutable) or unstable (mutable).
+
+A backup node is a node with only purpose to keep a pointer on an other one and copy its values (type and memory word) to the pointer node upon restore call.
+
+A node hole is a meta node defining condition checks on it as for instance equality or is stable. It is not an instance of Node but it has a pointer on a node.
+
+A typed rich node is a node without any behavior probably just for grouping.
+A rich node contains a pointer on a node that is either a stable, either a unstable or an hole node. It offers some checks to know if the node is transient or is feature and other useful operations.
+
+A stable node inherits from Node and can be only instantiated.
+
+An unstable node inherits from Node and can be instantiated and copied.
+
+A global node is like a container forming a binary tree where it has three value an uuid and two stable nodes (self and protocol) plus two pointers on other global nodes (left and right). If offers a get method to find an other global node according to its uuid.
+
+A base typed rich node is a specialization of typed rich node.
+
+A protected node is a type of node that is protected from the garbage collector.
+
+### Key Classes
+
+- struct NodeBackup;
+- struct NodeHole;
+- class Node;
+- class TypedRichNode;
+- class RichNode;
+- class StableNode;
+- class UnstableNode;
+- class GlobalNode;
+- class BaseTypedRichNode;
+- class ProtectedNode;
+
+### Important Functions
+### Dependencies
+### Notes
+
 
 <!-- ====================================================== -->
 ## store.hh
@@ -548,6 +681,27 @@ Types :
 <!-- ====================================================== -->
 ## uuid-decl.hh
 
+### Purpose
+
+UUID class definition with comparison operations.
+Defines global operators to be executed on UUIDs.
+
+### Key Classes
+
+- struct UUID;
+- class word_print;
+
+### Important Functions
+### Dependencies
+
+- "core-forward-decl.hh" : source code
+- cstdint : precise integers
+- string : text handling
+- sstream : string streams
+- iomanip : formatting output
+
+### Notes
+
 <!-- ====================================================== -->
 ## variables-decl.hh
 
@@ -556,6 +710,23 @@ Types :
 
 <!-- ====================================================== -->
 ## vmallocatedlist-decl.hh
+
+### Purpose
+
+Tiny file defining the virtual machine allocated list as a memory managed list.
+
+### Key Classes
+
+- class VMAllocatedList;
+
+### Important Functions
+### Dependencies
+
+- "memmanager.hh";
+- "memmanlist.hh";
+
+### Notes
+
 
 <!-- ====================================================== -->
 ## vmallocatedlist.hh

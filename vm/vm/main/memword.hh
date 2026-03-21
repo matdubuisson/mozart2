@@ -72,7 +72,7 @@ struct MWUAccessor {
 template <>
 union MWUnion<> {
   template <typename Q>
-  Q& get(){
+  Q& get() {
     return MWUAccessor<MWUnion, Q, Q>::get(this);
   }
 
