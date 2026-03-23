@@ -26,7 +26,7 @@ Defines a static array potentially sized.
 ### Important Functions
 ### Dependencies
 
-- core-forward-decl.hh
+- core-forward-decl.hh : source code
 - cassert : Runtime debugging checks
 - cstdint : Fixed-size integer types
 
@@ -219,6 +219,27 @@ Defines a static array potentially sized.
 <!-- ====================================================== -->
 ## exceptions-decl.hh
 
+### Purpose
+
+There are four kinds of exception : ekFail, ekWaitBefore, ekWaitQuietBefore and ekRaise.
+It defines the exception handler as a pair of a jump to the handler and a linked list pointing on the next exception handler.
+The global exception mechanism is defined like a stack where handlers are pushed and popped from the top of the stack.
+
+### Key Classes
+
+- struct ExceptionHandler;
+- enum class ExceptionKind;
+- class GlobalExceptionMechanism;
+
+### Important Functions
+### Dependencies
+
+- setjmp : non-local jumps, control flow different from usual one
+- "core-forward-decl.hh"
+- "store-decl.hh"
+
+### Notes
+
 <!-- ====================================================== -->
 ## exceptions.hh
 
@@ -249,11 +270,62 @@ Defines a static array potentially sized.
 <!-- ====================================================== -->
 ## gcollect-decl.hh
 
+### Purpose
+
+Defines the garbage collector as a graph replicator. The garbage collector travels the data graph, replicates only nodes that are still reachable so in use and let the others non-replicated in the old space. Once the new space is fulfilled, the old one is freed. A garbage collector process three kind of things : a space, a thread or a node (data).
+
+### Key Classes
+
+- class GarbageCollector: public GraphReplicator;
+
+### Important Functions
+
+- GarbageCollector::isGCRequired();
+- GarbageCollector::doGC(....);
+
+### Dependencies
+
+- "core-forward-decl.hh";
+- "graphreplicator-decl.hh";
+
+### Notes
+
 <!-- ====================================================== -->
 ## gcollect.hh
 
 <!-- ====================================================== -->
 ## graphreplicator-decl.hh
+
+### Purpose
+
+All data interconnections are modeled by a graph where data are nodes and references are links. The graph replicator is here to copy all the elements as stable/unstable/global nodes, spaces, threads, references and atoms.
+
+### Key Classes
+
+- class GraphReplicator;
+
+### Important Functions
+
+- GraphReplicator::copySpace;
+- GraphReplicator::copyThread;
+- GraphReplicator::copyStableNode;
+- GraphReplicator::copyUnstableNode;
+- GraphReplicator::copyStableRef;
+- GraphReplicator::copyWeakStableRef;
+- GraphReplicator::copyStableNodes;
+- GraphReplicator::copyUnstableNodes;
+- GraphReplicator::copyGNode;
+- GraphReplicator::copyAtom;
+
+### Dependencies
+
+- "core-forward-decl.hh" : source code
+- "memmanager.hh" : source code
+- "memmanlist.hh" : source code
+- "store-decl.hh" : source code
+- "runnable-decl.hh" : source code
+
+### Notes
 
 <!-- ====================================================== -->
 ## graphreplicator.hh
@@ -459,12 +531,30 @@ Defines the structure of a memory word. A memory word is a type which is defined
 ## runnable-decl.hh
 
 ### Purpose
+
+Three levels of thread priority are defined : low, middle and high.
+
+Defines the intermediate state of a runnable such that it can be reset, fetched or stored.
+This intermediate state maintains a VMAllocatedList (array list) of unstable nodes.
+
+An class interface is defined for runnable entities (threads). Each runnable has its own space and has a priority of execution and contains an intermediate state. A thread can be suspended, resumed, terminated or killed. 
+
+Defines also a list of runnables that typically will be used by the scheduler of the virtual machine to pick up new threads to execute.
+
 ### Key Classes
+
+- struct iterator;
+- class IntermediateState;
+- class Runnable;
+- class RunnableList;
+
 ### Important Functions
 ### Dependencies
 
 - "core-forward-decl.hh" : source file
 - "store-decl.hh" : source file
+- "vmallocatedlist-decl.hh": source file
+- cassert : runtime assertions
 
 ### Notes
 
@@ -476,6 +566,25 @@ Defines the structure of a memory word. A memory word is a type which is defined
 
 <!-- ====================================================== -->
 ## sclone-decl.hh
+
+### Purpose
+
+Defines a space cloner as a graph replicator.
+
+### Key Classes
+
+- class SpaceCloner: public GraphReplicator;
+
+### Important Functions
+
+- SpaceCloner::doCloneSpace(....);
+
+### Dependencies
+
+- "core-forward-decl.hh";
+- "graphreplicator-decl.hh";
+
+### Notes
 
 <!-- ====================================================== -->
 ## sclone.hh
@@ -497,6 +606,23 @@ Defines the structure of a memory word. A memory word is a type which is defined
 
 <!-- ====================================================== -->
 ## space-decl.hh
+
+### Purpose
+
+
+
+### Key Classes
+
+- struct ScriptEntry;
+- struct TrailEntry;
+- class SpaceScript : public VMAllocatedList<ScriptEntry>;
+- class SpaceTrail : public VMAllocatedList<TrailEntry>;
+- class Distributor;
+- class Space;
+
+### Important Functions
+### Dependencies
+### Notes
 
 <!-- ====================================================== -->
 ## space.hh
@@ -556,7 +682,7 @@ inherently mutable data (such as the contents of a cell).
 
 #### Nodes
 
-A node is essentially used for regular data structure consisting of one describing type and one memory word as value or pointer, however it can be user for graph replicators (TODO complete this). A node is copyable and can be seen as stable (immutable) or unstable (mutable).
+A node is essentially used for regular data structure consisting of one describing type and one memory word as value or pointer, however it can be used for graph replicators (TODO complete this). A node is copyable and can be seen as stable (immutable) or unstable (mutable).
 
 A backup node is a node with only purpose to keep a pointer on an other one and copy its values (type and memory word) to the pointer node upon restore call.
 
@@ -604,6 +730,21 @@ A protected node is a type of node that is protected from the garbage collector.
 
 <!-- ====================================================== -->
 ## threadpool-decl.hh
+
+### Purpose
+
+Defines the thread queue (queue of pointers of runnables) used by the virtual machine to schedule threads.
+
+Defines also the thread pool used by the virtual machine too to schedule threads and uses a thread queue to do that.
+
+### Key Classes
+
+- class ThreadQueue : public std::queue<Runnable*>;
+- class ThreadPool;
+
+### Important Functions
+### Dependencies
+### Notes
 
 <!-- ====================================================== -->
 ## threadpool.hh
