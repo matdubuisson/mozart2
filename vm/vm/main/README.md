@@ -41,6 +41,39 @@ Defines a static array potentially sized.
 <!-- ====================================================== -->
 ## atomtable.hh
 
+### Purpose
+
+Atoms definition and operation.
+Atom names definition and checks (if not a keyword, format it to be printable).
+Atom table definition used to retrieve atoms.
+
+### Key Classes
+
+- struct BasicAtomStreamer<char, 1>;
+- struct BasicAtomStreamer<char, 2>;
+- class Atom;
+- class UniqueName;
+- class AtomTable;
+- class AtomImpl;
+- class AtomTable;
+
+### Important Functions
+
+- size_t AtomImpl::length();
+- const char* AtomImpl::contents();
+- int AtomImpl::compare(const AtomImpl* rhs);
+
+### Dependencies
+
+- "core-forward-decl.hh" : source code
+- cstring : legacy string utils (from string.h)
+- string : string utils
+- type_traits : template meta-programming
+- sstream : strings manipulations as streams
+- "utf-decl.hh" : source code
+
+### Notes
+
 <!-- ====================================================== -->
 ## bigint-decl.hh
 
@@ -264,6 +297,15 @@ The global exception mechanism is defined like a stack where handlers are pushed
 <!-- ====================================================== -->
 ## functiontraits-decl.hh
 
+### Purpose
+
+Function traits definition.
+
+### Key Classes
+### Important Functions
+### Dependencies
+### Notes
+
 <!-- ====================================================== -->
 ## gcollect.cc
 
@@ -338,6 +380,21 @@ All data interconnections are modeled by a graph where data are nodes and refere
 
 <!-- ====================================================== -->
 ## lstring-decl.hh
+
+### Purpose
+
+Defines a lstring as a bounded mutable string of a certain generic type of character.
+
+### Key Classes
+
+- struct BaseLString;
+- struct LString : BaseLString<C>;
+- struct ContainedLString : mut::BaseLString<typename T::value_type>;
+- enum UnicodeErrorReason;
+
+### Important Functions
+### Dependencies
+### Notes
 
 <!-- ====================================================== -->
 ## lstring.hh
@@ -609,7 +666,8 @@ Defines a space cloner as a graph replicator.
 
 ### Purpose
 
-
+The space is an area used by many threads to run their computations.
+Spaces can form a tree where nodes are spaces.
 
 ### Key Classes
 
@@ -622,6 +680,12 @@ Defines a space cloner as a graph replicator.
 
 ### Important Functions
 ### Dependencies
+
+- "core-forward-decl.hh" : source code
+- "store-decl.hh" : source code
+- "exceptions-decl.hh" : source code
+- "vmallocatedlist-decl.hh" : source code
+
 ### Notes
 
 <!-- ====================================================== -->
@@ -658,7 +722,7 @@ There are two types of storage : the default storage (TODO complete more) and th
 - type-decl.hh : source file
 - memword.hh : source file
 - arrays.hh : source file
-- type_traits : template metaprogramming
+- type_traits : template meta-programming
 
 ### Notes
 
@@ -809,6 +873,15 @@ Types :
 
 <!-- ====================================================== -->
 ## utf-decl.hh
+
+### Purpose
+
+Some utf conversions.
+
+### Key Classes
+### Important Functions
+### Dependencies
+### Notes
 
 <!-- ====================================================== -->
 ## utf.hh
