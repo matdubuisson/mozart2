@@ -1,4 +1,10 @@
-# Virtual machine source code
+# Virtual machine source code documentation
+
+## Authors
+
+## Motivation
+
+This document has for purpose to help future maintainer or simply peoples wanting to get inspiration from this repo to understand more easily the structure of the project, what parts are for and why it does that.
 
 ### Purpose
 ### Key Classes
@@ -7,10 +13,7 @@
 ### Notes
 
 <!-- ====================================================== -->
-## array-decl.hh
-
-<!-- ====================================================== -->
-## array.hh
+## array-decl.hh / array.hh
 
 <!-- ====================================================== -->
 ## arrays.hh
@@ -33,10 +36,7 @@ Defines a static array potentially sized.
 ### Notes
 
 <!-- ====================================================== -->
-## atom-decl.hh
-
-<!-- ====================================================== -->
-## atom.hh
+## atom-decl.hh / atom.hh
 
 <!-- ====================================================== -->
 ## atomtable.hh
@@ -75,79 +75,40 @@ Atom table definition used to retrieve atoms.
 ### Notes
 
 <!-- ====================================================== -->
-## bigint-decl.hh
-
-<!-- ====================================================== -->
-## bigint.hh
+## bigint-decl.hh / bigint.hh
 
 <!-- ====================================================== -->
 ## bigintimplem-decl.hh
 
 <!-- ====================================================== -->
-## boolean-decl.hh
+## boolean-decl.hh / boolean.hh
 
 <!-- ====================================================== -->
-## boolean.hh
+## builtins-decl.hh / builtins.hh
 
 <!-- ====================================================== -->
-## builtins-decl.hh
+## bytestring-decl.hh / bytestring.hh
 
 <!-- ====================================================== -->
-## builtins.hh
+## callables-decl.hh / callables.hh
 
 <!-- ====================================================== -->
-## bytestring-decl.hh
+## cell-decl.hh / cell.hh
 
 <!-- ====================================================== -->
-## bytestring.hh
+## codearea-decl.hh / codearea.hh
 
 <!-- ====================================================== -->
-## cached
+## coders-decl.cc / coders.hh
 
 <!-- ====================================================== -->
-## callables-decl.hh
-
-<!-- ====================================================== -->
-## callables.hh
-
-<!-- ====================================================== -->
-## cell-decl.hh
-
-<!-- ====================================================== -->
-## cell.hh
-
-<!-- ====================================================== -->
-## CMakeLists.txt
-
-<!-- ====================================================== -->
-## codearea-decl.hh
-
-<!-- ====================================================== -->
-## codearea.hh
-
-<!-- ====================================================== -->
-## coders.cc
-
-<!-- ====================================================== -->
-## coders-decl.hh
-
-<!-- ====================================================== -->
-## coreatoms-decl.hh
-
-<!-- ====================================================== -->
-## coreatoms.hh
+## coreatoms-decl.hh / coreatoms.hh
 
 <!-- ====================================================== -->
 ## corebuilders.hh
 
 <!-- ====================================================== -->
-## coredatatypes.cc
-
-<!-- ====================================================== -->
-## coredatatypes-decl.hh
-
-<!-- ====================================================== -->
-## coredatatypes.hh
+## coredatatypes-decl.hh / coredatatypes.hh / coredatatypes.cc
 
 <!-- ====================================================== -->
 ## core-forward-decl.hh
@@ -202,55 +163,33 @@ Atom table definition used to retrieve atoms.
 ### Notes
 
 <!-- ====================================================== -->
-## coreinterfaces-decl.hh
+## coreinterfaces-decl.hh / coreinterfaces.hh
 
 <!-- ====================================================== -->
-## coreinterfaces.hh
+## coremodules.hh / coremodules.cc
 
 <!-- ====================================================== -->
-## coremodules.cc
+## datatype-decl.hh / datatype.hh
 
 <!-- ====================================================== -->
-## coremodules.hh
+## datatypeshelpers-decl.hh / datatypeshelpers.hh
 
 <!-- ====================================================== -->
-## datatype-decl.hh
+## debugger-decl.hh / debugger.hh / debugger.cc
+
+TODO (currently on another branch)
 
 <!-- ====================================================== -->
-## datatype.hh
+## dictionary-decl.hh / dictionary.hh
 
 <!-- ====================================================== -->
-## datatypeshelpers-decl.hh
+## dynbuilders-decl.hh / dynbuilders.hh
 
 <!-- ====================================================== -->
-## datatypeshelpers.hh
+## emulate.hh / emulate.cc
 
 <!-- ====================================================== -->
-## debugger.cc
-
-<!-- ====================================================== -->
-## debugger.hh
-
-<!-- ====================================================== -->
-## dictionary-decl.hh
-
-<!-- ====================================================== -->
-## dictionary.hh
-
-<!-- ====================================================== -->
-## dynbuilders-decl.hh
-
-<!-- ====================================================== -->
-## dynbuilders.hh
-
-<!-- ====================================================== -->
-## emulate.cc
-
-<!-- ====================================================== -->
-## emulate.hh
-
-<!-- ====================================================== -->
-## exceptions-decl.hh
+## exceptions-decl.hh / exceptions.hh
 
 ### Purpose
 
@@ -271,28 +210,14 @@ The global exception mechanism is defined like a stack where handlers are pushed
 - "core-forward-decl.hh"
 - "store-decl.hh"
 
-### Notes
+<!-- ====================================================== -->
+## exchelpers-decl.hh / exchelpers.hh
 
 <!-- ====================================================== -->
-## exceptions.hh
+## float-decl.hh / float.hh
 
 <!-- ====================================================== -->
-## exchelpers-decl.hh
-
-<!-- ====================================================== -->
-## exchelpers.hh
-
-<!-- ====================================================== -->
-## float-decl.hh
-
-<!-- ====================================================== -->
-## float.hh
-
-<!-- ====================================================== -->
-## foreignpointer-decl.hh
-
-<!-- ====================================================== -->
-## foreignpointer.hh
+## foreignpointer-decl.hh / foreignpointer.hh
 
 <!-- ====================================================== -->
 ## functiontraits-decl.hh
@@ -304,13 +229,9 @@ Function traits definition.
 ### Key Classes
 ### Important Functions
 ### Dependencies
-### Notes
 
 <!-- ====================================================== -->
-## gcollect.cc
-
-<!-- ====================================================== -->
-## gcollect-decl.hh
+## gcollect-decl.hh / gcollect.hh / gcollect.cc
 
 ### Purpose
 
@@ -330,13 +251,8 @@ Defines the garbage collector as a graph replicator. The garbage collector trave
 - "core-forward-decl.hh";
 - "graphreplicator-decl.hh";
 
-### Notes
-
 <!-- ====================================================== -->
-## gcollect.hh
-
-<!-- ====================================================== -->
-## graphreplicator-decl.hh
+## graphreplicator-decl.hh / graphreplicator.hh
 
 ### Purpose
 
@@ -367,16 +283,8 @@ All data interconnections are modeled by a graph where data are nodes and refere
 - "store-decl.hh" : source code
 - "runnable-decl.hh" : source code
 
-### Notes
-
 <!-- ====================================================== -->
-## graphreplicator.hh
-
-<!-- ====================================================== -->
-## grtypes-decl.hh
-
-<!-- ====================================================== -->
-## grtypes.hh
+## grtypes-decl.hh / grtypes.hh
 
 <!-- ====================================================== -->
 ## lstring-decl.hh
@@ -394,7 +302,6 @@ Defines a lstring as a bounded mutable string of a certain generic type of chara
 
 ### Important Functions
 ### Dependencies
-### Notes
 
 <!-- ====================================================== -->
 ## lstring.hh
@@ -404,7 +311,26 @@ Defines a lstring as a bounded mutable string of a certain generic type of chara
 
 <!-- ====================================================== -->
 ## memmanager.hh / memmanager.cc
+- <cstdlib>
+- <forward_list>
+- <atomic>
 
+- "core-forward-decl.hh"
+
+- "memmanager.hh"
+
+- "store-decl.hh"
+- "threadpool-decl.hh"
+- "gcollect-decl.hh"
+- "sclone-decl.hh"
+- "space-decl.hh"
+- "uuid-decl.hh"
+- "vmallocatedlist-decl.hh"
+
+- "atomtable.hh"
+- "bigintimplem-decl.hh"
+- "coreatoms-decl.hh"
+- "properties-decl.hh"
 ### Purpose
 
 Memory allocation and deallocation : 
@@ -431,8 +357,6 @@ Memory allocation and deallocation :
 - algorithm : Collection of general algorithms
 - forward_list : Singly linked list container
 
-### Notes
-
 <!-- ====================================================== -->
 ## memmanlist.hh
 
@@ -453,8 +377,6 @@ The memory management list is defined as a linked list with a complete set of op
 - "memmanager.hh" : source code
 - utility : move/forward/helpers functions
 - cassert : runtime assertions
-
-### Notes
 
 <!-- ====================================================== -->
 ## memword.hh
@@ -486,55 +408,34 @@ Defines the structure of a memory word. A memory word is a type which is defined
 ### Notes
 
 <!-- ====================================================== -->
-## mozartcore-decl.hh
-
-<!-- ====================================================== -->
-## mozartcore.hh
+## mozartcore-decl.hh / mozartcore.hh
 
 <!-- ====================================================== -->
 ## mozart.hh
 
 <!-- ====================================================== -->
-## names-decl.hh
-
-<!-- ====================================================== -->
-## names.hh
+## names-decl.hh / names.hh
 
 <!-- ====================================================== -->
 ## nullable-decl.hh
 
 <!-- ====================================================== -->
-## objects-decl.hh
-
-<!-- ====================================================== -->
-## objects.hh
+## objects-decl.hh / objects.hh
 
 <!-- ====================================================== -->
 ## opcodes.hh
 
 <!-- ====================================================== -->
-## ozcalls-decl.hh
+## ozcalls-decl.hh / ozcalls.hh
 
 <!-- ====================================================== -->
-## ozcalls.hh
+## patmattypes-decl.hh / patmattypes.hh
 
 <!-- ====================================================== -->
-## patmattypes-decl.hh
+## pickler.hh / pickler.cc
 
 <!-- ====================================================== -->
-## patmattypes.hh
-
-<!-- ====================================================== -->
-## pickler.cc
-
-<!-- ====================================================== -->
-## pickler.hh
-
-<!-- ====================================================== -->
-## port-decl.hh
-
-<!-- ====================================================== -->
-## port.hh
+## port-decl.hh / port.hh
 
 <!-- ====================================================== -->
 ## properties.cc
@@ -543,49 +444,28 @@ Defines the structure of a memory word. A memory word is a type which is defined
 ## properties-config.cc.in
 
 <!-- ====================================================== -->
-## properties-decl.hh
+## properties-decl.hh / properties.hh
 
 <!-- ====================================================== -->
-## properties.hh
+## records-decl.hh / records.hh
 
 <!-- ====================================================== -->
-## records-decl.hh
+## reference-decl.hh / reference.hh
 
 <!-- ====================================================== -->
-## records.hh
+## reflectivetypes-decl.hh / reflectivetypes.hh
 
 <!-- ====================================================== -->
-## reference-decl.hh
+## reifiedgnode-decl.hh / reifiedgnode.hh
 
 <!-- ====================================================== -->
-## reference.hh
+## reifiedspace-decl.hh / reifiedspace.hh
 
 <!-- ====================================================== -->
-## reflectivetypes-decl.hh
+## reifiedthread-decl.hh / reifiedthread.hh
 
 <!-- ====================================================== -->
-## reflectivetypes.hh
-
-<!-- ====================================================== -->
-## reifiedgnode-decl.hh
-
-<!-- ====================================================== -->
-## reifiedgnode.hh
-
-<!-- ====================================================== -->
-## reifiedspace-decl.hh
-
-<!-- ====================================================== -->
-## reifiedspace.hh
-
-<!-- ====================================================== -->
-## reifiedthread-decl.hh
-
-<!-- ====================================================== -->
-## reifiedthread.hh
-
-<!-- ====================================================== -->
-## runnable-decl.hh
+## runnable-decl.hh / runnable.hh
 
 ### Purpose
 
@@ -613,16 +493,8 @@ Defines also a list of runnables that typically will be used by the scheduler of
 - "vmallocatedlist-decl.hh": source file
 - cassert : runtime assertions
 
-### Notes
-
 <!-- ====================================================== -->
-## runnable.hh
-
-<!-- ====================================================== -->
-## sclone.cc
-
-<!-- ====================================================== -->
-## sclone-decl.hh
+## sclone-decl.hh / sclone.hh / sclone.cc
 
 ### Purpose
 
@@ -641,28 +513,14 @@ Defines a space cloner as a graph replicator.
 - "core-forward-decl.hh";
 - "graphreplicator-decl.hh";
 
-### Notes
+<!-- ====================================================== -->
+## serializer-decl.hh / serializer.hh / serializer.cc
 
 <!-- ====================================================== -->
-## sclone.hh
+## smallint-decl.hh / smallint.hh
 
 <!-- ====================================================== -->
-## serializer.cc
-
-<!-- ====================================================== -->
-## serializer-decl.hh
-
-<!-- ====================================================== -->
-## serializer.hh
-
-<!-- ====================================================== -->
-## smallint-decl.hh
-
-<!-- ====================================================== -->
-## smallint.hh
-
-<!-- ====================================================== -->
-## space-decl.hh
+## space-decl.hh / space.hh
 
 ### Purpose
 
@@ -686,13 +544,8 @@ Spaces can form a tree where nodes are spaces.
 - "exceptions-decl.hh" : source code
 - "vmallocatedlist-decl.hh" : source code
 
-### Notes
-
 <!-- ====================================================== -->
-## space.hh
-
-<!-- ====================================================== -->
-## storage-decl.hh
+## storage-decl.hh / storage.hh
 
 ### Purpose
 
@@ -724,13 +577,8 @@ There are two types of storage : the default storage (TODO complete more) and th
 - arrays.hh : source file
 - type_traits : template meta-programming
 
-### Notes
-
 <!-- ====================================================== -->
-## storage.hh
-
-<!-- ====================================================== -->
-## store-decl.hh
+## store-decl.hh / store.hh
 
 ### Purpose
 
@@ -780,20 +628,12 @@ A protected node is a type of node that is protected from the garbage collector.
 
 ### Important Functions
 ### Dependencies
-### Notes
-
 
 <!-- ====================================================== -->
-## store.hh
+## string-decl.hh / string.hh
 
 <!-- ====================================================== -->
-## string-decl.hh
-
-<!-- ====================================================== -->
-## string.hh
-
-<!-- ====================================================== -->
-## threadpool-decl.hh
+## threadpool-decl.hh / threadpool.hh
 
 ### Purpose
 
@@ -808,13 +648,9 @@ Defines also the thread pool used by the virtual machine too to schedule threads
 
 ### Important Functions
 ### Dependencies
-### Notes
 
 <!-- ====================================================== -->
-## threadpool.hh
-
-<!-- ====================================================== -->
-## type-decl.hh
+## type-decl.hh / type.hh
 
 ### Purpose
 
@@ -839,40 +675,20 @@ Types :
 
 - "core-forward-decl.hh" : source code
 
-### Notes
+<!-- ====================================================== -->
+## typeinfo-decl.hh / typeinfo.hh
 
 <!-- ====================================================== -->
-## type.hh
+## unify-decl.hh / unify.hh / unify.cc
 
 <!-- ====================================================== -->
-## typeinfo-decl.hh
+## unit-decl.hh / unit.hh
 
 <!-- ====================================================== -->
-## typeinfo.hh
+## unpickler.hh / unpickler.cc
 
 <!-- ====================================================== -->
-## unify.cc
-
-<!-- ====================================================== -->
-## unify-decl.hh
-
-<!-- ====================================================== -->
-## unify.hh
-
-<!-- ====================================================== -->
-## unit-decl.hh
-
-<!-- ====================================================== -->
-## unit.hh
-
-<!-- ====================================================== -->
-## unpickler.cc
-
-<!-- ====================================================== -->
-## unpickler.hh
-
-<!-- ====================================================== -->
-## utf-decl.hh
+## utf-decl.hh / utf.hh
 
 ### Purpose
 
@@ -884,13 +700,7 @@ Some utf conversions.
 ### Notes
 
 <!-- ====================================================== -->
-## utf.hh
-
-<!-- ====================================================== -->
-## utils-decl.hh
-
-<!-- ====================================================== -->
-## utils.hh
+## utils-decl.hh / utils.hh
 
 <!-- ====================================================== -->
 ## uuid-decl.hh
@@ -914,16 +724,11 @@ Defines global operators to be executed on UUIDs.
 - sstream : string streams
 - iomanip : formatting output
 
-### Notes
+<!-- ====================================================== -->
+## variables-decl.hh / variables.hh
 
 <!-- ====================================================== -->
-## variables-decl.hh
-
-<!-- ====================================================== -->
-## variables.hh
-
-<!-- ====================================================== -->
-## vmallocatedlist-decl.hh
+## vmallocatedlist-decl.hh / vmallocatedlist.hh
 
 ### Purpose
 
@@ -939,24 +744,118 @@ Tiny file defining the virtual machine allocated list as a memory managed list.
 - "memmanager.hh";
 - "memmanlist.hh";
 
-### Notes
+<!-- ====================================================== -->
+## vm-decl.hh / vm.hh / vm.cc
 
+### Purpose
+
+#### Builtin module
+
+A builtin module is a C++ written code that can be called directly by the OZ code at runtime. A builtin module has two values : an atom and a protected node. The atom allows OZ program to import the module using the name defined by this atom. The protected node allows to store the builtin module state into the space memory without being destroyed at a moment by the garbage collector.
+
+All defined modules are inside the directory `modules/` and you can read the dedicated [README.md](modules/README.md) about it.
+
+#### Virtual machine environment
+
+A class defines the whole VM environment. Basically it is a VM manager that can test/set the dynamic preemption mode (of the VM scheduler), it can returns the second memory manager used to replace the old one when the garbage collector does a clean up (TODO : check this is true) or can do other stuff like killing a VM, generating an uuid or launching the garbage collector.
+
+#### Virtual machine
+
+This is one of the most complex class of the project. It is the core of the virtual machine that orchestrates all other parts of the project. This object will run bytecode and schedules threads. Upon instructions it will decide to provide access to data, will manage memory space, will launch the garbage collector when requested, will (de)alloc memory from the memory manager and is the threads scheduler.
+
+A virtual machine has different key components :
+- thread pool
+- atom table
+- global node as root node of the data tree
+- virtual machine environment
+- memory manager
+- exception mechanism
+- spaces
+- threads
+- builtin modules
+- garbage collector
+- space cloner
+- other logistical stuff
+
+### Key Classes
+
+- struct AlarmRecord;
+- class BuiltinModule;
+- class VirtualMachineEnvironment;
+- class VirtualMachine;
+
+### Important Functions
+
+#### BuiltinModule
+
+- atom_t BuiltinModule::getName() : returns builtin module's name;
+- StableNode& BuiltinModule::getModule() : returns builtin module;
+
+#### VirtualMachineEnvironment
+
+- bool VirtualMachineEnvironment::useDynamicPreemption() : gets the flag telling if dynamic mode is set or not;
+- virtual bool VirtualMachineEnvironment::testDynamicPreemption/ExitRun() : can be redefined by inheriting classes;
+
+- virtual void VirtualMachineEnvironment::withSecondMemoryManager(const std::function<void(MemoryManager&)>& doGC) : runs the garbage collector on the second memory manager;
+
+- virtual void VirtualMachineEnvironment::killVM(VM vm, nativeint exitCode, const std::string& reason) : kills the VM;
+
+- virtual UUID genUUID(VM vm) : generates an UUID;
+
+- virtual void gCollect(GC gc) : runs the garbage collector;
+
+#### VirtualMachine
+
+- void* VirtualMachine::malloc(size_t size) : allocates memory;
+- void VirtualMachine::free(void* ptr, size_t size) : frees memory;
+- StaticArray<T> VirtualMachine::newStaticArray(size_t size) : static array allocation;
+- void VirtualMachine::deleteStaticArray(StaticArray<T> array, size_t size) : static array deallocation;
+
+- void VirtualMachine::onCleanup(VMCleanupListNode* node, const VMCleanupProc& handler) : somewhat shutdowns the VM;
+
+- run_return_type VirtualMachine::run() : core function, this is the thread scheduler;
+
+- void VirtualMachine::setCurrentSpace(Space* space);
+
+- void VirtualMachine::registerBuiltinModule(const std::shared_ptr<BuiltinModule>& module);
+- UnstableNode VirtualMachine::findBuiltinModule(T&& name);
+- UnstableNode VirtualMachine::findBuiltin(T&& moduleName, U&& builtinName);
+
+- UUID VirtualMachine::genUUID();
+
+- void VirtualMachine::setAlarm(std::int64_t delay, StableNode* wakeable);
+
+- ProtectedNode VirtualMachine::protect(T&& node);
+
+- void VirtualMachine::doGC() : runs the garbage collector;
+
+- atom_t VirtualMachine::getAtom(...., const chat* data);
+- atom_t VirtualMachine::getAtom(....);
+- unique_name_t VirtualMachine::getUniqueName(...., const char* data);
+
+- void VirtualMachine::requestPreempt() : requests the preemption of the current thread (TODO check if it is true);
+- void VirtualMachine::requestExitRun() : requests the ending of the current thread (TODO check if it is true);
+- void VirtualMachine::requestGC() : requests the garbage collect to be run;
+
+### Dependencies
+
+- [cstdlib](https://cplusplus.com/reference/cstdlib/) : reference of <stdlib.h> from C.
+- [forward_list](https://cplusplus.com/reference/forward_list/forward_list/) : singly linked list definition template.
+- [atomic](https://cplusplus.com/reference/atomic/atomic/) : atomic variables.
+- [core-forward-decl.hh](#core-forward-declhh)
+- [memmanager.hh](#memmanagerhh--memmanagercc)
+- "store-decl.hh"
+- "threadpool-decl.hh"
+- "gcollect-decl.hh"
+- "sclone-decl.hh"
+- "space-decl.hh"
+- "uuid-decl.hh"
+- "vmallocatedlist-decl.hh"
+- "atomtable.hh"
+- "bigintimplem-decl.hh"
+- "coreatoms-decl.hh"
+- "properties-decl.hh"
 
 <!-- ====================================================== -->
-## vmallocatedlist.hh
-
-<!-- ====================================================== -->
-## vm.cc
-
-<!-- ====================================================== -->
-## vm-decl.hh
-
-<!-- ====================================================== -->
-## vm.hh
-
-<!-- ====================================================== -->
-## weakrefs-decl.hh
-
-<!-- ====================================================== -->
-## weakrefs.hh
+## weakrefs-decl.hh / weakrefs.hh
 
