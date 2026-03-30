@@ -10,7 +10,6 @@ This document has for purpose to help future maintainer or simply peoples wantin
 ### Key Classes
 ### Important Functions
 ### Dependencies
-### Notes
 
 <!-- ====================================================== -->
 ## array-decl.hh / array.hh
@@ -72,8 +71,6 @@ Atom table definition used to retrieve atoms.
 - sstream : strings manipulations as streams
 - "utf-decl.hh" : source code
 
-### Notes
-
 <!-- ====================================================== -->
 ## bigint-decl.hh / bigint.hh
 
@@ -85,6 +82,81 @@ Atom table definition used to retrieve atoms.
 
 <!-- ====================================================== -->
 ## builtins-decl.hh / builtins.hh
+
+### Purpose
+
+#### BuiltinEntryPoint
+
+Defines several interfaces to call a builtin module from the C++ code.
+
+#### ExtractInlineAs
+
+Metafunction that tests whether T has a member "getInlineAsOpCodeInternal".
+
+#### Module
+
+Defines a simple class used to represent builtin modules, it has one single value a string as name.
+
+#### BaseBuiltin
+
+Defines all operations that can be performed about builtin modules. It allows to get information about any modules but also it allows also to call these modules.
+
+#### Builtin
+
+More concrete implementation of BaseBuiltin.
+
+### Key Classes
+
+- struct ParamInfo;
+    - enum Kind;
+- struct ParamTypeToKind {};
+- struct ParamTypeToKind<In>;
+- struct ParamTypeToKind<Out>;
+- struct SpecializedBuiltinEntryPoint;
+- struct BuiltinEntryPointGeneric;
+- struct BuiltinEntryPointGeneric<T, arity, arity, Args...>;
+- struct BuiltinEntryPoint;
+- struct BuiltinEntryPoint<T, arity, arity, Args...>;
+- struct HasGetInlineAsOpCodeInternal;
+    - struct Fallback;
+    - struct Derived : T, Fallback {};
+    - struct ChT;
+- struct ExtractInlineAs;
+- struct ExtractInlineAs<T, true>;
+    - struct ParamsInitializer {};
+    - struct ParamsInitializer<ar, ar>;
+    - struct ParamsInitializer<ar, i, T, Args...>;
+    - struct ExtractArity {};
+    - struct ExtractArity<void (*)(VM vm, Args...)>;
+- struct InlineAs;
+
+- class Module;
+- class BaseBuiltin;
+- class Builtin: public BaseBuiltin;
+
+### Important Functions
+
+- const std::string& BaseBuiltin::getModuleName();
+- size_t BaseBuiltin::getArity();
+- ParamInfo& BaseBuiltin::getParams(size_t i);
+- void BaseBuiltin::callBuiltin(VM vm, ....args);
+- void BaseBuiltin::getCallInfo(RichNode self, VM vm, size_t& arity,
+                   ProgramCounter& start, size_t& Xcount,
+                   StaticArray<StableNode>& Gs,
+                   StaticArray<StableNode>& Ks);
+- void BaseBuiltin::buildCodeBlock(VM vm, RichNode self);
+- void BaseBuiltin::setModuleName(const std::string& moduleName);
+
+### Dependencies
+
+#### decl.hh
+
+- [opcodes.hh](#opcodeshh)
+- [mozartcore-decl.hh](#mozartcore-declhh--mozartcorehh)
+
+#### hh
+
+- [mozartcore.hh](#mozartcore-declhh--mozartcorehh)
 
 <!-- ====================================================== -->
 ## bytestring-decl.hh / bytestring.hh
@@ -839,22 +911,32 @@ A virtual machine has different key components :
 
 ### Dependencies
 
+#### decl.hh
+
 - [cstdlib](https://cplusplus.com/reference/cstdlib/) : reference of <stdlib.h> from C.
 - [forward_list](https://cplusplus.com/reference/forward_list/forward_list/) : singly linked list definition template.
 - [atomic](https://cplusplus.com/reference/atomic/atomic/) : atomic variables.
 - [core-forward-decl.hh](#core-forward-declhh)
 - [memmanager.hh](#memmanagerhh--memmanagercc)
-- "store-decl.hh"
-- "threadpool-decl.hh"
-- "gcollect-decl.hh"
-- "sclone-decl.hh"
-- "space-decl.hh"
-- "uuid-decl.hh"
-- "vmallocatedlist-decl.hh"
-- "atomtable.hh"
-- "bigintimplem-decl.hh"
-- "coreatoms-decl.hh"
-- "properties-decl.hh"
+- [store-decl.hh](#storage-declhh--storagehh)
+- [threadpool-decl.hh](#threadpool-declhh--threadpoolhh)
+- [gcollect-decl.hh](#gcollect-declhh--gcollecthh--gcollectcc)
+- [sclone-decl.hh](#sclone-declhh--sclonehh--sclonecc)
+- [space-decl.hh](#space-declhh--spacehh)
+- [uuid-decl.hh](#uuid-declhh)
+- [vmallocatedlist-decl.hh](#vmallocatedlist-declhh--vmallocatedlisthh)
+- [atomtable.hh](#atomtablehh)
+- [bigintimplem-decl.hh](#bigintimplem-declhh)
+- [coreatoms-decl.hh](#coreatoms-declhh--coreatomshh)
+- [properties-decl.hh](#properties-declhh--propertieshh)
+
+#### hh
+
+[mozartcore.hh](#mozartcore-declhh--mozartcorehh)
+
+#### cc
+
+[mozart.hh](#mozarthh)
 
 <!-- ====================================================== -->
 ## weakrefs-decl.hh / weakrefs.hh
