@@ -260,6 +260,45 @@ TODO (currently on another branch)
 <!-- ====================================================== -->
 ## emulate.hh / emulate.cc
 
+### Purpose
+
+TODO
+
+#### DebugEntry
+
+#### StackEntry
+
+#### ThreadStack
+
+#### XRegArray
+
+#### Thread
+
+### Key Classes
+
+- struct DebugEntry;
+- struct StackEntry;
+- class ThreadStack: public VMAllocatedList<StackEntry>;
+- class XRegArray;
+- class Thread : public Runnable;
+
+### Important Functions
+### Dependencies
+
+#### hh
+
+- [mozartcore-decl.hh](#mozartcore-declhh--mozartcorehh)
+- [utility](https://cplusplus.com/reference/utility/)
+- [stack](https://cplusplus.com/reference/stack/stack/)
+- [cassert](https://cplusplus.com/reference/cassert/)
+
+#### cc
+
+- [mozart.hh](#mozarthh)
+- [coremodules.hh](#coremoduleshh--coremodulescc)
+- [iostream](https://cplusplus.com/reference/istream/iostream/)
+- [cassert](https://cplusplus.com/reference/cassert/)
+
 <!-- ====================================================== -->
 ## exceptions-decl.hh / exceptions.hh
 
@@ -560,10 +599,16 @@ Defines also a list of runnables that typically will be used by the scheduler of
 ### Important Functions
 ### Dependencies
 
-- "core-forward-decl.hh" : source file
-- "store-decl.hh" : source file
-- "vmallocatedlist-decl.hh": source file
-- cassert : runtime assertions
+#### decl.hh
+
+- [core-forward-decl.hh](#core-forward-declhh)
+- [store-decl.hh](#store-declhh--storehh)
+- [vmallocatedlist-decl.hh](#vmallocatedlist-declhh--vmallocatedlisthh)
+- [cassert](https://cplusplus.com/reference/cassert/)
+
+#### hh
+
+- [mozartcire.hh](#mozartcore-declhh--mozartcorehh)
 
 <!-- ====================================================== -->
 ## sclone-decl.hh / sclone.hh / sclone.cc
