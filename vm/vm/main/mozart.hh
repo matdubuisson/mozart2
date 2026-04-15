@@ -56,6 +56,8 @@
 
 #include "emulate.hh"
 
+#include "debugger.hh"
+
 #if !defined(MOZART_GENERATOR) && !defined(MOZART_BUILTIN_GENERATOR)
 namespace mozart { namespace builtins {
 #include "mozartbuiltins.hh"

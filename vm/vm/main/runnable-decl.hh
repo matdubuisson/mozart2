@@ -185,11 +185,14 @@ public:
    */
   virtual void run() = 0;
 
+  /** Tells if the thread is runnable */
+  bool isRunnable() { return _runnable; }
+
   /** Tells if the thread is terminated */
   bool isTerminated() { return _terminated; }
 
-  /** Tells if the thread is runnable */
-  bool isRunnable() { return _runnable; }
+  /** Tells if the thread is dead */
+  bool isDead() { return _dead; }
 
   /**
    * Resumes the thread

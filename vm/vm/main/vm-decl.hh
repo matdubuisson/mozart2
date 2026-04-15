@@ -46,6 +46,8 @@
 #include "coreatoms-decl.hh"
 #include "properties-decl.hh"
 
+#include "debugger-decl.hh"
+
 namespace mozart {
 
 ///////////////////
@@ -647,6 +649,8 @@ private:
 
   GarbageCollector gc;
   SpaceCloner sc;
+
+  Debugger dbg;
 
   VMAllocatedList<AlarmRecord> _alarms;
   StableNode* _pickleTypesRecord;

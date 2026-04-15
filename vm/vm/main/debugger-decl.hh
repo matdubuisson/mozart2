@@ -22,31 +22,39 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_MOZARTCORE_DECL_H
-#define MOZART_MOZARTCORE_DECL_H
+#ifndef MOZART_DEBUGGER_DECL_H
+#define MOZART_DEBUGGER_DECL_H
 
 #include "core-forward-decl.hh"
-
-#include "nullable-decl.hh"
-#include "type-decl.hh"
-#include "memword.hh"
-#include "store-decl.hh"
-#include "exceptions-decl.hh"
-#include "uuid-decl.hh"
-#include "typeinfo-decl.hh"
-#include "datatype-decl.hh"
+#include "emulate.hh"
 #include "runnable-decl.hh"
-#include "threadpool-decl.hh"
-#include "space-decl.hh"
-#include "graphreplicator-decl.hh"
-#include "gcollect-decl.hh"
-#include "sclone-decl.hh"
-#include "unify-decl.hh"
-#include "lstring-decl.hh"
-#include "coders-decl.hh"
-#include "utf-decl.hh"
-#include "functiontraits-decl.hh"
-#include "vm-decl.hh"
-#include "debugger-decl.hh"
 
-#endif // MOZART_MOZARTCORE_DECL_H
+namespace mozart {
+
+class Debugger {
+public:
+  inline
+  Debugger(VM vm): _vm(vm) {
+    _nvariables = 0;
+    _nthreads = 0;
+    _nsuspendedThreads = 0;
+    _ndeadThreads = 0;
+  }
+
+  void inspect(VM vm);
+
+  void inspect(const Runnable& runnable);
+
+  void inspect(const Thread& thread);
+
+  void inspect(const RichNode& variable);
+private:
+  VM _vm;
+
+  unsigned long int _nvariables, _nboundVariables;
+  unsigned long int _nthreads, _nsuspendedThreads, _ndeadThreads;
+};
+
+}
+
+#endif

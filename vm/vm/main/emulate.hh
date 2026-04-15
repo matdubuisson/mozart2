@@ -197,27 +197,56 @@ private:
 
   static constexpr size_t InitXRegisters = 64;
 public:
+  /**
+   * Creates a new light weight thread without arguments
+   * @param vm The virtual machine
+   * @param space The space for the runnable (that is the thread)
+   * @param abstraction The body of the thread TO-COMPLETE
+   * @param createSuspended True if the thread has to be scheduled at creation
+   */
   Thread(VM vm, Space* space, RichNode abstraction,
          bool createSuspended = false);
 
+  /**
+   * Creates a new light weight thread
+   * @param vm The virtual machine
+   * @param space The space for the runnable (that is the thread)
+   * @param abstraction The body of the thread TO-COMPLETE
+   * @param argc The number of values passed (the number of X registers)
+   * @param args The values to copy into X registers
+   * @param createSuspended True if the thread has to be scheduled at creation
+   */
   Thread(VM vm, Space* space, RichNode abstraction,
          size_t argc, RichNode args[],
          bool createSuspended = false);
 
+  /**
+   * Creates a new light weight thread as a copy of another one
+   * X registers, thread stack, exceptions and termination variable are copied
+   * @param gr The graph replicator
+   * @param from A reference on the light weight thread to copy
+   */
   inline
   Thread(GR gr, Thread& from);
 
+  /** Runs the thread */
   void run();
 
+  /** Kills the thread */
   void kill() {
     Super::kill();
   }
 
 public:
+  /** Gets a reference on the termination variable returned by the thread at end of life */
   StableNode& getTerminationVar() {
     return _terminationVar;
   }
 
+  /**
+   * Injects a new into the thread
+   * @param exception A pointer on the stable node representing the exception
+   */
   void injectException(StableNode* exception) {
     injectedException = exception;
 
@@ -226,16 +255,30 @@ public:
   }
 
 public:
+  /** Prepares the thread and all its elements on its stack to graph replication */
   void beforeGR();
+
+  /** Prepares the thread and all its elements on its stack to get back to normal after graph replication */
   void afterGR();
 
+  /**
+   * Collects the new thread for the garbage collector
+   * @param gc The garbage collector
+   */
   Runnable* gCollect(GC gc);
+
+  /**
+   * Collects the new thread for the space cloner
+   * @param sc The space cloner
+   */
   Runnable* sClone(SC sc);
 
 protected:
+  /** Terminates the thread and binds the termination variable */
   inline
   void terminate();
 
+  /** Disposes the thread and destroy X and Y registers */
   void dispose() {
     xregs.release(vm);
 
@@ -249,8 +292,20 @@ protected:
     Super::dispose();
   }
 public:
+  /**
+   * Dumps the thread
+   * It actually prints the thread on stderr
+   */
   void dump();
 private:
+  /**
+   * Creates a new light weight thread
+   * @param vm The virtual machine
+   * @param abstraction The body of the thread TO-COMPLETE
+   * @param argc The number of values passed (the number of X registers)
+   * @param args The values to copy into X registers
+   * @param createSuspended True if the thread has to be scheduled at creation
+   */
   inline
   void constructor(VM vm, RichNode abstraction,
                    size_t argc, RichNode args[],
