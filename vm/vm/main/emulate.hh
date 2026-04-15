@@ -127,8 +127,15 @@ public:
 
 class XRegArray {
 public:
+  /** Instantiates an empty array of X registers */
   XRegArray() : _array(nullptr, 0), _size(0) {}
 
+  /**
+   * Initializes the array with 'initialSize' X registers
+   * @param vm The virtual machine
+   * @param initialSize The initial size of the array
+   * @note All X registers are initialized to unit
+   */
   void init(VM vm, size_t initialSize) {
     assert(_array == nullptr);
     allocArray(vm, initialSize);
@@ -137,6 +144,14 @@ public:
       _array[i].init(vm);
   }
 
+  /**
+   * Initializes a new array with more capacity for X registers 'newSize',
+   * copies 'elemsToKeep' first old X registers into the new array and
+   * initializes the new X registers
+   * @param vm The virtual machine
+   * @param newSize The new size of the array
+   * @param elemsToKeep The number of X registers to copy from the old array
+   */
   void grow(VM vm, size_t newSize, size_t elemsToKeep) {
     if (newSize <= _size)
       return;
@@ -155,29 +170,55 @@ public:
       _array[i].init(vm);
   }
 
+  /**
+   * Releases the allocated memory of the X registers array
+   * @param vm The virtual machine
+   */
   void release(VM vm) {
     freeArray(vm, _array, _size);
     _array = nullptr;
     _size = 0;
   }
 
+  /** Gets the size of the array */
   size_t size() {
     return _size;
   }
 
+  /**
+   * Gets a reference on the indexth element of the X registers array
+   * @param index The index of the X register to get
+   * @returns A reference on the indexth element of the X registers array as unstable node
+   */
   UnstableNode& operator[](size_t index) {
     return _array[index];
   }
 
+  /**
+   * Gets the array of X registers as a static array of unstable nodes
+   * @returns The array of X registers
+   */
   StaticArray<UnstableNode> getArray() {
     return _array;
   }
 private:
+  /**
+   * Asks the provided virtual machine to allocate a new static array
+   * of unstable nodes and set the size
+   * @param vm The virtual machine
+   * @param size The size of the new array
+   */
   void allocArray(VM vm, size_t size) {
     _array = vm->newStaticArray<UnstableNode>(size);
     _size = size;
   }
 
+  /**
+   * Asks the provided virtual machine to deallocate a static array of unstable nodes
+   * @param vm The virtual machine
+   * @param array The array to deallocate
+   * @param size The size of the array to deallocate
+   */
   void freeArray(VM vm, StaticArray<UnstableNode> array, size_t size) {
     vm->deleteStaticArray<UnstableNode>(array, size);
   }
@@ -311,6 +352,17 @@ private:
                    size_t argc, RichNode args[],
                    bool createSuspended);
 
+  /**
+   * Pushes a new frame on the thread stack with the provided information
+   * @param vm The virtual machine
+   * @param abstraction The abstraction
+   * @param PC The program counter
+   * @param yregCount The number of Y registers
+   * @param yregs The Y registers
+   * @param gregs The G registers
+   * @param kregs The K registers
+   * @param debugEntry The debug entry
+   */
   inline
   void pushFrame(VM vm, StableNode* abstraction,
                  ProgramCounter PC, size_t yregCount,
@@ -319,6 +371,18 @@ private:
                  StaticArray<StableNode> kregs,
                  DebugEntry&& debugEntry);
 
+  /**
+   * Pops a frame from the thread stack and loads this frame into
+   * the provided references as arguments
+   * @param vm The virtual machine
+   * @param abstraction A reference to store the abstraction
+   * @param PC A reference to store the program counter
+   * @param yregCount A reference to store the number of Y registers
+   * @param yregs A reference to store the Y registers
+   * @param gregs A reference to store the G registers
+   * @param kregs A reference to store the K registers
+   * @param debugEntry A reference to store the debug entry
+   */
   inline
   void popFrame(VM vm, StableNode*& abstraction,
                 ProgramCounter& PC, size_t& yregCount,
@@ -327,6 +391,7 @@ private:
                 StaticArray<StableNode>& kregs,
                 DebugEntry& debugEntry);
 
+  
   void call(RichNode target, size_t actualArity, bool isTailCall,
             VM vm, StableNode*& abstraction,
             ProgramCounter& PC, size_t& yregCount,
@@ -349,15 +414,46 @@ private:
                DebugEntry&& debugEntry,
                bool& preempted);
 
+  /**
+   * Gets call information for a reflective target containing a callable object
+   * @param vm The virtual machine
+   * @param target A reference on a rich node representing the reflective target to call
+   * @param arity A reference to store the arity
+   * @param start A reference to store the program counter of the beginning
+   * @param Xcount A reference to store the number of X registers to copy
+   * @param Gs A reference to store the G registers to copy
+   * @param Ks A reference to store the K registers to copy
+   */
   inline
   void doGetCallInfo(VM vm, RichNode& target, size_t& arity,
                      ProgramCounter& start, size_t& Xcount,
                      StaticArray<StableNode>& Gs,
                      StaticArray<StableNode>& Ks);
 
+  /**
+   * TO-COMPLETE
+   * Dereferences a reflective target and sets the result into
+   * the original target reference
+   * @param vm The virtual machine
+   * @param target A reference on a rich node representing the reflective target to dereference
+   */
   inline
   void derefReflectiveTarget(VM vm, RichNode& target);
 
+  /**
+   * Applies pattern matching on the provided value according to the provided patterns
+   * @param vm The virtual machine
+   * @param value A rich node representing the value
+   * @param patterns A rich node representing the patterns
+   * @param abstraction A reference pointer to store the abstraction
+   * @param PC A reference to store the program counter
+   * @param yregCount A reference to store the number of Y registers
+   * @param xregs A reference to the array of X registers
+   * @param yregs A reference to the array of Y registers
+   * @param gregs A reference to the array of G registers
+   * @param kregs A reference to the array of K registers
+   * @param preempted A reference to store if the pattern matching has been preempted or not
+   */
   void patternMatch(VM vm, RichNode value, RichNode patterns,
                     StableNode*& abstraction,
                     ProgramCounter& PC, size_t& yregCount,
@@ -367,6 +463,21 @@ private:
                     StaticArray<StableNode>& kregs,
                     bool& preempted);
 
+  /**
+   * Applies a failure on the provided information for the thread.
+   * The thread raises an exception that will terminate it and prints
+   * the failure message to the screen
+   * @param vm The virtual machine
+   * @param info A rich node representing the information about the failure
+   * @param abstraction A reference pointer to store the abstraction
+   * @param PC A reference to store the program counter
+   * @param yregCount A reference to store the number of Y registers
+   * @param xregs A reference to the array of X registers
+   * @param yregs A reference to the array of Y registers
+   * @param gregs A reference to the array of G registers
+   * @param kregs A reference to the array of K registers
+   * @param debugEntry The debug entry to use for the failure
+   */
   void applyFail(VM vm, RichNode info,
                  StableNode*& abstraction,
                  ProgramCounter& PC, size_t& yregCount,
@@ -376,6 +487,23 @@ private:
                  StaticArray<StableNode>& kregs,
                  DebugEntry&& debugEntry);
 
+  /**
+   * Applies a wait before on the provided information for the thread.
+   * The thread is suspended on the waitee variable and the variable is
+   * marked as needed by the thread
+   * @param vm The virtual machine
+   * @param waitee A rich node representing the waitee
+   * @param isQuiet True if the wait before is quiet, false otherwise
+   * @param abstraction A reference pointer to store the abstraction
+   * @param PC A reference to store the program counter
+   * @param yregCount A reference to store the number of Y registers
+   * @param xregs A reference to the array of X registers
+   * @param yregs A reference to the array of Y registers
+   * @param gregs A reference to the array of G registers
+   * @param kregs A reference to the array of K registers
+   * @param debugEntry The debug entry to use for the wait before
+   * @note If the waitee value is a failed value, the apply wait before will result in a apply raise
+   */
   void applyWaitBefore(VM vm, RichNode waitee, bool isQuiet,
                        StableNode*& abstraction,
                        ProgramCounter& PC, size_t& yregCount,
@@ -385,6 +513,22 @@ private:
                        StaticArray<StableNode>& kregs,
                        DebugEntry&& debugEntry);
 
+  /**
+   * Applies a raise on the provided information for the thread.
+   * If there is an handler, it will be called with the raised exception else
+   * the thread is immediately terminated and an uncaught exception message is
+   * printed to the screen
+   * @param vm The virtual machine
+   * @param exception A rich node representing the exception to raise
+   * @param abstraction A reference pointer to store the abstraction
+   * @param PC A reference to store the program counter
+   * @param yregCount A reference to store the number of Y registers
+   * @param xregs A reference to the array of X registers
+   * @param yregs A reference to the array of Y registers
+   * @param gregs A reference to the array of G registers
+   * @param kregs A reference to the array of K registers
+   * @param debugEntry The debug entry to use for the raise
+   */
   void applyRaise(VM vm, RichNode exception,
                   StableNode*& abstraction,
                   ProgramCounter& PC, size_t& yregCount,
@@ -394,6 +538,15 @@ private:
                   StaticArray<StableNode>& kregs,
                   DebugEntry&& debugEntry);
 
+  /**
+   * Preprocesses an exception TO-COMPLETE
+   * @param vm The virtual machine
+   * @param exception A rich node representing the exception to preprocess
+   * @param abstraction A pointer to the stable node representing the abstraction
+   * @param PC The program counter
+   * @param kregs The K registers to use
+   * @param debugEntry The debug entry to use
+   */
   UnstableNode preprocessException(VM vm, RichNode exception,
                                    StableNode* abstraction,
                                    ProgramCounter PC,
