@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 4.0)
 project(MOZARTWISH)
 
 find_package(TCL REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_INTERP_RESULT=1")
+log("CMake CXX flags: ${CMAKE_CXX_FLAGS}")
 
 include_directories("${TCL_INCLUDE_PATH}" "${TK_INCLUDE_PATH}")
 
@@ -16,11 +17,17 @@ else()
   set(MAIN_SRC unixmain.cc)
 endif()
 
+log("Main source: ${MAIN_SRC}")
+
 add_executable(ozwish ${MAIN_SRC})
+log("New executable: ozwish")
+
 target_link_libraries(ozwish "${TCL_LIBRARY}" "${TK_LIBRARY}")
+log("Links libraries: ${TCL_LIBRARY} ${TK_LIBRARY}")
 
 if(NOT MINGW)
   target_link_libraries(ozwish pthread)
+  log("Links library: pthread")
 endif()
 
 # Install

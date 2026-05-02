@@ -1,2 +1,2 @@
-add_subdirectory(main)
-add_subdirectory(lib)
+add_subdirectory_and_log(main)
+add_subdirectory_and_log(lib)

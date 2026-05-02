@@ -1,9 +1,19 @@
 # Configure paths
+
+log_section("Config paths")
+
 set(MOZART_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 set(MOZART_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/../..")
 
+log("Mozart directory: ${MOZART_DIR}")
+log("Mozart build directory: ${MOZART_BUILD_DIR}")
+
 # Configure compiler
+
+log_section("Config compiler")
+
 set(CMAKE_CXX_FLAGS "-Wall -std=c++0x ${CMAKE_CXX_FLAGS}")
+log("CMake CXX flags: ${CMAKE_CXX_FLAGS}")
 
 if(WIN32)
   # Boost requires this
@@ -12,8 +22,11 @@ endif()
 
 # Boost library
 
+log_section("Boost library")
+
 set(MOZART_BOOST_USE_STATIC_LIBS ON
     CACHE BOOL "Use the static libraries of Boost")
+log("Mozart boost use static libraries: ${MOZART_BOOST_USE_STATIC_LIBS}")
 
 if(${MOZART_BOOST_USE_STATIC_LIBS})
   set(Boost_USE_STATIC_LIBS ON)
@@ -26,6 +39,9 @@ link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
 # GMP (optional)
+
+log_section("GMP config")
+
 include(FindGMP)
 if(GMP_FOUND)
   include_directories(${GMP_INCLUDE_DIR})
@@ -36,20 +52,27 @@ if(MINGW)
   # Work around a bug in MinGW
   string(REGEX REPLACE "(^| )-std=c\\+\\+0x($| )" " -std=gnu++0x "
          CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  log("CMake CXX flags: ${CMAKE_CXX_FLAGS}")
 endif()
 
 # Mozart VM library
+
+log_section("Mozart VM library")
 
 get_property(GENERATED_SOURCES_DIR GLOBAL PROPERTY GENERATED_SOURCES_DIR)
 include_directories("${MOZART_DIR}/vm/vm/main" "${GENERATED_SOURCES_DIR}")
 
 # Mozart VM Boost environment library
 
+log_section("Mozart VM Boost environment library")
+
 get_property(GENERATED_BOOSTSOURCES_DIR GLOBAL PROPERTY GENERATED_BOOSTSOURCES_DIR)
 include_directories("${MOZART_DIR}/vm/boostenv/main" "${GENERATED_BOOSTSOURCES_DIR}")
 
-
 # Compile the executable
+
+log_section("Executable compilation")
+
 add_executable(ozemulator emulator.cc)
 target_link_libraries(ozemulator mozartvmboost mozartvm ${Boost_LIBRARIES})
 
@@ -77,3 +100,5 @@ else() # WIN32
   # Install
   install(TARGETS ozemulator ozc DESTINATION bin)
 endif()
+
+log("Generated executable: ozengine")

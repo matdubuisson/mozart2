@@ -23,6 +23,9 @@ else()
     "${CMAKE_CURRENT_SOURCE_DIR}/mozart.el"
   )
 
+  log("Emacs options: ${EMACS_OPTIONS}")
+  log("Emacs mode sources: ${EMACS_MODE_SRCS}")
+
   set(ALL_ELC_FILES)
   foreach(el_file ${EMACS_MODE_SRCS})
     get_filename_component(basename ${el_file} NAME_WE)
@@ -42,6 +45,8 @@ else()
       COMMENT "Generating: ${basename}.elc"
       VERBATIM)
   endforeach()
+
+  log("All elc files: ${ALL_ELC_FILES}")
 
   add_custom_target(emacs_mode ALL DEPENDS ${ALL_ELC_FILES} VERBATIM)
 

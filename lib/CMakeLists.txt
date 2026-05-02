@@ -1,24 +1,42 @@
 # Configure paths
+
+log_section("Paths config")
+
 set(MOZART_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 set(MOZART_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/..")
-
 set(MOZART_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/main")
 set(MOZART_COMPILER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/compiler")
 
+log("Mozart directory: ${MOZART_DIR}")
+log("Mozart build directory: ${MOZART_BUILD_DIR}")
+log("Mozart lib directory: ${MOZART_LIB_DIR}")
+log("Mozart compiler directory: ${MOZART_COMPILER_DIR}")
+
 # Some OS-dependent configuration
+
+log_section("OS-dependent config")
+
 if(WIN32)
   set(PATHSEP ";")
 else()
   set(PATHSEP ":")
 endif()
 
+log("Path separation: ${PATHSEP}")
+
 # ---------------------------------------------------------------------------- #
 # Find all the files we need to compile                                        #
 # ---------------------------------------------------------------------------- #
 
+log_section("Files to be compiled")
+
 set(BASE_FUNCTOR "${MOZART_LIB_DIR}/base/Base.oz")
 set(RUNTIME_FUNCTOR "${MOZART_COMPILER_DIR}/RunTime.oz")
 set(INIT_FUNCTOR "${MOZART_LIB_DIR}/init/Init.oz")
+
+log("Base functor: ${BASE_FUNCTOR}")
+log("Runtime functor: ${RUNTIME_FUNCTOR}")
+log("Init functor: ${INIT_FUNCTOR}")
 
 set(SYS_FUNCTORS
     "${MOZART_LIB_DIR}/sys/Property.oz"
@@ -38,6 +56,8 @@ set(SYS_FUNCTORS
     "${MOZART_LIB_DIR}/ap/Application.oz"
     "${MOZART_DIR}/vm/boostenv/lib/OS.oz")
 
+log("Sys functors: ${SYS_FUNCTORS}")
+
 set(COMPILER_FUNCTORS_0
     "Annotate.oz" "Assembler.oz" "BackquoteMacro.oz" "Builtins.oz"
     "CodeEmitter.oz" "CodeGen.oz" "CodeStore.oz" "Compiler.oz" "Core.oz"
@@ -51,6 +71,8 @@ foreach(FUNCTOR ${COMPILER_FUNCTORS_0})
   set(COMPILER_FUNCTORS ${COMPILER_FUNCTORS} "${MOZART_COMPILER_DIR}/${FUNCTOR}")
 endforeach()
 
+log("Compiler functors: ${COMPILER_FUNCTORS_0}")
+
 set(OTHER_LIBRARY_FUNCTORS
     "${MOZART_LIB_DIR}/wp/TkBoot.oz"
     "${MOZART_LIB_DIR}/wp/Tk.oz"
@@ -58,9 +80,13 @@ set(OTHER_LIBRARY_FUNCTORS
     "${MOZART_LIB_DIR}/wp/Tix.oz"
     "${MOZART_DIR}/vm/boostenv/lib/VM.oz")
 
+log("Other library functors: ${OTHER_LIBRARY_FUNCTORS}")
+
 # ---------------------------------------------------------------------------- #
 # Stage 0: boot-compile the functors used by the compiler                      #
 # ---------------------------------------------------------------------------- #
+
+log_section("Boot compiler for compiler functors config (stage 0)")
 
 set(STAGE_0_CACHE "${CMAKE_CURRENT_BINARY_DIR}/stage0")
 set(STAGE_0_CACHE_SYSTEM "${STAGE_0_CACHE}/x-oz/system")
@@ -68,23 +94,40 @@ set(STAGE_0_BASE_OZF "${STAGE_0_CACHE}/Base.ozf")
 set(STAGE_0_INIT_OZF "${STAGE_0_CACHE}/Init.ozf")
 set(STAGE_0_SEARCH_LOAD "cache=${STAGE_0_CACHE}")
 
+log("Stage 0 cache: ${STAGE_0_CACHE}")
+log("Stage 0 cache system: ${STAGE_0_CACHE_SYSTEM}")
+log("Stage 0 base ozf: ${STAGE_0_BASE_OZF}")
+log("Stage 0 init ozf: ${STAGE_0_INIT_OZF}")
+log("Stage 0 search load: ${STAGE_0_SEARCH_LOAD}")
+
 file(MAKE_DIRECTORY "${STAGE_0_CACHE_SYSTEM}")
 
 find_package(Java COMPONENTS Runtime REQUIRED)
 
 set(JAVA_OPTIONS "-Xmx1024m" CACHE STRING "Options passed to the java program")
+log("Java options: ${JAVA_OPTIONS}")
 
 set(BOOTCOMPILER_JAR "${MOZART_BUILD_DIR}/bootcompiler/bootcompiler.jar")
 set(BOOTCOMPILER_DEFINES -D NO_GUMP)
 set(BOOTCOMPILER_BASEENV_DATA_FILE "${STAGE_0_CACHE}/baseenv.txt")
 set(BOOTCOMPILER_COMMAND
     ${Java_JAVA_EXECUTABLE} -jar  ${JAVA_OPTIONS} "${BOOTCOMPILER_JAR}")
+
+log("Boot compiler jar: ${BOOTCOMPILER_JAR}")
+log("Boot compiler defines: ${BOOTCOMPILER_DEFINES}")
+log("Boot compiler base env data file: ${BOOTCOMPILER_BASEENV_DATA_FILE}")
+log("Boot compiler command: ${BOOTCOMPILER_COMMAND}")
+
 get_property(GENERATED_SOURCES_DIR GLOBAL PROPERTY GENERATED_SOURCES_DIR)
+
 set(BOOTCOMPILER_COMMON_OPTIONS
     -m "${GENERATED_SOURCES_DIR}/"
     ${BOOTCOMPILER_DEFINES})
 set(BOOTCOMPILER_COMMON_DEPENDS
     gensources bootcompiler "${BOOTCOMPILER_JAR}")
+
+log("Boot compiler common options: ${BOOTCOMPILER_COMMON_OPTIONS}")
+log("Boot compiler common depends: ${BOOTCOMPILER_COMMON_DEPENDS}")
 
 add_custom_command(
   OUTPUT "${STAGE_0_BASE_OZF}" "${BOOTCOMPILER_BASEENV_DATA_FILE}"
@@ -123,6 +166,8 @@ foreach(FUNCTOR "${RUNTIME_FUNCTOR}" "${INIT_FUNCTOR}" ${SYS_FUNCTORS} ${COMPILE
     VERBATIM)
 endforeach()
 
+log("Stage 0 outputs: ${STAGE_0_OUTPUTS}")
+
 add_custom_target(
   library_stage_0
   DEPENDS ${STAGE_0_OUTPUTS})
@@ -131,15 +176,25 @@ add_custom_target(
 # Stage 1: compile the 3 critical functors: Base.ozf, RunTime.ozf and Init.ozf #
 # ---------------------------------------------------------------------------- #
 
+log_section("Compiler for critical functors config (stage 1)")
+
 set(STAGE_1_CACHE "${CMAKE_CURRENT_BINARY_DIR}/stage1")
 set(STAGE_1_CACHE_SYSTEM "${STAGE_1_CACHE}/x-oz/system")
 set(STAGE_1_SEARCH_LOAD "cache=${STAGE_1_CACHE}${PATHSEP}${STAGE_0_SEARCH_LOAD}")
+
+log("Stage 1 cache: ${STAGE_1_CACHE}")
+log("Stage 1 cache system: ${STAGE_1_CACHE_SYSTEM}")
+log("Stage 1 search load: ${STAGE_1_SEARCH_LOAD}")
 
 file(MAKE_DIRECTORY "${STAGE_1_CACHE_SYSTEM}")
 
 set(STAGE_1_BASE_OZF "${STAGE_1_CACHE}/Base.ozf")
 set(STAGE_1_RUNTIME_OZF "${STAGE_1_CACHE_SYSTEM}/RunTime.ozf")
 set(FINAL_INIT_OZF "${CMAKE_CURRENT_BINARY_DIR}/Init.ozf")
+
+log("Stage 1 base ozf: ${STAGE_1_BASE_OZF}")
+log("Stage 1 runtime ozf: ${STAGE_1_RUNTIME_OZF}")
+log("Final init ozf: ${FINAL_INIT_OZF}")
 
 add_custom_command(
   OUTPUT "${STAGE_1_BASE_OZF}"
@@ -185,6 +240,8 @@ add_custom_command(
 
 set(STAGE_1_OUTPUTS "${STAGE_1_RUNTIME_OZF}")
 
+log("Stage 1 outputs: ${STAGE_1_OUTPUTS}")
+
 add_custom_target(
   library_stage_1
   DEPENDS "${STAGE_1_BASE_OZF}" "${STAGE_1_RUNTIME_OZF}" "${FINAL_INIT_OZF}")
@@ -194,9 +251,15 @@ add_dependencies(library_stage_1 library_stage_0)
 # Stage 2: compile all compiler functors with the compiler                     #
 # ---------------------------------------------------------------------------- #
 
+log_section("Compiler for other functors config (stage 2)")
+
 set(STAGE_2_CACHE "${CMAKE_CURRENT_BINARY_DIR}/stage2")
 set(STAGE_2_CACHE_SYSTEM "${STAGE_2_CACHE}/x-oz/system")
 set(STAGE_2_SEARCH_LOAD "cache=${STAGE_2_CACHE}${PATHSEP}${STAGE_1_SEARCH_LOAD}")
+
+log("Stage 2 cache: ${STAGE_2_CACHE}")
+log("Stage 2 cache system: ${STAGE_2_CACHE_SYSTEM}")
+log("Stage 2 search load: ${STAGE_2_SEARCH_LOAD}")
 
 file(MAKE_DIRECTORY "${STAGE_2_CACHE_SYSTEM}")
 
@@ -226,6 +289,8 @@ foreach(FUNCTOR ${SYS_FUNCTORS} ${COMPILER_FUNCTORS})
   endif() # NOT CodeGen.oz
 endforeach()
 
+log("Stage 2 outputs: ${STAGE_2_OUTPUTS}")
+
 add_custom_target(
   library_stage_2
   DEPENDS ${STAGE_2_OUTPUTS})
@@ -235,9 +300,15 @@ add_dependencies(library_stage_2 library_stage_1)
 # Stage 3: compile the rest of the library                                     #
 # ---------------------------------------------------------------------------- #
 
+log_section("Compiler for rest of the library config (stage 3)")
+
 set(STAGE_3_CACHE "${CMAKE_CURRENT_BINARY_DIR}/stage3")
 set(STAGE_3_CACHE_SYSTEM "${STAGE_3_CACHE}/x-oz/system")
 set(STAGE_3_SEARCH_LOAD "cache=${STAGE_3_CACHE}${PATHSEP}${STAGE_2_SEARCH_LOAD}")
+
+log("Stage 3 cache: ${STAGE_3_CACHE}")
+log("Stage 3 cache system: ${STAGE_3_CACHE_SYSTEM}")
+log("Stage 3 search load: ${STAGE_3_SEARCH_LOAD}")
 
 file(MAKE_DIRECTORY "${STAGE_3_CACHE_SYSTEM}")
 
@@ -262,6 +333,8 @@ foreach(FUNCTOR ${OTHER_LIBRARY_FUNCTORS})
     VERBATIM)
 endforeach()
 
+log("Stage 3 outputs: ${STAGE_3_OUTPUTS}")
+
 add_custom_target(
   library_stage_3
   DEPENDS ${STAGE_3_OUTPUTS})
@@ -271,9 +344,15 @@ add_dependencies(library_stage_3 library_stage_2)
 # Target and install                                                           #
 # ---------------------------------------------------------------------------- #
 
+log_section("Target and install config")
+
 set(LIBRARY_CACHE "${CMAKE_CURRENT_BINARY_DIR}/cache")
 set(LIBRARY_CACHE_SYSTEM "${LIBRARY_CACHE}/x-oz/system")
 set(LIBRARY_SEARCH_LOAD "cache=${LIBRARY_CACHE}")
+
+log("Library cache: ${LIBRARY_CACHE}")
+log("Library cache system: ${LIBRARY_CACHE_SYSTEM}")
+log("Library search load: ${LIBRARY_SEARCH_LOAD}")
 
 file(MAKE_DIRECTORY "${LIBRARY_CACHE_SYSTEM}")
 
@@ -299,6 +378,8 @@ foreach(FUNCTOR "${RUNTIME_FUNCTOR}" ${SYS_FUNCTORS} ${COMPILER_FUNCTORS} ${OTHE
   endforeach()
 endforeach()
 
+log("Library functors ozf: ${LIBRARY_FUNCTORS_OZF}")
+
 add_custom_target(
   library ALL
   DEPENDS ${LIBRARY_FUNCTORS_OZF})
@@ -306,9 +387,12 @@ add_dependencies(library library_stage_3)
 
 # Supplementary files
 
+log_section("Supplementary files")
+
 set(SUPPLEMENTARY_FILES
     "images/mini-dec.xbm"
     "images/mini-inc.xbm")
+log("Supplementary files: ${SUPPLEMENTARY_FILES}")
 
 file(MAKE_DIRECTORY "${LIBRARY_CACHE_SYSTEM}/images")
 
@@ -326,6 +410,8 @@ foreach(SUPP_FILE ${SUPPLEMENTARY_FILES})
     VERBATIM)
 endforeach()
 
+log("Target supplementary files: ${TARGET_SUPPLEMENTARY_FILES}")
+
 # Install
 install(FILES "${FINAL_INIT_OZF}"
         DESTINATION share/mozart)
@@ -337,4 +423,4 @@ install(FILES ${TARGET_SUPPLEMENTARY_FILES}
 
 # Subdirectories
 
-add_subdirectory(tools)
+add_subdirectory_and_log(tools)

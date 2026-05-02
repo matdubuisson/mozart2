@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 4.0)
 project(MOZARTOPI CXX)
 
-add_subdirectory(opi)
-add_subdirectory(emacs)
+add_subdirectory_and_log(opi)
+add_subdirectory_and_log(emacs)

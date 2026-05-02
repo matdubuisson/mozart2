@@ -1,5 +1,7 @@
 # Boost library
 
+log_section("Boost library")
+
 find_package(Boost COMPONENTS random system thread filesystem chrono REQUIRED)
 
 link_directories(${Boost_LIBRARY_DIRS})
@@ -7,6 +9,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 separate_arguments(SPLIT_CXX_FLAGS UNIX_COMMAND "${CMAKE_CXX_FLAGS}")
 set(MOZART_GENERATOR_FLAGS "${MOZART_GENERATOR_FLAGS}" "${SPLIT_CXX_FLAGS}")
+
+log("Split CXX flags: ${SPLIT_CXX_FLAGS}")
 
 # GMP (optional)
 include(FindGMP)
@@ -22,6 +26,8 @@ if(WIN32)
   set(MOZART_GENERATOR_FLAGS "${MOZART_GENERATOR_FLAGS}" -D_WIN32_WINNT=0x0501)
 endif()
 
+log("Mozart generator flags: ${MOZART_GENERATOR_FLAGS}")
+
 if(MINGW)
   # Work around a bug in MinGW
   string(REGEX REPLACE "(^| )-std=c\\+\\+0x($| )" " -std=gnu++0x "
@@ -31,7 +37,11 @@ else()
   set(CXX_STD_OPT -std=c++0x)
 endif()
 
+log("CXX standard option: ${CXX_STD_OPT}")
+
 # Mozart VM library
+
+log_section("Mozart VM library")
 
 get_property(GENERATED_SOURCES_DIR GLOBAL PROPERTY GENERATED_SOURCES_DIR)
 include_directories("${MOZART_SOURCE_DIR}/vm/vm/main" "${GENERATED_SOURCES_DIR}")
@@ -40,7 +50,14 @@ link_directories("${MOZART_BINARY_DIR}/vm/vm/main")
 set(GENERATED_BOOSTSOURCES_CACHED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cached/)
 set(GENERATED_BOOSTSOURCES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/)
 
+log("Generated sources directory: ${GENERATED_SOURCES_DIR}")
+log("Generated boostsources cached directory: ${GENERATED_BOOSTSOURCES_CACHED_DIR}")
+log("Generated boostsources binary directory: ${GENERATED_BOOSTSOURCES_BINARY_DIR}")
+
 # Generate sources
+
+log_section("Sources generation")
+
 find_program(clang_bin clang++)
 
 add_custom_command(
@@ -86,21 +103,29 @@ add_custom_command(
   COMMENT "Generate sources for boostenv"
   VERBATIM)
 
+log("Generated commands in ${GENERATED_BOOSTSOURCES_BINARY_DIR}/boostenv.gen")
 
 # Use the cached files if they exist.
 
+log_section("Generated boost sources config")
+
 if(EXISTS ${GENERATED_BOOSTSOURCES_CACHED_DIR}/boostenv.gen)
+    log("Pre-generated files found in ${GENERATED_BOOSTSOURCES_CACHED_DIR}")
+    
     set(GENERATED_BOOSTSOURCES_DIR ${GENERATED_BOOSTSOURCES_CACHED_DIR})
 else()
+    log("No pre-generated files found in ${GENERATED_BOOSTSOURCES_CACHED_DIR}")
+    
     set(GENERATED_BOOSTSOURCES_DIR ${GENERATED_BOOSTSOURCES_BINARY_DIR})
     file(MAKE_DIRECTORY ${GENERATED_BOOSTSOURCES_BINARY_DIR})
 endif()
 set_property(GLOBAL PROPERTY GENERATED_BOOSTSOURCES_DIR "${GENERATED_BOOSTSOURCES_DIR}")
 
+log("Generated boost sources directory: ${GENERATED_BOOSTSOURCES_DIR}")
+
 add_custom_target(genboostsources
   DEPENDS ${GENERATED_BOOSTSOURCES_DIR}/boostenv.gen
   VERBATIM)
-
 
 # Include the generated files in the source archive.
 
@@ -109,6 +134,7 @@ set_property(GLOBAL APPEND PROPERTY SRCS_INSTALLED_DIRS
 
 if(DIST_TARGET_ENABLED)
     add_dependencies(dist genboostsources)
+    log("Dist target enabled")
 endif()
 
 # Boost environment library

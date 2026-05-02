@@ -1,7 +1,11 @@
+log_section("Panel files")
+
 set(PANEL_FUNCTOR
     "${CMAKE_CURRENT_SOURCE_DIR}/Panel.oz")
-
 set(PANEL_OZF "${CMAKE_CURRENT_BINARY_DIR}/Panel.ozf")
+
+log("Panel functor: ${PANEL_FUNCTOR}")
+log("Panel ozf: ${PANEL_OZF}")
 
 add_custom_command(
   OUTPUT "${PANEL_OZF}"

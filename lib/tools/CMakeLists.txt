@@ -1,3 +1,3 @@
-add_subdirectory(inspector)
-add_subdirectory(browser)
-add_subdirectory(panel)
+add_subdirectory_and_log(inspector)
+add_subdirectory_and_log(browser)
+add_subdirectory_and_log(panel)
