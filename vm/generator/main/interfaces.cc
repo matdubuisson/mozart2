@@ -110,11 +110,13 @@ void InterfaceDef::makeOutput(const SpecDecl* ND, llvm::raw_fd_ostream& to) {
     // Declaration of the procedure
     to << "\n  " << resultType << " " << funName
        << "(" << formals << ") {\n    ";
+      
+    
 
     // For every implementation that implements this interface (ImplementedBy)
-    for (int i = 0; i < (int) implems->getNumArgs(); ++i) {
+    for (int i = 0; i < (int) implems->template_arguments().size(); ++i) {
       std::string imp =
-        implems->getArg(i).getAsType()->getAsCXXRecordDecl()->getNameAsString();
+        implems->template_arguments()[i].getAsType()->getAsCXXRecordDecl()->getNameAsString();
 
       to << "if (_self.is<" << imp << ">()) {\n";
       to << "      return _self.as<" << imp << ">()."

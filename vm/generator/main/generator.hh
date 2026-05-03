@@ -48,7 +48,7 @@ inline
 std::unique_ptr<ostream> openFileOutputStream(const std::string& fileName) {
   std::error_code err;
   auto result = std::unique_ptr<ostream>(new ostream(fileName.c_str(), err,
-                                                     llvm::sys::fs::F_None));
+                                                     llvm::sys::fs::OF_None));
   checkErrString(err);
 
   return result;
@@ -58,7 +58,7 @@ inline
 void withFileOutputStream(const std::string& fileName,
                           std::function<void (ostream&)> body) {
   std::error_code err;
-  ostream stream(fileName.c_str(), err, llvm::sys::fs::F_None);
+  ostream stream(fileName.c_str(), err, llvm::sys::fs::OF_None);
   checkErrString(err);
 
   body(stream);

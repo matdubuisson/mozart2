@@ -106,11 +106,18 @@ int main(int argc, char* argv[]) {
   // Parse source file
   CI.createDiagnostics();
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(&CI.getDiagnostics());
+  std::shared_ptr<DiagnosticOptions> DiagOpts = std::make_shared<DiagnosticOptions>(CI.getDiagnosticOpts());
   std::unique_ptr<ASTUnit> unit =
-      ASTUnit::LoadFromASTFile(astFile,
-                               CI.getPCHContainerReader(),
-                               Diags,
-                               CI.getFileSystemOpts());
+      ASTUnit::LoadFromASTFile(
+                                astFile,
+                                CI.getPCHContainerReader(),
+                                ASTUnit::LoadEverything,
+                                CI.getVirtualFileSystemPtr(),
+                                DiagOpts,
+                                Diags,
+                                CI.getFileSystemOpts(),
+                                CI.getHeaderSearchOpts()
+                              );
 
   // Setup printing policy
   // We want the bool type to be printed as "bool"

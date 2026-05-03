@@ -52,13 +52,13 @@ std::string getTypeParamAsString(const SpecDecl* specDecl, bool basicName) {
 }
 
 std::string getTypeParamAsString(const TemplateSpecializationType *unaryTemplate, bool basicName) {
-  assert(unaryTemplate->getNumArgs() == 1);
-  assert(unaryTemplate->getArg(0).getKind() == TemplateArgument::Type);
+  assert(unaryTemplate->template_arguments().size() == 1);
+  assert(unaryTemplate->template_arguments()[0].getKind() == TemplateArgument::Type);
 
   if (basicName)
-    return basicTypeToString(unaryTemplate->getArg(0).getAsType());
+    return basicTypeToString(unaryTemplate->template_arguments()[0].getAsType());
   else
-    return typeToString(unaryTemplate->getArg(0).getAsType());
+    return typeToString(unaryTemplate->template_arguments()[0].getAsType());
 }
 
 bool isTheClass(const ClassDecl* decl,
@@ -111,7 +111,7 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
 
   ASTContext& Context = *context;
   PrintingPolicy Policy = Context.getPrintingPolicy();
-  const int Indentation = 0;
+  //const int Indentation = 0;
 
   Out << "template <";
 
@@ -135,10 +135,10 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
 
       if (Args) {
         Out << " = ";
-        Args->get(i).print(Policy, Out);
+        Args->get(i).print(Policy, Out, true);
       } else if (TTP->hasDefaultArgument()) {
         Out << " = ";
-        Out << TTP->getDefaultArgument().getAsString(Policy);
+        TTP->getDefaultArgument().getArgument().print(Policy, Out, true);
       };
     } else if (const NonTypeTemplateParmDecl *NTTP =
                  dyn_cast<NonTypeTemplateParmDecl>(Param)) {
@@ -154,11 +154,10 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
 
       if (Args) {
         Out << " = ";
-        Args->get(i).print(Policy, Out);
+        Args->get(i).print(Policy, Out, true);
       } else if (NTTP->hasDefaultArgument()) {
         Out << " = ";
-        NTTP->getDefaultArgument()->printPretty(Out, 0, Policy,
-                                                Indentation);
+        NTTP->getDefaultArgument().getArgument().print(Policy, Out, true);
       }
     } else if (const TemplateTemplateParmDecl *TTPD =
                  dyn_cast<TemplateTemplateParmDecl>(Param)) {
