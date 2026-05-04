@@ -125,7 +125,8 @@ T getValueParamAsIntegral(const SpecDecl* specDecl) {
   assert(templateArgs.size() == 1);
   assert(templateArgs[0].getKind() == clang::TemplateArgument::Integral);
 
-  auto&& integralArg = internal::dereference(templateArgs[0].getAsIntegral());
+  llvm::APSInt integralValue = templateArgs[0].getAsIntegral();
+  auto&& integralArg = internal::dereference(integralValue);
   auto result = integralArg.getLimitedValue(std::numeric_limits<T>::max());
 
   return (T) result;
