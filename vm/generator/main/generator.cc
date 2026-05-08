@@ -150,7 +150,19 @@ int main(int argc, char* argv[]) {
   // We want the bool type to be printed as "bool"
   context = &(unit->getASTContext());
   PrintingPolicy policy = context->getPrintingPolicy();
-  policy.Bool=1;
+  policy.Bool = 1;
+  policy.SuppressSpecifiers = false;
+  policy.SuppressTagKeyword = false;
+  policy.SuppressTagKeywordInAnonNames = false;
+  policy.IncludeTagDefinition = true;
+  policy.SuppressScope = false;
+  policy.SuppressUnwrittenScope = false;
+  policy.SuppressInlineNamespace = (unsigned int) PrintingPolicy::SuppressInlineNamespaceMode::None;
+  policy.SuppressInitializers = false;
+  policy.SuppressStrongLifetime = false;
+  policy.SuppressLifetimeQualifiers = false;
+  policy.SuppressTemplateArgsInCXXConstructors = false;
+  policy.SuppressDefaultTemplateArgs = false;
   context->setPrintingPolicy(policy);
 
   // Process
