@@ -36,6 +36,10 @@ typedef clang::CXXRecordDecl ClassDecl;
 
 typedef llvm::raw_fd_ostream ostream;
 
+/**
+ * If the provided argument contains an error, prints it on LLVM's error stream
+ * @param err A reference to the potential error
+ */
 inline
 void checkErrString(const std::error_code& err) {
   if (err) {
@@ -44,6 +48,11 @@ void checkErrString(const std::error_code& err) {
   }
 }
 
+/**
+ * Opens an output stream on the file
+ * @param fileName
+ * @returns An LLVM output stream
+ */
 inline
 std::unique_ptr<ostream> openFileOutputStream(const std::string& fileName) {
   std::error_code err;

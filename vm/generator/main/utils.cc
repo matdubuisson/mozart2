@@ -111,7 +111,7 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
 
   ASTContext& Context = *context;
   PrintingPolicy Policy = Context.getPrintingPolicy();
-  //const int Indentation = 0;
+  const int Indentation = 0;
 
   Out << "template <";
 
@@ -135,10 +135,10 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
 
       if (Args) {
         Out << " = ";
-        Args->get(i).print(Policy, Out, true);
+        Args->get(i).print(Policy, Out, false);
       } else if (TTP->hasDefaultArgument()) {
         Out << " = ";
-        TTP->getDefaultArgument().getArgument().print(Policy, Out, true);
+        TTP->getDefaultArgument().getSourceExpression()->printPretty(Out, nullptr, Policy);
       };
     } else if (const NonTypeTemplateParmDecl *NTTP =
                  dyn_cast<NonTypeTemplateParmDecl>(Param)) {
@@ -157,7 +157,8 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
         Args->get(i).print(Policy, Out, true);
       } else if (NTTP->hasDefaultArgument()) {
         Out << " = ";
-        NTTP->getDefaultArgument().getArgument().print(Policy, Out, true);
+        //NTTP->getDefaultArgument().getArgument().print(Policy, Out, true);
+        NTTP->getDefaultArgument().getSourceExpression()->printPretty(Out, nullptr, Policy, Indentation);
       }
     } else if (const TemplateTemplateParmDecl *TTPD =
                  dyn_cast<TemplateTemplateParmDecl>(Param)) {
