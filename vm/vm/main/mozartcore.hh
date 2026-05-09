@@ -38,5 +38,6 @@
 #include "pickler.hh"
 #include "unpickler.hh"
 #include "utils-decl.hh"
+#include "debugger-decl.hh"
 
 #endif // MOZART_MOZARTCORE_H

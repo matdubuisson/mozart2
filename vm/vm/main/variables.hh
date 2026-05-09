@@ -39,6 +39,10 @@ template <class This>
 VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
   WithHome(vm, gr, from) {
 
+  /**
+   * Basically pendings is a VMAllocatedList<StableNode*>
+   * so we need to make a stable reference of each StableNode*
+   */
   for (auto iter = from.pendings.begin();
        iter != from.pendings.end();
        ++iter) {

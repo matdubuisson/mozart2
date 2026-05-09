@@ -72,6 +72,8 @@ void registerCoreModules(VM vm) {
   registerBuiltinModVirtualByteString(vm);
   registerBuiltinModVirtualString(vm);
   registerBuiltinModWeakReference(vm);
+
+  registerBuiltinModDebugger(vm);
 }
 
 // Workaround a problem which LString.slice() is a undefined symbol in this file.

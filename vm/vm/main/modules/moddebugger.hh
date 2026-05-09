@@ -22,48 +22,37 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_MOZARTCORE_DECL_H
-#define MOZART_MOZARTCORE_DECL_H
+#ifndef MOZART_MODDEBUGGER_H
+#define MOZART_MODDEBUGGER_H
 
-#include "core-forward-decl.hh"
+#include "../mozartcore.hh"
 
-#include "nullable-decl.hh"
-#include "type-decl.hh"
-#include "memword.hh"
-#include "store-decl.hh"
-#include "exceptions-decl.hh"
-#include "uuid-decl.hh"
-#include "typeinfo-decl.hh"
-#include "datatype-decl.hh"
-#include "runnable-decl.hh"
-#include "threadpool-decl.hh"
-#include "space-decl.hh"
-#include "graphreplicator-decl.hh"
-#include "gcollect-decl.hh"
-#include "sclone-decl.hh"
-#include "unify-decl.hh"
-#include "lstring-decl.hh"
-#include "coders-decl.hh"
-#include "utf-decl.hh"
-#include "functiontraits-decl.hh"
-#include "vm-decl.hh"
+#ifndef MOZART_GENERATOR
 
-// #include "opcodes.hh"
+#include <iostream>
 
-// #include "type.hh"
-// #include "store.hh"
-// #include "exceptions.hh"
-// #include "typeinfo.hh"
-// #include "datatype.hh"
-// #include "runnable.hh"
-// #include "threadpool.hh"
-// #include "space.hh"
-// #include "graphreplicator.hh"
-// #include "gcollect.hh"
-// #include "sclone.hh"
-// #include "unify.hh"
-// #include "lstring.hh"
-// #include "utf.hh"
-// #include "vm.hh"
+namespace mozart {
 
-#endif // MOZART_MOZARTCORE_DECL_H
+namespace builtins {
+
+class ModDebugger: public Module {
+public:
+  ModDebugger(): Module("Debugger") {}
+
+  class Hello: public Builtin<Hello> {
+  public:
+    Hello(): Builtin("hello") {}
+
+    static void call(VM vm) {
+      std::cout << "Hello, I'm the debugger module!" << std::endl;
+    }
+  };
+};
+
+}
+
+}
+
+#endif // MOZART_GENERATOR
+
+#endif // MOZART_MODDEBUGGER_H

@@ -25,6 +25,10 @@
 #ifndef MOZART_VM_H
 #define MOZART_VM_H
 
+#ifndef MOZART_VM_DECL_H
+  #error "vm-decl.hh should be defined before vm.hh"
+#endif
+
 #include "mozartcore.hh"
 
 #ifndef MOZART_GENERATOR
@@ -73,23 +77,28 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
                                VirtualMachineOptions options):
   rootGlobalNode(nullptr), environment(environment),
   _propertyRegistry(options),
-  gc(this, environment.getSecondMemoryManagerRef()), sc(this),
+  // One garbage collector and one space cloner dedicated to this VM
+  gc(this, environment.getSecondMemoryManagerRef()),
+  sc(this),
+  _preemptRequestedNot(ATOMIC_FLAG_INIT),
+  _exitRunRequestedNot(ATOMIC_FLAG_INIT),
+  _gcRequestedNot(ATOMIC_FLAG_INIT),
   _referenceTime(0) {
 
-  _preemptRequestedNot.clear();
-  _exitRunRequestedNot.clear();
-  _gcRequestedNot.clear();
-
+  // One memory manager dedicated to this VM
   memoryManager.init(this);
 
+  // Top level space can change so it is independent from the VM
   _topLevelSpace = new (this) Space(this);
   _currentSpace = _topLevelSpace;
   _currentThread = nullptr;
   _isOnTopLevel = true;
 
+  // Built-in modules size is non-predictable so make it independent
   _builtinModules = new (this) NodeDictionary;
   _propertyRegistry.create(this);
 
+  // Configure the VM
   _cleanupList = nullptr;
 
   _envUseDynamicPreemption = environment.useDynamicPreemption();

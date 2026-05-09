@@ -22,48 +22,42 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_MOZARTCORE_DECL_H
-#define MOZART_MOZARTCORE_DECL_H
+#ifndef MOZART_DEBUGGER_DECL_H
+#define MOZART_DEBUGGER_DECL_H
 
-#include "core-forward-decl.hh"
+// #include "core-forward-decl.hh"
+// #include "emulate.hh"
+// #include "runnable-decl.hh"
 
-#include "nullable-decl.hh"
-#include "type-decl.hh"
-#include "memword.hh"
-#include "store-decl.hh"
-#include "exceptions-decl.hh"
-#include "uuid-decl.hh"
-#include "typeinfo-decl.hh"
-#include "datatype-decl.hh"
-#include "runnable-decl.hh"
-#include "threadpool-decl.hh"
-#include "space-decl.hh"
-#include "graphreplicator-decl.hh"
-#include "gcollect-decl.hh"
-#include "sclone-decl.hh"
-#include "unify-decl.hh"
-#include "lstring-decl.hh"
-#include "coders-decl.hh"
-#include "utf-decl.hh"
-#include "functiontraits-decl.hh"
-#include "vm-decl.hh"
+namespace mozart {
 
-// #include "opcodes.hh"
+// class Debugger {
+// public:
+//   inline
+//   Debugger(VM vm): _vm(vm) {
+//     _nvariables = 0;
+//     _nthreads = 0;
+//     _nsuspendedThreads = 0;
+//     _ndeadThreads = 0;
+//   }
 
-// #include "type.hh"
-// #include "store.hh"
-// #include "exceptions.hh"
-// #include "typeinfo.hh"
-// #include "datatype.hh"
-// #include "runnable.hh"
-// #include "threadpool.hh"
-// #include "space.hh"
-// #include "graphreplicator.hh"
-// #include "gcollect.hh"
-// #include "sclone.hh"
-// #include "unify.hh"
-// #include "lstring.hh"
-// #include "utf.hh"
-// #include "vm.hh"
+//   void inspect(VM vm); // At each step of scheduler in vm.cc VirtualMachine::run()
 
-#endif // MOZART_MOZARTCORE_DECL_H
+//   void inspect(const Runnable& runnable); // runnable-decl.hh Runnable constructor
+
+//   void inspect(const Thread& thread); // emulate.hh Thread constructor
+
+//   void inspect(const Thread& thread, const OpCode op); // emulate.cc in Thread::run()
+
+//   void inspect(const RichNode& variable); // coreinterfaces-decl.hh DataflowVariable or Variable in variable-decl.hh
+// private:
+//   VM _vm;
+
+//   unsigned long int _nvariables, _nboundVariables;
+//   unsigned long int _nthreads, _nsuspendedThreads, _ndeadThreads;
+//   unsigned long int _ninstructions;
+// };
+
+}
+
+#endif

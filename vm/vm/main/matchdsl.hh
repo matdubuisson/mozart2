@@ -341,7 +341,7 @@ struct OzValueToPrimitiveValue<char32_t> {
 
 template <>
 struct OzValueToPrimitiveValue<UUID> {
-  static bool call(VM vm, RichNode value, UUID& primitive) {
+  static bool [[gnu::no_dangling]] call(VM vm, RichNode value, UUID& primitive) {
     if (value.is<ByteString>()) {
       // Fast path for a raw ByteString
       auto& bytes = value.as<ByteString>().value();
