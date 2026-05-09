@@ -4,14 +4,16 @@ This readme describes how to build the mozart code but also how to re-generate t
 
 ## Install build tools
 
-```
+The cmake project will be compiled using make and LLVM/CLang will use ninja.
+
+```bash
 $ sudo apt update
 $ sudo apt install make ninja-build
 ```
 
 ## Install gcc/g++ 15
 
-```
+```bash
 $ sudo apt update
 $ sudo apt install build-essential
 $ sudo apt install -y gcc-15 g++-15
@@ -19,14 +21,18 @@ $ sudo apt install -y gcc-15 g++-15
 
 ### Manage multiple gcc/g++ versions
 
-```
+#### Add new alternatives for gcc/g++
+
+```bash
 $ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14
 $ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14
 $ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 15
 $ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 15
 ```
 
-```
+#### Select the latest alternative
+
+```bash
 $ sudo update-alternatives --config gcc
 There are 2 choices for the alternative gcc (providing /usr/bin/gcc).
 
@@ -49,39 +55,35 @@ There are 2 choices for the alternative g++ (providing /usr/bin/g++).
 Press <enter> to keep the current choice[*], or type selection number: 0
 ```
 
-```
+#### Check the versions
+
+```bash
 $ gcc -v
-Using built-in specs.
-COLLECT_GCC=gcc
-COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-linux-gnu/15/lto-wrapper
-OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
-OFFLOAD_TARGET_DEFAULT=1
-Target: x86_64-linux-gnu
-Configured with: ../src/configure -v --with-pkgversion='Ubuntu 15-20250404-0ubuntu1' --with-bugurl=file:///usr/share/doc/gcc-15/README.Bugs --enable-languages=c,ada,c++,go,d,fortran,objc,obj-c++,m2,rust,cobol,algol68 --prefix=/usr --with-gcc-major-version-only --program-suffix=-15 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/libexec --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-libstdcxx-backtrace --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-15-n9L2J0/gcc-15-15-20250404/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-15-n9L2J0/gcc-15-15-20250404/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --with-build-config=bootstrap-lto-lean --enable-link-serialization=2
-Thread model: posix
-Supported LTO compression algorithms: zlib zstd
-gcc version 15.0.1 20250404 (experimental) [master r15-9193-g08e803aa9be] (Ubuntu 15-20250404-0ubuntu1) 
+gcc (Ubuntu 15-20250404-0ubuntu1) 15.0.1 20250404 (experimental) [master r15-9193-g08e803aa9be]
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 $ g++ -v
-Using built-in specs.
-COLLECT_GCC=g++
-COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-linux-gnu/15/lto-wrapper
-OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
-OFFLOAD_TARGET_DEFAULT=1
-Target: x86_64-linux-gnu
-Configured with: ../src/configure -v --with-pkgversion='Ubuntu 15-20250404-0ubuntu1' --with-bugurl=file:///usr/share/doc/gcc-15/README.Bugs --enable-languages=c,ada,c++,go,d,fortran,objc,obj-c++,m2,rust,cobol,algol68 --prefix=/usr --with-gcc-major-version-only --program-suffix=-15 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/libexec --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-libstdcxx-backtrace --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-15-n9L2J0/gcc-15-15-20250404/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-15-n9L2J0/gcc-15-15-20250404/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --with-build-config=bootstrap-lto-lean --enable-link-serialization=2
-Thread model: posix
-Supported LTO compression algorithms: zlib zstd
-gcc version 15.0.1 20250404 (experimental) [master r15-9193-g08e803aa9be] (Ubuntu 15-20250404-0ubuntu1)
+g++ (Ubuntu 15-20250404-0ubuntu1) 15.0.1 20250404 (experimental) [master r15-9193-g08e803aa9be]
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ```
 
 ## Install OpenJDK 21
 
-```
+The boot-compiler has been made in Scala using a version executed with Java 8. **It should be updated soon.**
+
+```bash
 $ sudo apt update
-$ sudo apt install -y openjdk-21-jdk
+$ sudo apt install -y openjdk-8-jdk # Should migrate to openjdk-21-jdk soon
 ```
 
-```
+### Manage multiple openjdk versions
+
+#### Select the latest java version
+
+```bash
 $ sudo update-alternatives --config java
 There are 3 choices for the alternative java (providing /usr/bin/java).
 
@@ -92,35 +94,23 @@ There are 3 choices for the alternative java (providing /usr/bin/java).
   2            /usr/lib/jvm/java-25-openjdk-amd64/bin/java      2511      manual mode
 * 3            /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java   1081      manual mode
 
-Press <enter> to keep the current choice[*], or type selection number: 1
-$ sudo update-alternatives --config javac
-There are 3 choices for the alternative javac (providing /usr/bin/javac).
-
-  Selection    Path                                          Priority   Status
-------------------------------------------------------------
-  0            /usr/lib/jvm/java-25-openjdk-amd64/bin/javac   2511      auto mode
-  1            /usr/lib/jvm/java-21-openjdk-amd64/bin/javac   2111      manual mode
-  2            /usr/lib/jvm/java-25-openjdk-amd64/bin/javac   2511      manual mode
-* 3            /usr/lib/jvm/java-8-openjdk-amd64/bin/javac    1081      manual mode
-
-Press <enter> to keep the current choice[*], or type selection number: 1
-update-alternatives: using /usr/lib/jvm/java-21-openjdk-amd64/bin/javac to provide /usr/bin/javac (javac) in manual mode
+Press <enter> to keep the current choice[*], or type selection number: 3
 ```
 
-```
+#### Check the java version
+
+```bash
 $ java -version
-openjdk version "21.0.9" 2025-10-21
-OpenJDK Runtime Environment (build 21.0.9+10-Ubuntu-125.04)
-OpenJDK 64-Bit Server VM (build 21.0.9+10-Ubuntu-125.04, mixed mode, sharing)
-$ javac -version
-javac 21.0.9
+openjdk version "1.8.0_472"
+OpenJDK Runtime Environment (build 1.8.0_472-8u472-ga-1~25.04-b08)
+OpenJDK 64-Bit Server VM (build 25.472-b08, mixed mode)
 ```
 
 ## Install cmake-4.3.1 from sources
 
 ### Download the sources
 
-```
+```bash
 $ cd
 $ mkdir -p builds/
 $ cd builds/
@@ -131,7 +121,7 @@ $ cd cmake-4.3.1/
 
 ### Compile the sources
 
-```
+```bash
 $ sed -i '/"lib64"/s/64//' Modules/GNUInstallDirs.cmake
 $ ./bootstrap --prefix=/usr        \
             --system-libs        \
@@ -146,7 +136,7 @@ See [here](./README.Linux.issues.md#missing-dependencies-cmake-installation) if 
 
 By default make builds one thing at a time but you could speed up the compilation by allowing it to use multiple cores with `make -j$(nproc)`.
 
-```
+```bash
 $ make
 $ ./bin/cmake --version
 cmake version 4.3.1
@@ -154,7 +144,7 @@ cmake version 4.3.1
 CMake suite maintained and supported by Kitware (kitware.com/cmake).
 ```
 
-```
+```bash
 $ sudo make install
 $ cmake --version
 cmake version 4.3.1
@@ -164,12 +154,12 @@ CMake suite maintained and supported by Kitware (kitware.com/cmake).
 
 ## Install llvm 22.1.0 from sources
 
-```
+```bash
 $ grep -rl '#!.*python$' | xargs sed -i '1s/python$/python3/'
 $ sed 's/utility/tool/' -i llvm/utils/FileCheck/CMakeLists.txt
 ```
 
-```
+```bash
 $ mkdir -v llvm/build/
 $ cd llvm/build/
 $ CC=gcc CXX=g++                               \
@@ -197,7 +187,7 @@ Of course, we can specify several cores to ninja in order to speed up compilatio
 
 Finally install it and check the version.
 
-```
+```bash
 $ sudo ninja install
 $ llvm-config --version
 22.1.0
@@ -206,7 +196,9 @@ $ llvm-config --version
 By the way, if you pay attention to the option `-D LLVM_ENABLE_PROJECTS=clang` it asked cmake to build clang as well.
 Today llvm includes all its dependencies/subprojects inside its own source code to ease the building of it.
 
-```
+Check the installed CLang version.
+
+```bash
 $ clang -v
 clang version 22.1.0
 Target: x86_64-unknown-linux-gnu
@@ -222,14 +214,29 @@ Selected multilib: .;@m64
 
 ## Fully compile Mozart2
 
-```
+```bash
 $ whereis llvm
 llvm: /usr/include/llvm
 ```
 
-```
+```bash
 $ mkdir build/
 $ cd build/
+```
+
+## Compile Mozart2 with pre-generated files
+
+Here we describe how to make a full compilation of the Mozart project : all pre-generated sources used for templates and builtins are recompiled. You will need to do that if you develop new methods using templates or new OZ builtin modules.
+
+```bash
+$ cmake -S . -B build/ -DMOZART_CACHED_BUILD=OFF -DClang_DIR=/usr/lib/cmake/clang/ -DLLVM_DIR=/usr/lib/cmake/llvm/ -DCMAKE_BUILD_TYPE=Release
+$ make -B gensources genboostsources && make
+```
+
+An advice is to add all cores to compile faster and activate the verbose mode in order to see which commands fail to compile.
+
+```bash
+$ make -B gensources genboostsources VERBOSE=1 -j$(nproc) && make VERBOSE=1 -j$(nproc)
 ```
 
 ## Sources
