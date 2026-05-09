@@ -47,6 +47,5 @@
 #include "utf-decl.hh"
 #include "functiontraits-decl.hh"
 #include "vm-decl.hh"
-#include "debugger-decl.hh"
 
 #endif // MOZART_MOZARTCORE_DECL_H

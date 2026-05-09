@@ -60,9 +60,7 @@ public:
 
   template <class... Args>
   SpecializedBuiltinEntryPoint(void (*pointer)(VM, Args...)):
-    _pointer((void (*)()) pointer) {
-      
-    }
+    _pointer((void (*)()) pointer) {}
 
   template <class... Args>
   void operator()(VM vm, Args&&... args) {

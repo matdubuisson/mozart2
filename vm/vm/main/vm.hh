@@ -73,28 +73,23 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
                                VirtualMachineOptions options):
   rootGlobalNode(nullptr), environment(environment),
   _propertyRegistry(options),
-  // One garbage collector and one space cloner dedicated to this VM
-  gc(this, environment.getSecondMemoryManagerRef()),
-  sc(this),
-  _preemptRequestedNot(ATOMIC_FLAG_INIT),
-  _exitRunRequestedNot(ATOMIC_FLAG_INIT),
-  _gcRequestedNot(ATOMIC_FLAG_INIT),
+  gc(this, environment.getSecondMemoryManagerRef()), sc(this),
   _referenceTime(0) {
 
-  // One memory manager dedicated to this VM
+  _preemptRequestedNot.clear();
+  _exitRunRequestedNot.clear();
+  _gcRequestedNot.clear();
+
   memoryManager.init(this);
 
-  // Top level space can change so it is independent from the VM
   _topLevelSpace = new (this) Space(this);
   _currentSpace = _topLevelSpace;
   _currentThread = nullptr;
   _isOnTopLevel = true;
 
-  // Built-in modules size is non-predictable so make it independent
   _builtinModules = new (this) NodeDictionary;
   _propertyRegistry.create(this);
 
-  // Configure the VM
   _cleanupList = nullptr;
 
   _envUseDynamicPreemption = environment.useDynamicPreemption();
