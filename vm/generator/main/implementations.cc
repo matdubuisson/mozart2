@@ -146,8 +146,9 @@ private:
 
   bool requiresStableNodeInGR() {
     return (storageKind == skCustom) &&
-      ((storage == "SpaceRef") || (storage == "class mozart::Runnable *") ||
-      (storage == "class mozart::StableNode *"));
+      ((storage == "SpaceRef")
+      || (storage == "Runnable *")
+      || (storage == "StableNode *"));
   }
 };
 
@@ -551,7 +552,7 @@ void ImplementationDef::makeContentsOfAutoGCollect(llvm::raw_fd_ostream& to,
 
   if (!toStableNode && requiresStableNodeInGR()) {
     to << "  StableNode* stable = new (gc->vm) StableNode;\n";
-    to << "  to.make<Reference>(gc->vm, stable);\n";
+    to << "  to.make<Reference>(gc->vm, stable); // makeContentsOfAutoGCollect\n";
     toPrefix = "stable->";
   }
 
