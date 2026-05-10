@@ -1,3 +1,4 @@
 add_subdirectory_and_log(inspector)
 add_subdirectory_and_log(browser)
 add_subdirectory_and_log(panel)
+add_subdirectory_and_log(debugger)

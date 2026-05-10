@@ -92,7 +92,6 @@ export
    'close':  CloseBrowser
 
 define
-
    %%
    %%
    %%  Local initial constants;
