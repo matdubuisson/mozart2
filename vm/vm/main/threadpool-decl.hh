@@ -121,6 +121,8 @@ public:
     queues[tpHi].dump();
   }
 private:
+  friend class Introspection;
+
   bool empty(ThreadPriority priority) {
     return queues[priority].empty();
   }

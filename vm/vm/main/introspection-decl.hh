@@ -22,37 +22,39 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_MODDEBUGGER_H
-#define MOZART_MODDEBUGGER_H
+#ifndef MOZART_INTROSPECTION_DECL_H
+#define MOZART_INTROSPECTION_DECL_H
 
-#include "../mozartcore.hh"
-
-#ifndef MOZART_GENERATOR
-
-#include <iostream>
+#include "mozartcore-decl.hh"
 
 namespace mozart {
 
-namespace builtins {
-
-class ModDebugger: public Module {
+class Introspection {
 public:
-  ModDebugger(): Module("Debugger") {}
+    Introspection() {}
 
-  class Hello: public Builtin<Hello> {
-  public:
-    Hello(): Builtin("hello") {}
+public:
+    /* ========== Virtual Machine stats ========== */
 
-    static void call(VM vm) {
-      std::cout << "Hello, I'm the debugger module!" << std::endl;
-    }
-  };
+public:
+    /* ========== Threads stats ========== */
+
+    size_t getActiveThreadsCount(VM vm);
+
+    size_t getPassiveThreadsCount(VM vm);
+
+    size_t getTotalThreadsCount(VM vm);
+
+public:
+    /* ========== Variables stats ========== */
+
+    size_t getBoundVariablesCount(VM vm);
+
+    size_t getUnBoundVariablesCount(VM vm);
+
+    size_t getTotalVariablesCount(VM vm);
 };
 
 }
 
-}
-
-#endif // MOZART_GENERATOR
-
-#endif // MOZART_MODDEBUGGER_H
+#endif // MOZART_INTROSPECTION_DECL_H

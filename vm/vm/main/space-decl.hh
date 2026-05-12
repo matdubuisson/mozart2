@@ -565,6 +565,7 @@ private:
 
 private:
   friend struct SpaceRef;
+  friend class Introspection;
 
   VM vm;
 

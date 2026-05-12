@@ -312,6 +312,7 @@ protected:
   VM vm;
 private:
   friend class RunnableList;
+  friend class Introspection;
 
   SpaceRef _space;
 
@@ -367,7 +368,7 @@ public:
   };
 public:
   /** Initializes a runnable list */
-  RunnableList() : first(nullptr), last(nullptr) {}
+  RunnableList() : first(nullptr), last(nullptr), length(0) {}
 
   /** Gets the beginning of the list */
   iterator begin() {
@@ -380,6 +381,7 @@ public:
   }
 private:
   friend class Runnable;
+  friend class Introspection;
 
   /**
    * Inserts a new runnable address at the end of the list
@@ -395,6 +397,8 @@ private:
       last->_next = item;
 
     last = item;
+
+    length++;
   }
 
   /**
@@ -402,6 +406,8 @@ private:
    * @param item The address of the runnable
    */
   void remove(Runnable* item) {
+    assert(length > 0);
+
     if (item->_previous == nullptr)
       first = item->_next;
     else
@@ -411,10 +417,13 @@ private:
       last = item->_previous;
     else
       item->_next->_previous = item->_previous;
+    
+    length--;
   }
 
   Runnable* first;
   Runnable* last;
+  size_t length; // Used by the introspection to gain performance
 };
 
 }

@@ -22,42 +22,68 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_DEBUGGER_DECL_H
-#define MOZART_DEBUGGER_DECL_H
+#ifndef MOZART_INTROSPECTION_H
+#define MOZART_INTROSPECTION_H
 
-// #include "core-forward-decl.hh"
-// #include "emulate.hh"
-// #include "runnable-decl.hh"
+#include "mozartcore.hh"
 
 namespace mozart {
 
-// class Debugger {
-// public:
-//   inline
-//   Debugger(VM vm): _vm(vm) {
-//     _nvariables = 0;
-//     _nthreads = 0;
-//     _nsuspendedThreads = 0;
-//     _ndeadThreads = 0;
-//   }
+/* ========== Virtual Machine stats ========== */
 
-//   void inspect(VM vm); // At each step of scheduler in vm.cc VirtualMachine::run()
 
-//   void inspect(const Runnable& runnable); // runnable-decl.hh Runnable constructor
 
-//   void inspect(const Thread& thread); // emulate.hh Thread constructor
+/* ========== Threads stats ========== */
 
-//   void inspect(const Thread& thread, const OpCode op); // emulate.cc in Thread::run()
+typedef RunnableList::iterator iterator;
 
-//   void inspect(const RichNode& variable); // coreinterfaces-decl.hh DataflowVariable or Variable in variable-decl.hh
-// private:
-//   VM _vm;
+inline size_t Introspection::getActiveThreadsCount(VM vm) {
+    size_t count = 0;
+    RunnableList& aliveThreads = vm->aliveThreads;
 
-//   unsigned long int _nvariables, _nboundVariables;
-//   unsigned long int _nthreads, _nsuspendedThreads, _ndeadThreads;
-//   unsigned long int _ninstructions;
-// };
+    for (iterator iter = aliveThreads.begin();
+         iter != aliveThreads.end(); iter++) {
+        Runnable *runnable = *iter;
+        if (runnable->isRunnable())
+            count++;
+    }
+
+    return count;
+}
+
+inline size_t Introspection::getPassiveThreadsCount(VM vm) {
+    size_t count = 0;
+    RunnableList& aliveThreads = vm->aliveThreads;
+
+    for (iterator iter = aliveThreads.begin();
+         iter != aliveThreads.end(); iter++) {
+        Runnable *runnable = *iter;
+        // Dead or terminated runnable are immediately removed from the list
+        if (!runnable->isRunnable())
+            count++;
+    }
+
+    return count;
+}
+
+inline size_t Introspection::getTotalThreadsCount(VM vm) {
+    return vm->aliveThreads.length;
+}
+
+/* ========== Variables stats ========== */
+
+inline size_t Introspection::getBoundVariablesCount(VM vm) {
+    return 0;
+}
+
+inline size_t Introspection::getUnBoundVariablesCount(VM vm) {
+    return 0;
+}
+
+inline size_t Introspection::getTotalVariablesCount(VM vm) {
+    return 0;
+}
 
 }
 
-#endif
+#endif // MOZART_INTROSPECTION_H

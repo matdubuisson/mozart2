@@ -48,22 +48,4 @@
 #include "functiontraits-decl.hh"
 #include "vm-decl.hh"
 
-// #include "opcodes.hh"
-
-// #include "type.hh"
-// #include "store.hh"
-// #include "exceptions.hh"
-// #include "typeinfo.hh"
-// #include "datatype.hh"
-// #include "runnable.hh"
-// #include "threadpool.hh"
-// #include "space.hh"
-// #include "graphreplicator.hh"
-// #include "gcollect.hh"
-// #include "sclone.hh"
-// #include "unify.hh"
-// #include "lstring.hh"
-// #include "utf.hh"
-// #include "vm.hh"
-
 #endif // MOZART_MOZARTCORE_DECL_H

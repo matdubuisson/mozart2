@@ -46,8 +46,6 @@
 #include "coreatoms-decl.hh"
 #include "properties-decl.hh"
 
-#include "debugger-decl.hh"
-
 namespace mozart {
 
 ///////////////////
@@ -541,6 +539,7 @@ private:
   friend class SpaceCloner;
   friend class Runnable;
   friend class GlobalNode;
+  friend class Introspection;
 
   friend void* ::operator new (size_t size, mozart::VM vm);
   friend void* ::operator new[] (size_t size, mozart::VM vm);
@@ -649,8 +648,6 @@ private:
 
   GarbageCollector gc;
   SpaceCloner sc;
-
-  // Debugger dbg;
 
   VMAllocatedList<AlarmRecord> _alarms;
   StableNode* _pickleTypesRecord;

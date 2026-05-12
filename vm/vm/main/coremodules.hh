@@ -63,7 +63,6 @@
 #include "modules/modvirtualbytestring.hh"
 #include "modules/modvirtualstring.hh"
 #include "modules/modweakref.hh"
-
-#include "modules/moddebugger.hh"
+#include "modules/modintrospection.hh"
 
 #endif // MOZART_COREMODULES_H
