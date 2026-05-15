@@ -154,6 +154,27 @@ public:
     }
   };
 
+  class InputVSLine: public Builtin<InputVSLine> {
+  public:
+    InputVSLine(): Builtin("inputVSLine") {}
+
+    static void call(VM vm, Out result) {
+      std::string input;
+      std::getline(std::cin, input);
+
+      {
+        OzListBuilder builder(vm);
+        forEachCodePoint(makeLString(input.c_str(), input.length()),
+          [vm, &builder] (char32_t c) -> bool {
+            builder.push_back(vm, (nativeint) c);
+            return true;
+          }
+        );
+        result = builder.get(vm);
+      }
+    }
+  };
+
   class InputInt: public Builtin<InputInt> {
   public:
     InputInt(): Builtin("inputInt") {}

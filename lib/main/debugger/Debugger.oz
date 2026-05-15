@@ -26,14 +26,26 @@
 functor
 
 import
-  Boot at 'x-oz://boot/Boot'
+  Boot        at 'x-oz://boot/Boot'
 define
+  Boot_Thread = {Boot.getInternal 'Thread'}
   Boot_System = {Boot.getInternal 'System'}
-  proc {Test}
-    {Boot_System.printVS "Hello again from debugger" false true}
+
+  proc {Loop}
+    This = {Boot_Thread.this $}
+  in
+    {Boot_Thread.setPriority This 'high'}
+
+    {Boot_System.printVS "[DEBUGGER] Enter command: " false false}
+    local Command in
+      Command = {Boot_System.inputVSLine $}
+      {Boot_System.printVS "You entered: "#Command false true}
+    end
+    
+    {Boot_Thread.setPriority This 'low'}
     {Time.delay 500}
-    {Test}
+    {Loop}
   end
 in
-  {Test}
+  {Loop}
 end

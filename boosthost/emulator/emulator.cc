@@ -381,7 +381,6 @@ int main(int argc, char** argv) {
         ozcalls::asyncOzCall(vm, applyProc, importParam, *baseEnv);
       }
 
-      std::cout << "Run base functor" << std::endl;
       boostVM.run();
     }
 
@@ -406,7 +405,6 @@ int main(int argc, char** argv) {
         }
 
         ozcalls::asyncOzCall(vm, initValue, *baseEnv, *initFunctor);
-        std::cout << "Run thread loading init functor" << std::endl;
         boostVM.run();
       } else {
         // Assume it is already the Init functor
@@ -458,10 +456,7 @@ int main(int argc, char** argv) {
 
       baseEnv.reset();
       initFunctor.reset();
-      // if (isDebuggerMode)
-      //   debuggerFunctor.reset();
 
-      std::cout << "Run init functor at " << initFunctorPath.string() << std::endl;
       boostVM.run();
     }
 

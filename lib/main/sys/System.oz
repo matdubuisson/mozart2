@@ -43,6 +43,7 @@ export
    PrintError
    ShowError
    Input
+   InputLine
    InputInt
    InputFloat
    gcDo: GCDo
@@ -83,6 +84,10 @@ define
 
    proc {Input ?VS}
       {Boot_System.inputVS VS}
+   end
+
+   proc {InputLine ?VS}
+      {Boot_System.inputVSLine VS}
    end
 
    proc {InputInt ?VS}
