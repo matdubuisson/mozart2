@@ -189,7 +189,8 @@ int main(int argc, char** argv) {
       "minimal heap size in MB")
     ("max-memory", po::value<size_t>(&maxMemoryMega),
       "maximum heap size in MB")
-    ("gui", "GUI mode");
+    ("gui", "GUI mode")
+    ("debugger", "Activate debugger");
 
   po::options_description hidden("Hidden options");
   hidden.add_options()
@@ -290,6 +291,19 @@ int main(int argc, char** argv) {
 
   appGUI = varMap.count("gui") != 0;
 
+  bool isDebuggerMode = varMap.count("debugger");
+  boost::filesystem::path debuggerFunctorPath;
+  if (isDebuggerMode) {
+    if (isBuildSetting) {
+      debuggerFunctorPath = ozHome / PATH_LIT("lib") / PATH_LIT("debugger") /
+        PATH_LIT("Debugger.ozf");
+    } else {
+      debuggerFunctorPath = ozHome / PATH_LIT("share") / PATH_LIT("mozart") /
+        PATH_LIT("cache") / PATH_LIT("x-oz") / PATH_LIT("system") /
+        PATH_LIT("Debugger.ozf");
+    }
+  }
+
   // SET UP THE VM AND RUN
   boostenv::BoostEnvironment boostEnv([=] (VM vm, std::unique_ptr<std::string> app, bool isURL) {
     boostenv::BoostVM& boostVM = boostenv::BoostVM::forVM(vm);
@@ -367,6 +381,7 @@ int main(int argc, char** argv) {
         ozcalls::asyncOzCall(vm, applyProc, importParam, *baseEnv);
       }
 
+      std::cout << "Run base functor" << std::endl;
       boostVM.run();
     }
 
@@ -391,11 +406,42 @@ int main(int argc, char** argv) {
         }
 
         ozcalls::asyncOzCall(vm, initValue, *baseEnv, *initFunctor);
+        std::cout << "Run thread loading init functor" << std::endl;
         boostVM.run();
       } else {
         // Assume it is already the Init functor
         DataflowVariable(*initFunctor).bind(vm, initValue);
       }
+    }
+
+    if (isDebuggerMode) {
+      ProtectedNode debuggerFunctor = vm->protect(OptVar::build(vm));
+
+      UnstableNode debuggerValue;
+
+      if (!boostEnv.bootLoader(vm, debuggerFunctorPath.string(), debuggerValue)) {
+        std::cerr << "panic: could not load Init functor at "
+                  << debuggerFunctorPath << std::endl;
+        return false;
+      }
+
+      if (Callable(debuggerValue).isProcedure(vm)) {
+        std::cerr << "Debugger.ozf must be a functor and not just a procedure" << std::endl;
+        return false;
+      } else {
+        DataflowVariable(*debuggerFunctor).bind(vm, debuggerValue);
+      }
+
+      auto ApplyAtom = build(vm, "apply");
+      auto ApplyProc = Dottable(*debuggerFunctor).dot(vm, ApplyAtom);
+
+      auto BootModule = vm->findBuiltinModule("Boot");
+      auto ImportRecord = buildRecord(
+        vm, buildArity(vm, "import", "Boot"), BootModule);
+
+      ozcalls::asyncOzCall(vm, ApplyProc, ImportRecord, OptVar::build(vm));
+
+      debuggerFunctor.reset();
     }
 
     // Apply the Init functor
@@ -412,7 +458,10 @@ int main(int argc, char** argv) {
 
       baseEnv.reset();
       initFunctor.reset();
+      // if (isDebuggerMode)
+      //   debuggerFunctor.reset();
 
+      std::cout << "Run init functor at " << initFunctorPath.string() << std::endl;
       boostVM.run();
     }
 
