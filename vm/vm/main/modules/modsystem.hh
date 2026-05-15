@@ -133,6 +133,49 @@ public:
     }
   };
 
+  class InputVS: public Builtin<InputVS> {
+  public:
+    InputVS(): Builtin("inputVS") {}
+
+    static void call(VM vm, Out result) {
+      std::string input;
+      std::cin >> input;
+
+      {
+        OzListBuilder builder(vm);
+        forEachCodePoint(makeLString(input.c_str(), input.length()),
+          [vm, &builder] (char32_t c) -> bool {
+            builder.push_back(vm, (nativeint) c);
+            return true;
+          }
+        );
+        result = builder.get(vm);
+      }
+    }
+  };
+
+  class InputInt: public Builtin<InputInt> {
+  public:
+    InputInt(): Builtin("inputInt") {}
+
+    static void call(VM vm, Out result) {
+      nativeint input;
+      std::cin >> input;
+      result = build(vm, input);
+    }
+  };
+
+  class InputFloat: public Builtin<InputFloat> {
+  public:
+    InputFloat(): Builtin("inputFloat") {}
+
+    static void call(VM vm, Out result) {
+      double input;
+      std::cin >> input;
+      result = build(vm, input);
+    }
+  };
+
   class GCDo: public Builtin<GCDo> {
   public:
     GCDo(): Builtin("gcDo") {}

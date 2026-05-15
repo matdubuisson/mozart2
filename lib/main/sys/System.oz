@@ -42,6 +42,9 @@ export
    ShowInfo
    PrintError
    ShowError
+   Input
+   InputInt
+   InputFloat
    gcDo: GCDo
    Postmortem
    Eq
@@ -76,6 +79,18 @@ define
 
    proc {ShowError VS}
       {Boot_System.printVS VS true true}
+   end
+
+   proc {Input ?VS}
+      {Boot_System.inputVS VS}
+   end
+
+   proc {InputInt ?VS}
+      {Boot_System.inputInt VS}
+   end
+
+   proc {InputFloat ?VS}
+      {Boot_System.inputFloat VS}
    end
 
    GCDo = Boot_System.gcDo
