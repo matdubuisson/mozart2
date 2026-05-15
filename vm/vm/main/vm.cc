@@ -24,6 +24,8 @@
 
 #include "mozart.hh"
 
+#include <iostream>
+
 namespace mozart {
 
 ////////////////////
@@ -31,6 +33,8 @@ namespace mozart {
 ////////////////////
 
 VirtualMachine::run_return_type VirtualMachine::run() {
+  std::cout << "Thread pool size on startup: " << threadPool.getRunnableCount() << std::endl;
+
   while (!(testAndClearExitRunRequested() ||
       (_envUseDynamicPreemption && environment.testDynamicExitRun()))) {
 
