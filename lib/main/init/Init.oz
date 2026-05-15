@@ -190,7 +190,6 @@ import
    Boot at 'x-oz://boot/Boot'
 
 define
-
    %% The mechanism with which builtin modules can be accessed
    GetInternal = Boot.getInternal
    GetNative = Boot.getNative

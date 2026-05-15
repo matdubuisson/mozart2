@@ -54,6 +54,7 @@ set(SYS_FUNCTORS
     "${MOZART_LIB_DIR}/cp/Combinator.oz"
     "${MOZART_LIB_DIR}/cp/RecordC.oz"
     "${MOZART_LIB_DIR}/ap/Application.oz"
+    "${MOZART_LIB_DIR}/debugger/Debugger.oz"
     "${MOZART_DIR}/vm/boostenv/lib/OS.oz")
 
 log("Sys functors: ${SYS_FUNCTORS}")

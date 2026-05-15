@@ -53,7 +53,7 @@ require
    Boot_System             at 'x-oz://boot/System'
    Boot_Property           at 'x-oz://boot/Property'
    Boot_WeakRef            at 'x-oz://boot/WeakReference'
-
+   Boot_Introspection      at 'x-oz://boot/Introspection'
 prepare
 
    %%
@@ -363,6 +363,7 @@ prepare
    \insert 'CompactByteString.oz'
    \insert 'BitString.oz'
    \insert 'ByteString.oz'
+   \insert 'Introspection.oz'
 
 export
    %% Value
@@ -567,6 +568,9 @@ export
    %% ByteString
    'ByteString'         : ByteString
    'IsByteString'       : IsByteString
+
+   %% Introspection
+   'Introspection'      : Introspection   
 
    %% Will be removed by the compiler
    'ByNeedDot'          : ByNeedDot
