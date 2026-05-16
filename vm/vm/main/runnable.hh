@@ -106,6 +106,7 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
   _space->notifyThreadCreated();
 
   vm->aliveThreads.insert(this);
+  vm->getIntrospection().signalThreadCreation(this);
 }
 
 Runnable::Runnable(GR gr, Runnable& from) :
@@ -122,8 +123,14 @@ Runnable::Runnable(GR gr, Runnable& from) :
 
   _reification.init(vm, ReifiedThread::build(vm, this));
 
-  if (!_dead)
+  if (!_dead) {
     vm->aliveThreads.insert(this);
+    vm->getIntrospection().signalThreadCreation(this);
+  }
+}
+
+Runnable::~Runnable() {
+  vm->getIntrospection().signalThreadDeletion(this);
 }
 
 void Runnable::setPriority(ThreadPriority priority) {

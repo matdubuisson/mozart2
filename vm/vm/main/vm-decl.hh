@@ -46,6 +46,8 @@
 #include "coreatoms-decl.hh"
 #include "properties-decl.hh"
 
+#include "introspection-decl.hh"
+
 namespace mozart {
 
 ///////////////////
@@ -482,6 +484,10 @@ public:
     return atomTable.getUniqueName(this, length, data);
   }
 public:
+  Introspection& getIntrospection() {
+    return introspection;
+  }
+public:
   /**
    * Protects a node from the garbage collector
    * @param node The node to protect
@@ -648,6 +654,8 @@ private:
 
   GarbageCollector gc;
   SpaceCloner sc;
+
+  Introspection introspection;
 
   VMAllocatedList<AlarmRecord> _alarms;
   StableNode* _pickleTypesRecord;

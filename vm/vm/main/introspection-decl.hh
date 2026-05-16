@@ -25,34 +25,49 @@
 #ifndef MOZART_INTROSPECTION_DECL_H
 #define MOZART_INTROSPECTION_DECL_H
 
-#include "mozartcore-decl.hh"
+#include "core-forward-decl.hh"
+#include "opcodes.hh"
+#include "runnable-decl.hh"
 
 namespace mozart {
 
+// Assumption : there is only one VM
+
 class Introspection {
 public:
-    Introspection() {}
+  Introspection() {}
 
 public:
-    /* ========== Virtual Machine stats ========== */
+  /* ========== Thread updaters ========== */
+  void signalThreadCreation(Runnable *thread);
+
+  void signalThreadDeletion(Runnable *thread);
+
+  void signalThreadOperation(Runnable *thread, OpCode op);
 
 public:
-    /* ========== Threads stats ========== */
-
-    size_t getActiveThreadsCount(VM vm);
-
-    size_t getPassiveThreadsCount(VM vm);
-
-    size_t getTotalThreadsCount(VM vm);
+  /* ========== Virtual Machine stats ========== */
 
 public:
-    /* ========== Variables stats ========== */
+  /* ========== Threads stats ========== */
 
-    size_t getBoundVariablesCount(VM vm);
+  size_t getActiveThreadsCount();
 
-    size_t getUnBoundVariablesCount(VM vm);
+  size_t getPassiveThreadsCount();
 
-    size_t getTotalVariablesCount(VM vm);
+  size_t getTotalThreadsCount();
+
+public:
+  /* ========== Variables stats ========== */
+
+  size_t getBoundVariablesCount();
+
+  size_t getUnBoundVariablesCount();
+
+  size_t getTotalVariablesCount();
+
+private:
+  RunnableList threads;
 };
 
 }

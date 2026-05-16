@@ -51,6 +51,7 @@
 #include "unify.hh"
 #include "utf.hh"
 #include "utils.hh"
+#include "introspection.hh"
 #include "vm.hh"
 #include "vmallocatedlist.hh"
 

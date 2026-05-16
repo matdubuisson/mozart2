@@ -30,11 +30,26 @@ import
 define
   Boot_Thread = {Boot.getInternal 'Thread'}
   Boot_System = {Boot.getInternal 'System'}
+  Boot_Introspection = {Boot.getInternal 'Introspection'}
 
   proc {Loop}
     This = {Boot_Thread.this $}
+    Stats = stats(
+      threads: threads(
+        active: {Boot_Introspection.getActiveThreadsCount $}
+        passive: {Boot_Introspection.getPassiveThreadsCount $}
+        total: {Boot_Introspection.getTotalThreadsCount $}
+      )
+      variables: variables(
+        bound: {Boot_Introspection.getBoundVariablesCount $}
+        unbound: {Boot_Introspection.getUnBoundVariablesCount $}
+        total: {Boot_Introspection.getTotalVariablesCount $}
+      )
+    )
   in
     {Boot_Thread.setPriority This 'high'}
+
+    {Boot_System.printRepr Stats false true}
 
     {Boot_System.printVS "[DEBUGGER] Enter command: " false false}
     local Command in

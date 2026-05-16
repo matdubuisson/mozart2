@@ -25,63 +25,71 @@
 #ifndef MOZART_INTROSPECTION_H
 #define MOZART_INTROSPECTION_H
 
+#include <iostream>
 #include "mozartcore.hh"
 
 namespace mozart {
 
-/* ========== Virtual Machine stats ========== */
+inline void Introspection::signalThreadCreation(Runnable *thread) {
+  threads.insert(thread);
+}
 
+inline void Introspection::signalThreadDeletion(Runnable *thread) {
+  threads.remove(thread);
+}
 
+inline void Introspection::signalThreadOperation(Runnable *thread, OpCode op) {
+
+}
 
 /* ========== Threads stats ========== */
 
 typedef RunnableList::iterator iterator;
+typedef bool (*Condition)(Runnable *thread);
 
-inline size_t Introspection::getActiveThreadsCount(VM vm) {
-    size_t count = 0;
-    RunnableList& aliveThreads = vm->aliveThreads;
+inline size_t getThreadsCount(RunnableList& threads, std::function<bool(Runnable*)> condition) {
+  size_t count = 0;
 
-    for (iterator iter = aliveThreads.begin();
-         iter != aliveThreads.end(); iter++) {
-        Runnable *runnable = *iter;
-        if (runnable->isRunnable())
-            count++;
-    }
+  for (iterator iter = threads.begin(); iter != threads.end(); iter++) {
+    Runnable *thread = *iter;
+    if (condition(thread))
+      count++;
+  }
 
-    return count;
+  std::cout << count << std::endl;
+  return count;
 }
 
-inline size_t Introspection::getPassiveThreadsCount(VM vm) {
-    size_t count = 0;
-    RunnableList& aliveThreads = vm->aliveThreads;
-
-    for (iterator iter = aliveThreads.begin();
-         iter != aliveThreads.end(); iter++) {
-        Runnable *runnable = *iter;
-        // Dead or terminated runnable are immediately removed from the list
-        if (!runnable->isRunnable())
-            count++;
-    }
-
-    return count;
+inline size_t Introspection::getActiveThreadsCount() {
+  return getThreadsCount(threads, [](Runnable* thread){
+    return thread->isEmulatedThread() && thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
+  });
 }
 
-inline size_t Introspection::getTotalThreadsCount(VM vm) {
-    return vm->aliveThreads.length;
+inline size_t Introspection::getPassiveThreadsCount() {
+  return getThreadsCount(threads, [](Runnable* thread){
+    return thread->isEmulatedThread() && !thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
+  });
+}
+
+inline size_t Introspection::getTotalThreadsCount() {
+  return getThreadsCount(threads, [](Runnable* thread){
+    return thread->isEmulatedThread() && !thread->isDead() && !thread->isTerminated();
+  });
 }
 
 /* ========== Variables stats ========== */
 
-inline size_t Introspection::getBoundVariablesCount(VM vm) {
-    return 0;
+inline size_t Introspection::getBoundVariablesCount() {
+  return 0;
 }
 
-inline size_t Introspection::getUnBoundVariablesCount(VM vm) {
-    return 0;
+inline size_t Introspection::getUnBoundVariablesCount() {
+  return 0;
 }
 
-inline size_t Introspection::getTotalVariablesCount(VM vm) {
-    return 0;
+inline size_t Introspection::getTotalVariablesCount() {
+  return 0;
 }
 
 }

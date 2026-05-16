@@ -273,6 +273,9 @@ public:
   /** Runs the thread */
   void run();
 
+  /** Tells if the runnable is a normal thread */
+  bool isThread() { return true; }
+
   /** Kills the thread */
   void kill() {
     Super::kill();
@@ -557,6 +560,8 @@ private:
                                    ProgramCounter PC,
                                    StaticArray<StableNode>& kregs,
                                    const DebugEntry& debugEntry);
+
+  friend class Introspection;
 
   XRegArray xregs;
   ThreadStack stack;

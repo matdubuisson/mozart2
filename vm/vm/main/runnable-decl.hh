@@ -164,6 +164,9 @@ public:
   inline
   Runnable(GR gr, Runnable& from);
 
+  inline
+  ~Runnable();
+
   /** Gets the space of the thread */
   Space* getSpace() {
     return _space;
@@ -193,6 +196,9 @@ public:
 
   /** Tells if the thread is deaddisp */
   bool isDead() { return _dead; }
+
+  /** Tells if the runnable is a normal thread */
+  virtual bool isEmulatedThread() { return false; }
 
   /**
    * Resumes the thread

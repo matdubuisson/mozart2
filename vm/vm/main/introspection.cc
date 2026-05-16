@@ -1,4 +1,4 @@
-// Copyright © 2011, Université catholique de Louvain
+// Copyright © 2014, Université catholique de Louvain
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -22,21 +22,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_MOZARTCORE_H
-#define MOZART_MOZARTCORE_H
+#include "introspection-decl.hh"
 
-#include "mozartcore-decl.hh"
+namespace mozart {
 
-#include "builtins-decl.hh"
-#include "corebuilders.hh"
-#include "coredatatypes-decl.hh"
-#include "coreinterfaces.hh"
-#include "dynbuilders-decl.hh"
-#include "exchelpers-decl.hh"
-#include "matchdsl.hh"
-#include "ozcalls-decl.hh"
-#include "pickler.hh"
-#include "unpickler.hh"
-#include "utils-decl.hh"
 
-#endif // MOZART_MOZARTCORE_H
+
+}
