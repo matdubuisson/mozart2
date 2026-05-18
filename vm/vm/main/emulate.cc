@@ -1214,6 +1214,7 @@ void Thread::run() {
       }
 
       case ExceptionKind::ekWaitBefore: {
+        // std::cout << "Thread " << _id << " is waiting" << std::endl;
         applyWaitBefore(vm, *node, false,
                         abstraction, PC, yregCount, xregs, yregs, gregs, kregs,
                         std::move(debugEntry));
@@ -1221,6 +1222,7 @@ void Thread::run() {
       }
 
       case ExceptionKind::ekWaitQuietBefore: {
+        // std::cout << "Thread " << _id << " is waiting" << std::endl;
         applyWaitBefore(vm, *node, true,
                         abstraction, PC, yregCount, xregs, yregs, gregs, kregs,
                         std::move(debugEntry));
@@ -1279,6 +1281,25 @@ void Thread::popFrame(VM vm, StableNode*& abstraction,
   debugEntry = std::move(entry.debugEntry);
 
   stack.remove_front(vm);
+}
+
+void Thread::getFrame(VM vm, StableNode*& abstraction,
+                      ProgramCounter& PC, size_t& yregCount,
+                      StaticArray<UnstableNode>& yregs,
+                      StaticArray<StableNode>& gregs,
+                      StaticArray<StableNode>& kregs,
+                      DebugEntry& debugEntry) {
+  StackEntry& entry = stack.front();
+
+  assert(!entry.isExceptionHandler());
+  
+  abstraction = entry.abstraction;
+  PC = entry.PC;
+  yregCount = entry.yregCount;
+  yregs = entry.yregs;
+  gregs = entry.gregs;
+  kregs = entry.kregs;
+  debugEntry = std::move(entry.debugEntry);
 }
 
 void Thread::call(RichNode target, size_t actualArity, bool isTailCall,

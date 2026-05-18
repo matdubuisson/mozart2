@@ -99,19 +99,21 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
   vm(vm), _space(space), _priority(priority),
   _runnable(false), _terminated(false), _dead(false),
   _raiseOnBlock(false), _intermediateState(vm),
-  _replicate(nullptr) {
+  _replicate(nullptr), _id(_everCreatedThreadsCount++),
+  _kindId(0), _generationId(0) {
 
   _reification.init(vm, ReifiedThread::build(vm, this));
 
   _space->notifyThreadCreated();
 
   vm->aliveThreads.insert(this);
-  vm->getIntrospection().signalThreadCreation(this);
+  //vm->getIntrospection().signalThreadCreation(this);
 }
 
 Runnable::Runnable(GR gr, Runnable& from) :
   vm(gr->vm), _intermediateState(vm, gr, from._intermediateState),
-  _replicate(nullptr) {
+  _replicate(nullptr), _id(_everCreatedThreadsCount++),
+  _kindId(0), _generationId(0) {
 
   gr->copySpace(_space, from._space);
   _priority = from._priority;
@@ -125,12 +127,12 @@ Runnable::Runnable(GR gr, Runnable& from) :
 
   if (!_dead) {
     vm->aliveThreads.insert(this);
-    vm->getIntrospection().signalThreadCreation(this);
+    //vm->getIntrospection().signalThreadCreation(this);
   }
 }
 
 Runnable::~Runnable() {
-  vm->getIntrospection().signalThreadDeletion(this);
+  //vm->getIntrospection().signalThreadDeletion(this);
 }
 
 void Runnable::setPriority(ThreadPriority priority) {

@@ -202,6 +202,8 @@ public:
     return _array;
   }
 private:
+  friend class Introspection;
+
   /**
    * Asks the provided virtual machine to allocate a new static array
    * of unstable nodes and set the size
@@ -274,7 +276,7 @@ public:
   void run();
 
   /** Tells if the runnable is a normal thread */
-  bool isThread() { return true; }
+  bool isEmulatedThread() { return true; }
 
   /** Kills the thread */
   void kill() {
@@ -388,6 +390,14 @@ private:
    */
   inline
   void popFrame(VM vm, StableNode*& abstraction,
+                ProgramCounter& PC, size_t& yregCount,
+                StaticArray<UnstableNode>& yregs,
+                StaticArray<StableNode>& gregs,
+                StaticArray<StableNode>& kregs,
+                DebugEntry& debugEntry);
+
+  inline
+  void getFrame(VM vm, StableNode*& abstraction,
                 ProgramCounter& PC, size_t& yregCount,
                 StaticArray<UnstableNode>& yregs,
                 StaticArray<StableNode>& gregs,

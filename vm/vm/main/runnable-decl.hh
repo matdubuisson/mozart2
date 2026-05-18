@@ -147,6 +147,8 @@ private:
 
 class Runnable {
 public:
+  static size_t _everCreatedThreadsCount;
+public:
   /**
    * Initializes a thread defined as a VM, a space and a priority level
    * @param vm The virtual machine
@@ -167,12 +169,28 @@ public:
   inline
   ~Runnable();
 
+public:
   /** Gets the space of the thread */
   Space* getSpace() {
     return _space;
   }
 
-  /** Gets the priority of the thread */
+  /** @returns The thread id representing that the thread is the 'id' th
+   * thread ever created
+   */
+  size_t getID() { return _id; }
+
+  /** @returns The thread kind id representing from which code this thread
+   * has been generated
+   */
+  size_t getKindID() { return _kindId; }
+
+  /** @returns The thread generation id representing the nth thread generated
+   * from the same code
+   */
+  size_t getGenerationID() { return _generationId; }
+
+  /** @returns The priority of the thread */
   ThreadPriority getPriority() { return _priority; }
 
   /**
@@ -316,6 +334,7 @@ public:
   virtual void dump() {}
 protected:
   VM vm;
+  const size_t _id, _kindId, _generationId;
 private:
   friend class RunnableList;
   friend class Introspection;

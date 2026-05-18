@@ -30,18 +30,6 @@
 
 namespace mozart {
 
-inline void Introspection::signalThreadCreation(Runnable *thread) {
-  threads.insert(thread);
-}
-
-inline void Introspection::signalThreadDeletion(Runnable *thread) {
-  threads.remove(thread);
-}
-
-inline void Introspection::signalThreadOperation(Runnable *thread, OpCode op) {
-
-}
-
 /* ========== Threads stats ========== */
 
 typedef RunnableList::iterator iterator;
@@ -60,35 +48,84 @@ inline size_t getThreadsCount(RunnableList& threads, std::function<bool(Runnable
   return count;
 }
 
-inline size_t Introspection::getActiveThreadsCount() {
-  return getThreadsCount(threads, [](Runnable* thread){
-    return thread->isEmulatedThread() && thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
+inline size_t Introspection::getActiveThreadsCount(VM vm) {
+  return getThreadsCount(vm->aliveThreads, [](Runnable* thread) {
+    return thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
   });
 }
 
-inline size_t Introspection::getPassiveThreadsCount() {
-  return getThreadsCount(threads, [](Runnable* thread){
-    return thread->isEmulatedThread() && !thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
+inline size_t Introspection::getPassiveThreadsCount(VM vm) {
+  return getThreadsCount(vm->aliveThreads, [](Runnable* thread) {
+    return !thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
   });
 }
 
-inline size_t Introspection::getTotalThreadsCount() {
-  return getThreadsCount(threads, [](Runnable* thread){
-    return thread->isEmulatedThread() && !thread->isDead() && !thread->isTerminated();
+inline size_t Introspection::getTotalThreadsCount(VM vm) {
+  return getThreadsCount(vm->aliveThreads, [](Runnable* thread) {
+    return !thread->isDead() && !thread->isTerminated();
   });
 }
 
 /* ========== Variables stats ========== */
 
-inline size_t Introspection::getBoundVariablesCount() {
+inline void forEachThread(RunnableList& threads,
+  std::function<void(Runnable*)> lambda) {
+
+  for (iterator iter = threads.begin(); iter != threads.end(); iter++) {
+    Runnable *thread = *iter;
+    lambda(thread);
+  }
+}
+
+inline void parseStaticArray(StaticArray<UnstableNode>& array,
+  std::function<void(UnstableNode& unstableNode)> lambda) {
+  for (size_t i = 0; i < array.size(); i++) {
+    lambda(array[i]);
+  }
+}
+
+inline size_t Introspection::getBoundVariablesCount(VM vm) {
+  size_t count = 0;
+  forEachThread(vm->aliveThreads, [&count](Runnable* runnable) {
+    if (runnable->isDead() || runnable->isTerminated())
+      return;
+    else if (Thread *thread = dynamic_cast<Thread*>(runnable)) {
+      std::cout << "Parse thread " << thread->getID() << std::endl;
+      StackEntry& entry = thread->stack.front();
+      for (StaticArray<UnstableNode> array : {
+        thread->xregs._array, 
+        entry.yregs
+      }) {
+        std::cout << "TEST" << std::endl;
+        parseStaticArray(array, [&count](UnstableNode& node) {
+          Type type = node.type();
+          switch (type.getStructuralBehavior()) {
+            case StructuralBehavior::sbValue: {
+              std::cout << "Value: " << type.info()->_name << std::endl;
+              break;
+            } case StructuralBehavior::sbStructural: {
+              std::cout << "Structure: " << type.info()->_name << std::endl;
+              break;
+            } case StructuralBehavior::sbTokenEq: {
+              std::cout << "Token: " << type.info()->_name << std::endl;
+              break;
+            } case StructuralBehavior::sbVariable: {
+              std::cout << "Variable: " << type.info()->_name << std::endl;
+              break;
+            }
+          }
+        });
+      }
+    }
+  });
+  return count;
+}
+
+inline size_t Introspection::getUnBoundVariablesCount(VM vm) {
   return 0;
 }
 
-inline size_t Introspection::getUnBoundVariablesCount() {
-  return 0;
-}
-
-inline size_t Introspection::getTotalVariablesCount() {
+inline size_t Introspection::getTotalVariablesCount(VM vm) {
   return 0;
 }
 

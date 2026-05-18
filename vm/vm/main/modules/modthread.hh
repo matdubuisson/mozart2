@@ -68,6 +68,33 @@ public:
     }
   };
 
+  class GetID: public Builtin<GetID> {
+  public:
+    GetID(): Builtin("getID") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm, vm->getCurrentThread()->getID());
+    }
+  };
+
+  class GetKindID: public Builtin<GetKindID> {
+  public:
+    GetKindID(): Builtin("getKindID") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm, vm->getCurrentThread()->getKindID());
+    }
+  };
+
+  class GetGenerationID: public Builtin<GetGenerationID> {
+  public:
+    GetGenerationID(): Builtin("getGenerationID") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm, vm->getCurrentThread()->getGenerationID());
+    }
+  };
+
   class GetPriority: public Builtin<GetPriority> {
   public:
     GetPriority(): Builtin("getPriority") {}

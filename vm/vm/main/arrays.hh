@@ -38,50 +38,37 @@ namespace mozart {
  */
 template <class T>
 class StaticArray {
-private:
-  T* _array;
-
-#ifdef MOZART_STATICARRAY_WITH_SIZE
-  size_t _size;
-#endif
-
 public:
   /** Create an array with s elements */
   StaticArray(T* array, size_t s) : _array(array) {
-#ifdef MOZART_STATICARRAY_WITH_SIZE
     _size = s;
-#endif
   }
 
   /** Create an array with no element */
   StaticArray() : _array(nullptr) {
-#ifdef MOZART_STATICARRAY_WITH_SIZE
     _size = 0;
-#endif
   }
 
   /** Convert from nullptr */
   StaticArray(std::nullptr_t nullp) : _array(nullptr) {
-#ifdef MOZART_STATICARRAY_WITH_SIZE
     _size = 0;
-#endif
   }
+
+  /** Gets the size of the array */
+  inline
+  size_t size() { return _size; }
 
   /** Zero-based access to elements (read-write) */
   inline
   T& operator[](size_t i) {
-#ifdef MOZART_STATICARRAY_WITH_SIZE
     assert(i < _size);
-#endif
     return _array[i];
   }
 
   /** Zero-based access to elements (read-write) */
   inline
   T& operator[](int i) {
-#ifdef MOZART_STATICARRAY_WITH_SIZE
-    assert((i >= 0) && ((size_t i) < _size));
-#endif
+    assert((i >= 0) && ((size_t) i < _size));
     return _array[i];
   }
 
@@ -95,22 +82,99 @@ public:
   inline
   void operator=(std::nullptr_t nullp) {
     _array = nullptr;
-#ifdef MOZART_STATICARRAY_WITH_SIZE
     _size = 0;
-#endif
   }
 
   /** Take a slice of the array, dropping n elements at the beginning */
   inline
   StaticArray<T> drop(size_t n) {
-#ifdef MOZART_STATICARRAY_WITH_SIZE
     assert(n <= _size);
     return { _array+n, _size-n };
-#else
-    return { _array+n, 0 };
-#endif
   }
+private:
+  T* _array;
+  size_t _size;
 };
+
+// /**
+//  * A simple wrapper for an array and its size (only in debug mode)
+//  * @param <T> Type of the elements in the array
+//  */
+// template <class T>
+// class StaticArray {
+// private:
+//   T* _array;
+
+// #ifdef MOZART_STATICARRAY_WITH_SIZE
+//   size_t _size;
+// #endif
+
+// public:
+//   /** Create an array with s elements */
+//   StaticArray(T* array, size_t s) : _array(array) {
+// #ifdef MOZART_STATICARRAY_WITH_SIZE
+//     _size = s;
+// #endif
+//   }
+
+//   /** Create an array with no element */
+//   StaticArray() : _array(nullptr) {
+// #ifdef MOZART_STATICARRAY_WITH_SIZE
+//     _size = 0;
+// #endif
+//   }
+
+//   /** Convert from nullptr */
+//   StaticArray(std::nullptr_t nullp) : _array(nullptr) {
+// #ifdef MOZART_STATICARRAY_WITH_SIZE
+//     _size = 0;
+// #endif
+//   }
+
+//   /** Zero-based access to elements (read-write) */
+//   inline
+//   T& operator[](size_t i) {
+// #ifdef MOZART_STATICARRAY_WITH_SIZE
+//     assert(i < _size);
+// #endif
+//     return _array[i];
+//   }
+
+//   /** Zero-based access to elements (read-write) */
+//   inline
+//   T& operator[](int i) {
+// #ifdef MOZART_STATICARRAY_WITH_SIZE
+//     assert((i >= 0) && ((size_t i) < _size));
+// #endif
+//     return _array[i];
+//   }
+
+//   /** Convert to a raw array */
+//   inline
+//   operator T*() {
+//     return _array;
+//   }
+
+//   /** Assign from nullptr */
+//   inline
+//   void operator=(std::nullptr_t nullp) {
+//     _array = nullptr;
+// #ifdef MOZART_STATICARRAY_WITH_SIZE
+//     _size = 0;
+// #endif
+//   }
+
+//   /** Take a slice of the array, dropping n elements at the beginning */
+//   inline
+//   StaticArray<T> drop(size_t n) {
+// #ifdef MOZART_STATICARRAY_WITH_SIZE
+//     assert(n <= _size);
+//     return { _array+n, _size-n };
+// #else
+//     return { _array+n, 0 };
+// #endif
+//   }
+// };
 
 }
 

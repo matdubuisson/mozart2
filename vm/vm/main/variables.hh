@@ -37,7 +37,8 @@ namespace mozart {
 
 template <class This>
 VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
-  WithHome(vm, gr, from) {
+  WithHome(vm, gr, from),
+  _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {
 
   /**
    * Basically pendings is a VMAllocatedList<StableNode*>

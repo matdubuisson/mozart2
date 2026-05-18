@@ -109,6 +109,8 @@ public:
     return 0;
   }
 private:
+  friend class Introspection;
+  
   const std::string _name;
   const UUID _uuid;
   const bool _hasUUID;

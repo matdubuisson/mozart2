@@ -35,15 +35,21 @@ namespace mozart {
 // VariableBase //
 //////////////////
 
+class VariableBaseCommon {
+protected:
+  static size_t _everCreatedVariablesCount;
+};
+
 template <class This>
-class VariableBase: public WithHome {
+class VariableBase: public VariableBaseCommon, public WithHome {
 public:
   /**
    * Declares a new variable base
    * @param vm The virtual machine in which the variable base is being created
    * @note By default the variable is not needed
    */
-  explicit VariableBase(VM vm): WithHome(vm), _needed(false) {}
+  explicit VariableBase(VM vm): WithHome(vm), _needed(false),
+  _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
 
   /**
    * Declares a new variable base
@@ -51,7 +57,8 @@ public:
    * @param home The home space of the variable base
    * @note By default the variable is not needed
    */
-  VariableBase(VM vm, Space* home): WithHome(home), _needed(false) {}
+  VariableBase(VM vm, Space* home): WithHome(home), _needed(false),
+  _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
 
   /**
    * Declares a new variable base with copies of the provided variable's pendings
@@ -62,6 +69,21 @@ public:
    */
   inline
   VariableBase(VM vm, GR gr, This& from);
+public:
+  /** @returns The variable id representing that the variable is the 'id' th
+   * variable ever created
+   */
+  size_t getID() { return _id; }
+
+  /** @returns The variable kind id representing from which code this variable
+   * has been generated
+   */
+  size_t getKindID() { return _kindId; }
+
+  /** @returns The variable generation id representing the nth variable generated
+   * from the same code
+   */
+  size_t getGenerationID() { return _generationId; }
 
 public:
   // DataflowVariable interface
@@ -108,6 +130,8 @@ protected:
   inline
   void doBind(RichNode self, VM vm, RichNode src);
 
+protected:
+  const size_t _id, _kindId, _generationId;
 private:
   // TODO Might be a good candidate for noinline
   /**

@@ -22,39 +22,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_INTROSPECTION_DECL_H
-#define MOZART_INTROSPECTION_DECL_H
-
-#include "core-forward-decl.hh"
-#include "opcodes.hh"
-#include "runnable-decl.hh"
+#include "mozart.hh"
 
 namespace mozart {
 
-// Assumption : there is only one VM
-
-class Introspection {
-public:
-  Introspection() {}
-
-public:
-  /* ========== Threads stats ========== */
-
-  size_t getActiveThreadsCount(VM vm);
-
-  size_t getPassiveThreadsCount(VM vm);
-
-  size_t getTotalThreadsCount(VM vm);
-
-public:
-  /* ========== Variables stats ========== */
-  size_t getBoundVariablesCount(VM vm);
-
-  size_t getUnBoundVariablesCount(VM vm);
-
-  size_t getTotalVariablesCount(VM vm);
-};
+size_t Runnable::_everCreatedThreadsCount = 0;
 
 }
-
-#endif // MOZART_INTROSPECTION_DECL_H

@@ -64,7 +64,7 @@ public:
 
     static void call(VM vm, Out result) {
       Introspection introspection;
-      result = build(vm, vm->getIntrospection().getActiveThreadsCount());
+      result = build(vm, vm->getIntrospection().getActiveThreadsCount(vm));
     }
   };
 
@@ -74,7 +74,7 @@ public:
 
     static void call(VM vm, Out result) {
       Introspection introspection;
-      result = build(vm, vm->getIntrospection().getPassiveThreadsCount());
+      result = build(vm, vm->getIntrospection().getPassiveThreadsCount(vm));
     }
   };
 
@@ -84,7 +84,7 @@ public:
 
     static void call(VM vm, Out result) {
       Introspection introspection;
-      result = build(vm, vm->getIntrospection().getTotalThreadsCount());
+      result = build(vm, vm->getIntrospection().getTotalThreadsCount(vm));
     }
   };
 
@@ -94,7 +94,7 @@ public:
 
     static void call(VM vm, Out result) {
       Introspection introspection;
-      result = build(vm, vm->getIntrospection().getBoundVariablesCount());
+      result = build(vm, vm->getIntrospection().getBoundVariablesCount(vm));
     }
   };
 
@@ -103,7 +103,7 @@ public:
     GetUnBoundVariablesCount(): Builtin("getUnBoundVariablesCount") {}
 
     static void call(VM vm, Out result) {
-      result = build(vm, vm->getIntrospection().getUnBoundVariablesCount());
+      result = build(vm, vm->getIntrospection().getUnBoundVariablesCount(vm));
     }
   };
 
@@ -112,7 +112,7 @@ public:
     GetTotalVariablesCount(): Builtin("getTotalVariablesCount") {}
 
     static void call(VM vm, Out result) {
-      result = build(vm, vm->getIntrospection().getTotalVariablesCount());
+      result = build(vm, vm->getIntrospection().getTotalVariablesCount(vm));
     }
   };
 };
