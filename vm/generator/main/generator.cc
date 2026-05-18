@@ -36,10 +36,26 @@ enum GenMode {
 
 GenMode mode;
 
+/**
+ * @brief Tells if the provided declared record is not a 'Module'
+ * 
+ * @param base A pointer on the declared record
+ * @param data Unused pointer
+ * @return If the base's name is 'Module'
+ */
 bool baseIsNotModule(const CXXRecordDecl* base, void* data) {
   return base->getNameAsString() != "Module";
 }
 
+/**
+ * @brief 
+ * 
+ * @param outputDir 
+ * @param ds 
+ * @param builtinHeaderFile 
+ * @param builtinCodeFile 
+ * @param emulateInlineTo 
+ */
 void processDeclContext(const std::string outputDir, const DeclContext* ds,
                         llvm::raw_fd_ostream* builtinHeaderFile,
                         llvm::raw_fd_ostream* builtinCodeFile,

@@ -33,6 +33,11 @@ enum ParamKind {
 struct BuiltinParam {
   BuiltinParam(): kind(pkIn) {}
 
+  /**
+   * @brief Generates a json describing the built-in module
+   * 
+   * @param to The output stream where to write
+   */
   void makeOutput(llvm::raw_fd_ostream& to);
 
   ParamKind kind;
@@ -54,11 +59,32 @@ struct BuiltinDef {
     initFullCppGetter();
   }
 
+  /** @brief Creates a getter method */
   inline
   void initFullCppGetter();
 
+  /**
+   * @brief Generates a json describing the built-in module and its components
+   * 
+   * @param to The output stream where to write
+   */
   void makeOutput(llvm::raw_fd_ostream& to);
+
+  /**
+   * @brief Generates some inlined instructions
+   * 
+   * @param to The output stream where to write
+   * @note Pure performance purpose
+   */
   void makeEmulateInlinesOutput(llvm::raw_fd_ostream& to);
+
+  /**
+   * @brief Makes an interface and an implementation of the getter for the
+   * built-in module
+   * 
+   * @param header The output stream where to write the header
+   * @param code The output stream where to write the code
+   */
   void makeBuiltinDefsOutput(llvm::raw_fd_ostream& header,
                              llvm::raw_fd_ostream& code);
 
@@ -83,8 +109,28 @@ struct ModuleDef {
     nameExpr = nullptr;
   }
 
+  /**
+   * @brief Generates a json describing the module and all its built-ins
+   * 
+   * @param to The output stream where to write
+   */
   void makeOutput(llvm::raw_fd_ostream& to);
+
+  /**
+   * @brief For each built-in of the module, generates their inlined instructions
+   * 
+   * @param to The output stream where to write
+   */
   void makeEmulateInlinesOutput(llvm::raw_fd_ostream& to);
+
+  /**
+   * @brief Makes an interface and an implementation of the module and for all
+   * of its built-in modules and additionally generates a register call to activate
+   * the built-in modules
+   * 
+   * @param header The output stream where to write the header
+   * @param code The output stream where to write the code
+   */
   void makeBuiltinDefsOutput(llvm::raw_fd_ostream& header,
                              llvm::raw_fd_ostream& code);
 
@@ -102,18 +148,42 @@ void BuiltinDef::initFullCppGetter() {
     "biref::" + module.cppName + "::" + cppName + "::get";
 }
 
+/**
+ * @brief Tells if the provided class is the Module class
+ * 
+ * @param cls The class declaration
+ * @return If the statement is true
+ */
 bool isTheModuleClass(const ClassDecl* cls) {
   return isTheClass(cls, "mozart::builtins::Module");
 }
 
+/**
+ * @brief Tells if one of the base classes of the provided one is a module class
+ * 
+ * @param cls The class declaration
+ * @return If the statement is true
+ */
 bool isModuleClass(const ClassDecl* cls) {
   return existsBaseClassSuchThat(cls, isTheModuleClass);
 }
 
+/**
+ * @brief Tells if the provided class is an instance of built-in
+ * 
+ * @param cls The class declaration
+ * @return If the statement is true
+ */
 bool isInstantiationOfBuiltin(const ClassDecl* cls) {
   return isAnInstantiationOfTheTemplate(cls, "mozart::builtins::Builtin");
 }
 
+/**
+ * @brief Tells if the provided class is a built-in class
+ * 
+ * @param cls The class declaration
+ * @return If the statement is true
+ */
 bool isBuiltinClass(const ClassDecl* cls) {
   return existsBaseClassSuchThat(cls, isInstantiationOfBuiltin);
 }

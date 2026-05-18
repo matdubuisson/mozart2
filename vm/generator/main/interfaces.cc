@@ -28,6 +28,9 @@
 
 using namespace clang;
 
+/**
+ * @brief Defines the implementation process of an interface
+ */
 struct InterfaceDef {
   InterfaceDef() {
     name = "";
@@ -36,6 +39,13 @@ struct InterfaceDef {
     autoReflectiveCalls = true;
   }
 
+  /**
+   * @brief Generates a function or template function according to the base
+   * classes of the provided template class
+   * 
+   * @param ND The template class declaration
+   * @param to Output stream where to write
+   */
   void makeOutput(const SpecDecl* ND, llvm::raw_fd_ostream& to);
 
   std::string name;
@@ -80,15 +90,16 @@ void InterfaceDef::makeOutput(const SpecDecl* ND, llvm::raw_fd_ostream& to) {
   for (auto iter = ND->decls_begin(), e = ND->decls_end(); iter != e; ++iter) {
     const Decl* decl = *iter;
 
-    if (decl->isImplicit())
+    if (decl->isImplicit()) // Is declaration written by human ?
       continue;
-    if (!decl->isFunctionOrFunctionTemplate())
+    if (!decl->isFunctionOrFunctionTemplate()) // Is it what we expect ?
       continue;
-    if (decl->getAccess() != AS_public)
+    if (decl->getAccess() != AS_public) // Is it public ?
       continue;
 
     const FunctionDecl* function;
 
+    // Generates the template of the function if needed
     if ((function = dyn_cast<FunctionDecl>(decl))) {
       // Do nothing
     } else if (const FunctionTemplateDecl* funTemplate =
@@ -110,9 +121,7 @@ void InterfaceDef::makeOutput(const SpecDecl* ND, llvm::raw_fd_ostream& to) {
     // Declaration of the procedure
     to << "\n  " << resultType << " " << funName
        << "(" << formals << ") {\n    ";
-      
     
-
     // For every implementation that implements this interface (ImplementedBy)
     for (int i = 0; i < (int) implems->template_arguments().size(); ++i) {
       std::string imp =

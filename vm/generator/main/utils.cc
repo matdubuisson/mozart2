@@ -105,6 +105,7 @@ bool existsBaseClassSuchThat(
 
 void printTemplateParameters(llvm::raw_fd_ostream& Out,
   const TemplateParameterList *Params, const TemplateArgumentList *Args) {
+  /** @brief Template definition generation */
 
   assert(Params);
   assert(!Args || Params->size() == Args->size());
@@ -122,6 +123,11 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
     const Decl *Param = Params->getParam(i);
     if (const TemplateTypeParmDecl *TTP =
           dyn_cast<TemplateTypeParmDecl>(Param)) {
+      /**
+       * @brief typename class paramater generation
+       * It produces something like :
+       * typename|class (...) typelabel|classname (= default-type|class)
+       */
 
       if (TTP->wasDeclaredWithTypename())
         Out << "typename ";
@@ -142,6 +148,11 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
       };
     } else if (const NonTypeTemplateParmDecl *NTTP =
                  dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+      /**
+       * @brief template value generation
+       * It produces something like :
+       * nativetype|class (...) (name) (= default-value)
+       */
       Out << NTTP->getType().getAsString(Policy);
 
       if (NTTP->isParameterPack() && !isa<PackExpansionType>(NTTP->getType()))
@@ -157,8 +168,8 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
         Args->get(i).print(Policy, Out, true);
       } else if (NTTP->hasDefaultArgument()) {
         Out << " = ";
-        //NTTP->getDefaultArgument().getArgument().print(Policy, Out, true);
-        NTTP->getDefaultArgument().getSourceExpression()->printPretty(Out, nullptr, Policy, Indentation);
+        NTTP->getDefaultArgument().getSourceExpression()->printPretty(
+          Out, nullptr, Policy, Indentation);
       }
     } else if (const TemplateTemplateParmDecl *TTPD =
                  dyn_cast<TemplateTemplateParmDecl>(Param)) {
@@ -172,6 +183,7 @@ void printTemplateParameters(llvm::raw_fd_ostream& Out,
 
 void printActualTemplateParameters(llvm::raw_fd_ostream& Out,
   const TemplateParameterList *Params, const TemplateArgumentList *Args) {
+  /** @brief Concrete template call generation */
 
   assert(Params);
   assert(!Args || Params->size() == Args->size());
@@ -188,6 +200,10 @@ void printActualTemplateParameters(llvm::raw_fd_ostream& Out,
     const Decl *Param = Params->getParam(i);
     if (const TemplateTypeParmDecl *TTP =
           dyn_cast<TemplateTypeParmDecl>(Param)) {
+      /**
+       * @brief concrete typename or class specification
+       * Something like typename|class (...)
+       */
 
       Out << TTP->getNameAsString();
 
@@ -195,6 +211,10 @@ void printActualTemplateParameters(llvm::raw_fd_ostream& Out,
         Out << "... ";
     } else if (const NonTypeTemplateParmDecl *NTTP =
                  dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+      /**
+       * @brief concrete value specification
+       * Something like nativetype|class (...)
+       */
       if (IdentifierInfo *Name = NTTP->getIdentifier()) {
         Out << ' ';
         Out << Name->getName();
@@ -217,6 +237,18 @@ void parseFunction(const clang::FunctionDecl* function,
                    std::string& formalParams, std::string& actualParams,
                    std::string& reflectActualParams,
                    bool hasSelfParam) {
+  /**
+   * @brief Generation of formals
+   * type name, ....
+   * ie: int x, float y, ....
+   * 
+   * @brief Generation of actuals
+   * TO-COMPLETE
+   * 
+   * @brief Generation of reflect actuals
+   * TO-COMPLETE
+   * 
+   */
 
   name = function->getNameAsString();
   resultType = typeToString(function->getReturnType());

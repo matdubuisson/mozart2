@@ -39,6 +39,12 @@ enum StructuralBehavior {
   sbValue, sbStructural, sbTokenEq, sbVariable
 };
 
+/**
+ * @brief Converts a structural behavior to string
+ * 
+ * @param behavior The structural behavior
+ * @return A string representing the structural behavior
+ */
 std::string sb2s(StructuralBehavior behavior) {
   switch (behavior) {
     case sbValue: return "sbValue";
@@ -52,6 +58,9 @@ std::string sb2s(StructuralBehavior behavior) {
   }
 }
 
+/**
+ * @brief Defines the implementation process of a method
+ */
 struct ImplemMethodDef {
   ImplemMethodDef() {}
 
@@ -62,12 +71,20 @@ struct ImplemMethodDef {
     hasSelfParam = false;
   }
 
+  /** @brief Runs a parsing of the pointer function */
   void parseTheFunction() {
     std::string reflectActuals;
     parseFunction(function, name, resultType, formals, actuals,
                   reflectActuals, hasSelfParam);
   }
 
+  /**
+   * @brief Tells if the current method definition is a redefinition of
+   * the provided one
+   * 
+   * @param other A method definition
+   * @return If both are copies
+   */
   bool isRedefinitionOf(const ImplemMethodDef& other) {
     return (hasSelfParam == other.hasSelfParam) &&
       (name == other.name) &&
@@ -85,6 +102,9 @@ struct ImplemMethodDef {
   std::string actuals;
 };
 
+/**
+ * @brief Defines the implementation process of a class
+ */
 struct ImplementationDef {
   ImplementationDef() {
     name = "";
@@ -106,6 +126,9 @@ struct ImplementationDef {
     autoSClone = true;
   }
 
+  /** @brief Sets the copyable option according to the storage kind
+   * and the structural behavior
+   */
   void computeProperties() {
     if ((storageKind == skCustom) && (structuralBehavior == sbValue)) {
       copyable = "(! ::mozart::MemWord::requiresExternalMemory<" +
@@ -115,8 +138,27 @@ struct ImplementationDef {
     }
   }
 
+  /**
+   * @brief Defines the class name and potentially defines a template
+   * class Storage on the specified class
+   * 
+   * @param to Output stream where to write
+   */
   void makeOutputDeclBefore(llvm::raw_fd_ostream& to);
+
+  /**
+   * @brief Defines the a template class TypeInfoOf on the specified class
+   * and a TypedRichNode
+   * 
+   * @param Output stream where to write
+   */
   void makeOutputDeclAfter(llvm::raw_fd_ostream& to);
+
+  /**
+   * @brief Defines the body of the class itself as a TypeInfoOf<ClassName>
+   * 
+   * @param to Output stream where to write
+   */
   void makeOutput(llvm::raw_fd_ostream& to);
 
   std::string name;
@@ -139,11 +181,31 @@ struct ImplementationDef {
   bool autoSClone;
   std::vector<ImplemMethodDef> methods;
 private:
+  /**
+   * @brief Defines a memory allocation of the class according to
+   * the storage options of this class
+   * 
+   * @param to Output stream where to write
+   * @param toStableNode If set it prevents to make a reference on the stable node
+   */
   void makeContentsOfAutoGCollect(llvm::raw_fd_ostream& to,
                                   bool toStableNode);
+
+  /**
+   * @brief Defines a memory allocation of the class according to
+   * the storage options of this class
+   * 
+   * @param to Output stream where to write
+   * @param toStableNode If set it prevents to make a reference on the stable node
+   */
   void makeContentsOfAutoSClone(llvm::raw_fd_ostream& to,
                                 bool toStableNode);
 
+  /**
+   * @brief Tells if a stable node storage is required
+   * 
+   * @return If storage kind is custom and type is SpareRef, Runnable* or StableNode*
+   */
   bool requiresStableNodeInGR() {
     return (storageKind == skCustom) &&
       ((storage == "SpaceRef")
