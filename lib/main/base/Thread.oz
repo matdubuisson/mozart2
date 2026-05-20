@@ -29,6 +29,9 @@
 %% Module
 %%
 local
+   GetID             = Boot_Thread.getID
+   GetKindID         = Boot_Thread.getKindID
+   GetGenerationID   = Boot_Thread.getGenerationID
    GetThreadPriority = Boot_Thread.getPriority
    SetThreadPriority = Boot_Thread.setPriority
    ThisThread        = Boot_Thread.this
@@ -40,7 +43,10 @@ local
    end
 in
 
-   Thread= 'thread'(setPriority:        SetThreadPriority
+   Thread= 'thread'(getID:              GetID
+                    getKindID:          GetKindID
+                    getGenerationID:    GetGenerationID
+                    setPriority:        SetThreadPriority
                     getPriority:        GetThreadPriority
                     setThisPriority:    SetThisPriority
                     getThisPriority:    GetThisPriority

@@ -51,10 +51,12 @@ VirtualMachine::run_return_type VirtualMachine::run() {
       _alarms.remove_front(this);
     }
 
+    bool areOperationsLimited = _nOperationsWithoutSystemThreads != SIZE_MAX;
+
     // Select a thread
     Runnable* currentThread;
     do {
-      currentThread = threadPool.popNext();
+      currentThread = threadPool.popNext(!areOperationsLimited);
     } while (currentThread != nullptr && currentThread->isTerminated());
 
     // When there is no runnable thread left, return to the external world
@@ -79,10 +81,19 @@ VirtualMachine::run_return_type VirtualMachine::run() {
       case tpHi: priority = "high"; break;
       case tpSystem: priority = "system"; break;
     }
-    std::cout << "Execute thread " << currentThread->getID() << " " << priority << std::endl;
+    std::cout << "=> Execute thread " << currentThread->getID() << " " << priority << std::endl;
 
-    currentThread->run();
+    size_t nOperations = currentThread->run(
+      _nOperationsWithoutSystemThreads);
+
+    std::cout << "==> " << nOperations << " operations executed for thread " << currentThread->getID() << " " << priority << std::endl;
+
     _currentThread = nullptr;
+
+    if (areOperationsLimited)
+      _nOperationsWithoutSystemThreads -= nOperations;
+      if (_nOperationsWithoutSystemThreads == 0)
+        _nOperationsWithoutSystemThreads = SIZE_MAX;
 
     // Schedule the thread anew if it is still runnable
     if (currentThread->isRunnable())

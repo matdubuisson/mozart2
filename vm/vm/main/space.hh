@@ -63,8 +63,9 @@ namespace internal {
 
     DummyThread(GR gr, DummyThread& from): Runnable(gr, from) {}
 
-    void run() {
+    size_t run(size_t _) {
       terminate();
+      return 0;
     }
 
     void resume(bool skipSchedule = false) {

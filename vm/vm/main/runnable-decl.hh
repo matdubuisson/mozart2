@@ -204,7 +204,7 @@ public:
   /**
    * Runs the thread
    */
-  virtual void run() = 0;
+  virtual size_t run(size_t maxInstructionsNumber = SIZE_MAX) = 0;
 
   /** Tells if the thread is runnable */
   bool isRunnable() { return _runnable; }
@@ -272,6 +272,16 @@ public:
   /** Sets raise on block */
   void setRaiseOnBlock(bool value) {
     _raiseOnBlock = value;
+  }
+
+  bool doesRequestPreemption() {
+    bool value = _preemptOnNextExecution;
+    _preemptOnNextExecution = false;
+    return value;
+  }
+
+  void requestPreemption() {
+    _preemptOnNextExecution = true;
   }
 
   /** Gets intermediate state */
@@ -353,6 +363,7 @@ private:
   bool _preemptible;
 
   bool _raiseOnBlock;
+  bool _preemptOnNextExecution;
 
   StableNode _reification;
 

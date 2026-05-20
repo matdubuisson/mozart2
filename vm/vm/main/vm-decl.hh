@@ -499,6 +499,7 @@ public:
 public:
   // Influence from the external world
 
+
   /** Requests preemption of the current thread TO-COMPLETE : check if 100% correct */
   void requestPreempt() {
     _preemptRequestedNot.clear(std::memory_order_release);
@@ -524,6 +525,10 @@ public:
    */
   void setReferenceTime(std::int64_t value) {
     _referenceTime.store(value, std::memory_order_release);
+  }
+
+  void setNOperationsWithoutSystemThreads(size_t limit) {
+    _nOperationsWithoutSystemThreads = limit;
   }
 private:
   /** Checks if preemption is requested and clears the flag */
@@ -668,6 +673,7 @@ private:
   std::atomic_flag _exitRunRequestedNot;
   std::atomic_flag _gcRequestedNot;
   std::atomic<std::int64_t> _referenceTime;
+  size_t _nOperationsWithoutSystemThreads;
 
   // During GC, we need a SpaceRef version of the top-level space
   SpaceRef _topLevelSpaceRef;

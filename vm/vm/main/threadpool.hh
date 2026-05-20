@@ -90,10 +90,10 @@ Runnable* ThreadPool::popNext(bool includeSystemThreads) {
         remainings[tpSystem]--;
         return popNext(tpSystem);
       }
-
-      // Reset remainings[tpSystem] to the maximum value
-      remainings[tpSystem] = queues[tpSystem].size();
     }
+
+    // Reset remainings[tpSystem] to the maximum value
+    remainings[tpSystem] = queues[tpSystem].size();
 
     // While remainings[tpHi] > 0, return the first Hi-priority thread
     if (!queues[tpHi].empty() && remainings[tpHi] > 0) {

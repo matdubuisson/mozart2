@@ -306,7 +306,7 @@ Thread::Thread(GR gr, Thread& from): Runnable(gr, from) {
   gr->copyStableNode(_terminationVar, from._terminationVar);
 }
 
-void Thread::run() {
+size_t Thread::run(size_t maxInstructionsNumber) {
   // Local variable cache of fields
 
   VM const vm = this->vm;
@@ -346,6 +346,8 @@ void Thread::run() {
   bool hasBackupPC = false;
   ProgramCounter backupPC = NullPC;
 
+  size_t instructionsNumber = 0;
+
   // The big try-catch that catches all bad things in the world
   MOZART_TRY(vm) {
 
@@ -359,7 +361,10 @@ void Thread::run() {
 
     // The big loop
 
-    while (!preempted) {
+    while (!preempted && !doesRequestPreemption()
+      && instructionsNumber < maxInstructionsNumber) {
+      instructionsNumber++;
+
       OpCode op = *PC;
 
       switch (op) {
@@ -923,7 +928,7 @@ void Thread::run() {
 
             default: {
               assert(false);
-              return;
+              return instructionsNumber;
             }
           } // switch (where)
 
@@ -962,7 +967,6 @@ void Thread::run() {
 
               default: {
                 assert(false);
-                return;
               }
             }
 
@@ -1103,7 +1107,7 @@ void Thread::run() {
 
                 default: {
                   assert(false);
-                  return;
+                  return instructionsNumber;
                 }
               }
             }
@@ -1164,7 +1168,7 @@ void Thread::run() {
 
                 default: {
                   assert(false);
-                  return;
+                  return instructionsNumber;
                 }
               }
             }
@@ -1244,12 +1248,13 @@ void Thread::run() {
 #undef GPC
 #undef KPC
 
-  if (isTerminated())
-    return;
+  if (!isTerminated()) {
+    // Store the current state in the stack frame, for next invocation of run()
+    pushFrame(vm, abstraction, PC, yregCount, yregs, gregs, kregs,
+              std::move(debugEntry));
+  }
 
-  // Store the current state in the stack frame, for next invocation of run()
-  pushFrame(vm, abstraction, PC, yregCount, yregs, gregs, kregs,
-            std::move(debugEntry));
+  return instructionsNumber;
 }
 
 void Thread::pushFrame(VM vm, StableNode* abstraction,

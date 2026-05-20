@@ -273,7 +273,7 @@ public:
   Thread(GR gr, Thread& from);
 
   /** Runs the thread */
-  void run();
+  size_t run(size_t maxInstructionsNumber);
   
   /** Kills the thread */
   void kill() {

@@ -105,6 +105,7 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
   _preemptRequestedNot.test_and_set();
   _exitRunRequestedNot.test_and_set();
   _gcRequestedNot.test_and_set();
+  _nOperationsWithoutSystemThreads = SIZE_MAX;
 
   initialize();
   _pickleTypesRecord = new (this) StableNode(this, Pickler::buildTypesRecord(this));

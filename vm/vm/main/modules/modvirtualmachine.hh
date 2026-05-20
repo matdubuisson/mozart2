@@ -22,48 +22,39 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_COREMODULES_H
-#define MOZART_COREMODULES_H
+#ifndef MOZART_MODVIRTUALMACHINE_H
+#define MOZART_MODVIRTUALMACHINE_H
 
-#include "mozart.hh"
+#include "../mozartcore.hh"
 
-#include "modules/modarray.hh"
-#include "modules/modatom.hh"
-#include "modules/modboot.hh"
-#include "modules/modbrowser.hh"
-#include "modules/modcell.hh"
-#include "modules/modchunk.hh"
-#include "modules/modcoders.hh"
-#include "modules/modcompactstring.hh"
-#include "modules/modcompilersupport.hh"
-#include "modules/moddebug.hh"
-#include "modules/moddictionary.hh"
-#include "modules/modexception.hh"
-#include "modules/modint.hh"
-#include "modules/modfloat.hh"
-#include "modules/modforeignpointer.hh"
-#include "modules/modgnode.hh"
-#include "modules/modliteral.hh"
-#include "modules/modname.hh"
-#include "modules/modnumber.hh"
-#include "modules/modobject.hh"
-#include "modules/modpickle.hh"
-#include "modules/modport.hh"
-#include "modules/modprocedure.hh"
-#include "modules/modproperty.hh"
-#include "modules/modrecord.hh"
-#include "modules/modreflection.hh"
-#include "modules/modserializer.hh"
-#include "modules/modspace.hh"
-#include "modules/modsystem.hh"
-#include "modules/modthread.hh"
-#include "modules/modtime.hh"
-#include "modules/modtuple.hh"
-#include "modules/modvalue.hh"
-#include "modules/modvirtualbytestring.hh"
-#include "modules/modvirtualstring.hh"
-#include "modules/modweakref.hh"
-#include "modules/modintrospection.hh"
-#include "modules/modvirtualmachine.hh"
+#ifndef MOZART_GENERATOR
 
-#endif // MOZART_COREMODULES_H
+namespace mozart {
+
+namespace builtins {
+
+class ModVirtualMachine: public Module {
+public:
+  ModVirtualMachine(): Module("VirtualMachine") {}
+
+  class SetNOperationsWithoutSystemThreads:
+    public Builtin<SetNOperationsWithoutSystemThreads> {
+  public:
+    SetNOperationsWithoutSystemThreads():
+      Builtin("setNOperationsWithoutSystemThreads") {}
+
+    static void call(VM vm, In limit) {
+      size_t l = getArgument<size_t>(vm, limit);
+      vm->setNOperationsWithoutSystemThreads(l);
+    }
+  };
+
+};
+
+}
+
+}
+
+#endif // MOZART_GENERATOR
+
+#endif // MOZART_MODVIRTUALMACHINE_H

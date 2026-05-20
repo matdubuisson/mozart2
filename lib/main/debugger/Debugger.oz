@@ -31,6 +31,7 @@ define
   Boot_Thread = {Boot.getInternal 'Thread'}
   Boot_System = {Boot.getInternal 'System'}
   Boot_Introspection = {Boot.getInternal 'Introspection'}
+  Boot_VirtualMachine = {Boot.getInternal 'VirtualMachine'}
 
   proc {GetVMStatus ?Status}
     Status = stats(
@@ -149,12 +150,30 @@ define
           {Boot_System.printVS MARKER#": continue takes one integer argument" true true}
           {DefaultLoop}
         end
+
+      %%%%%%%% continue
+      [] "noperations" then
+        Argument = {Boot_System.inputVS $}
+      in
+        try
+          NOperations = {String.toInt Argument $}
+        in
+          {Boot_System.printVS "NOperations: "#NOperations false true}
+          {Boot_VirtualMachine.setNOperationsWithoutSystemThreads NOperations}
+          {Boot_Thread.requestPreemption This}
+          {DefaultLoop}
+        catch _ then
+          {Boot_System.printVS MARKER#": noperations takes one integer argument" true true}
+          {DefaultLoop}
+        end
+
       %%%%%%%% unknown command
       else
         {Boot_System.printVS MARKER#": unknown command '"#Command#"', try help to get more infos" true true}
         {DefaultLoop}
       end
     else
+      {Boot_Thread.requestPreemption This}
       {Loop NonPreemptible NContinues - 1}
     end
   end

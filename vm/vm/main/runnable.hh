@@ -98,8 +98,8 @@ void IntermediateState::rewind(VM vm) {
 Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
   vm(vm), _space(space), _priority(priority),
   _runnable(false), _terminated(false),
-  _dead(false), _preemptible(true),
-  _raiseOnBlock(false), _intermediateState(vm),
+  _dead(false), _preemptible(true), _raiseOnBlock(false),
+  _preemptOnNextExecution(false), _intermediateState(vm),
   _replicate(nullptr), _id(_everCreatedThreadsCount++),
   _kindId(0), _generationId(0) {
 
@@ -124,6 +124,7 @@ Runnable::Runnable(GR gr, Runnable& from) :
   _preemptible = from._preemptible;
 
   _raiseOnBlock = from._raiseOnBlock;
+  _preemptOnNextExecution = from._preemptOnNextExecution;
 
   _reification.init(vm, ReifiedThread::build(vm, this));
 

@@ -163,6 +163,16 @@ public:
     }
   };
 
+  class RequestPreemption: public Builtin<RequestPreemption> {
+  public:
+    RequestPreemption(): Builtin("requestPreemption") {}
+
+    static void call(VM vm, In thread) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      runnable->requestPreemption();
+    }
+  };
+
   // class SetNonPreemptible: public Builtin<SetNonPreemptible> {
   // public:
   //   SetNonPreemptible(): Builtin("setNonPreemptible") {}

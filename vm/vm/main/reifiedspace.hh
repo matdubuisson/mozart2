@@ -53,13 +53,14 @@ private:
       gr->copyUnstableNode(_value, from._value);
     }
 
-    void run() {
+    size_t run(size_t _) {
       MOZART_TRY(vm) {
         unify(vm, _var, _value);
       } MOZART_CATCH(vm, kind, node) {
         assert(false); // TODO Or should we actually handle this case?
       } MOZART_ENDTRY(vm);
       terminate();
+      return 0;
     }
 
     Runnable* gCollect(GC gc) {
