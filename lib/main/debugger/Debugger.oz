@@ -32,9 +32,8 @@ define
   Boot_System = {Boot.getInternal 'System'}
   Boot_Introspection = {Boot.getInternal 'Introspection'}
 
-  proc {Loop}
-    This = {Boot_Thread.this $}
-    Stats = stats(
+  proc {GetVMStatus ?Status}
+    Status = stats(
       threads: threads(
         active: {Boot_Introspection.getActiveThreadsCount $}
         passive: {Boot_Introspection.getPassiveThreadsCount $}
@@ -46,21 +45,121 @@ define
         total: {Boot_Introspection.getTotalVariablesCount $}
       )
     )
-  in
-    {Boot_Thread.setPriority This 'high'}
+  end
 
-    {Boot_System.printRepr Stats false true}
+  proc {GetThreadStatus Thread ?Status}
+    Status = 'thread'(
+      id: {Boot_Thread.getID Thread $}
+      priority: {Boot_Thread.getPriority Thread $}
+      preemptible: {Boot_Thread.isPreemptible Thread $}
+    )
+  end
 
-    {Boot_System.printVS "[DEBUGGER] Enter command: " false false}
-    local Command in
-      Command = {Boot_System.inputVSLine $}
-      {Boot_System.printVS "You entered: "#Command false true}
+  MARKER = "[DEBUGGER]"
+
+  proc {Loop
+    NonPreemptible
+    NContinues}
+
+    This = {Boot_Thread.this $}
+    proc {DefaultLoop}
+      {Loop
+        NonPreemptible
+        NContinues}
     end
-    
-    {Boot_Thread.setPriority This 'low'}
-    {Time.delay 500}
-    {Loop}
+  in
+    if NContinues == 0 then
+      Status
+      Command
+    in
+      Status = {GetThreadStatus This $}
+      
+      if Status.preemptible andthen NonPreemptible then
+        {Boot_Thread.setPreemptible This false}
+      end
+      
+      local
+        NextThread = {Boot_Introspection.getNextScheduledThread false $}
+      in
+        {Boot_System.printVS MARKER#": "#
+          "Next scheduled thread is: "#
+          {Int.toString {Boot_Thread.getID NextThread $} $}
+        false true}
+      end
+
+      {Boot_System.printVS MARKER#
+        "(id: "#{Int.toString Status.id $}#
+        ", "#
+        "priority: "#{Atom.toString Status.priority $}#
+        ", "#
+        "preemptible: "#{Bool.toString Status.preemptible $}#
+        "): "
+        false false}
+
+      Command = {Boot_System.inputVS $}
+
+      %%%%%%%% help
+      case Command of "help" then
+        {Boot_System.printVS "Useful help doc will be here" false true}
+        {DefaultLoop}
+
+      %%%%%%%% preemptible
+      [] "preemptible" then
+        Activated = {Boot_System.inputVS $}
+      in
+        case Activated of "true" then
+          {Loop false 0}
+        [] "false" then
+          {Loop true 0}
+        else
+          {Boot_System.printVS MARKER#": preemptible command takes one boolean argument true or false" true true}
+          {DefaultLoop}
+        end
+        
+      %%%%%%%% status
+      [] "status" then
+        Status = {GetVMStatus $}
+      in
+        {Boot_System.printVS "VM status:\n"#
+          "\tThreads:\n"#
+          "\t\t- "#Status.threads.active#" active\n"#
+          "\t\t- "#Status.threads.passive#" passive\n"#
+          "\t\t- "#Status.threads.total#" in total\n"#
+          "\tVariables:\n"#
+          "\t\t- "#Status.variables.bound#" bound\n"#
+          "\t\t- "#Status.variables.unbound#" unbound\n"#
+          "\t\t- "#Status.variables.total#" in total\n"
+          false true}
+
+        {DefaultLoop}
+      
+      %%%%%%%% continue
+      [] "continue" then
+        Argument = {Boot_System.inputVS $}
+      in
+        try
+          NextNContinue = {String.toInt Argument $}
+        in
+          {Boot_System.printVS "Continue: "#NextNContinue false true}
+          {Boot_Thread.setPreemptible This true}
+          {Loop
+            NonPreemptible
+            NextNContinue}
+        catch _ then
+          {Boot_System.printVS MARKER#": continue takes one integer argument" true true}
+          {DefaultLoop}
+        end
+      %%%%%%%% unknown command
+      else
+        {Boot_System.printVS MARKER#": unknown command '"#Command#"', try help to get more infos" true true}
+        {DefaultLoop}
+      end
+    else
+      {Loop NonPreemptible NContinues - 1}
+    end
   end
 in
-  {Loop}
+  {Loop
+    true
+    0}
 end
