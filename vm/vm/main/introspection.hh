@@ -30,10 +30,31 @@
 
 namespace mozart {
 
-/* ========== Threads stats ========== */
-
 typedef RunnableList::iterator iterator;
-typedef bool (*Condition)(Runnable *thread);
+
+/* ========== VM state ========== */
+
+inline Runnable* Introspection::getNextScheduledThread(VM vm, bool includeSystemThreads) {
+  return vm->getThreadPool().getNext(includeSystemThreads);
+}
+
+/* ========== Threads state ========== */
+
+inline RunnableList& Introspection::getThreads(VM vm) {
+  return vm->aliveThreads;
+}
+
+inline Runnable* Introspection::getThread(VM vm, size_t id) {
+  RunnableList& list = vm->aliveThreads;
+  for (iterator iter = list.begin(); iter != list.end(); iter++) {
+    Runnable *runnable = *iter;
+    if (runnable->getID() == id)
+      return runnable;
+  }
+  return nullptr;
+}
+
+/* ========== Threads stats ========== */
 
 inline size_t getThreadsCount(RunnableList& threads, std::function<bool(Runnable*)> condition) {
   size_t count = 0;
@@ -44,7 +65,6 @@ inline size_t getThreadsCount(RunnableList& threads, std::function<bool(Runnable
       count++;
   }
 
-  std::cout << count << std::endl;
   return count;
 }
 
@@ -86,38 +106,39 @@ inline void parseStaticArray(StaticArray<UnstableNode>& array,
 
 inline size_t Introspection::getBoundVariablesCount(VM vm) {
   size_t count = 0;
-  forEachThread(vm->aliveThreads, [&count](Runnable* runnable) {
-    if (runnable->isDead() || runnable->isTerminated())
-      return;
-    else if (Thread *thread = dynamic_cast<Thread*>(runnable)) {
-      std::cout << "Parse thread " << thread->getID() << std::endl;
-      StackEntry& entry = thread->stack.front();
-      for (StaticArray<UnstableNode> array : {
-        thread->xregs._array, 
-        entry.yregs
-      }) {
-        std::cout << "TEST" << std::endl;
-        parseStaticArray(array, [&count](UnstableNode& node) {
-          Type type = node.type();
-          switch (type.getStructuralBehavior()) {
-            case StructuralBehavior::sbValue: {
-              std::cout << "Value: " << type.info()->_name << std::endl;
-              break;
-            } case StructuralBehavior::sbStructural: {
-              std::cout << "Structure: " << type.info()->_name << std::endl;
-              break;
-            } case StructuralBehavior::sbTokenEq: {
-              std::cout << "Token: " << type.info()->_name << std::endl;
-              break;
-            } case StructuralBehavior::sbVariable: {
-              std::cout << "Variable: " << type.info()->_name << std::endl;
-              break;
-            }
-          }
-        });
-      }
-    }
-  });
+  // forEachThread(vm->aliveThreads, [&count](Runnable* runnable) {
+  //   if (runnable->isDead() || runnable->isTerminated())
+  //     return;
+  //   else if (Thread *thread = dynamic_cast<Thread*>(runnable)) {
+  //     std::cout << "Parse thread " << thread->getID() << std::endl;
+  //     StackEntry& entry = thread->stack.front();
+  //     for (StaticArray<UnstableNode> array : {
+  //       thread->xregs._array, 
+  //       entry.yregs
+  //     }) {
+  //       std::cout << "TEST" << std::endl;
+  //       parseStaticArray(array, [&count](UnstableNode& node) {
+  //         Type type = node.type();
+  //         switch (type.getStructuralBehavior()) {
+  //           case StructuralBehavior::sbValue: {
+  //             //std::cout << "Value: " << type.info()->_name << std::endl;
+
+  //             break;
+  //           } case StructuralBehavior::sbStructural: {
+  //             //std::cout << "Structure: " << type.info()->_name << std::endl;
+  //             break;
+  //           } case StructuralBehavior::sbTokenEq: {
+  //             std::cout << "Token: " << type.info()->_name << std::endl;
+  //             break;
+  //           } case StructuralBehavior::sbVariable: {
+  //             std::cout << "Variable: " << type.info()->_name << std::endl;
+  //             break;
+  //           }
+  //         }
+  //       });
+  //     }
+  //   }
+  // });
   return count;
 }
 

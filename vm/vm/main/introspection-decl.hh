@@ -38,6 +38,15 @@ public:
   Introspection() {}
 
 public:
+  /* ========== VM state ========== */
+  Runnable* getNextScheduledThread(VM vm, bool includeSystemThreads);
+
+public:
+  /* ========== Threads state ========== */
+  RunnableList& getThreads(VM vm);
+
+  Runnable* getThread(VM vm, size_t id);
+
   /* ========== Threads stats ========== */
 
   size_t getActiveThreadsCount(VM vm);

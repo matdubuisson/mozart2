@@ -26,6 +26,7 @@
 #define MOZART_OZCALLS_DECL_H
 
 #include "mozartcore-decl.hh"
+#include "emulate.hh"
 
 namespace mozart {
 
@@ -49,16 +50,16 @@ internal::OutputParam<T> out(T& value) {
   return internal::OutputParam<T>(value);
 }
 
-inline
-void asyncOzCall(VM vm, Space* space, RichNode callable);
+// inline
+// Thread* asyncOzCall(VM vm, Space* space, RichNode callable);
 
 template <typename... Args>
 inline
-void asyncOzCall(VM vm, Space* space, RichNode callable, Args&&... args);
+Thread* asyncOzCall(VM vm, Space* space, RichNode callable, Args&&... args);
 
 template <typename... Args>
 inline
-void asyncOzCall(VM vm, RichNode callable, Args&&... args);
+Thread* asyncOzCall(VM vm, RichNode callable, Args&&... args);
 
 template <typename... Args>
 inline

@@ -51,8 +51,50 @@ void ThreadQueue::dump() {
 // ThreadPool //
 ////////////////
 
-Runnable* ThreadPool::popNext() {
+Runnable* ThreadPool::getNext(bool includeSystemThreads) {
   do {
+    if (includeSystemThreads) {
+      // Thread system must execute once before all others
+      if (!queues[tpSystem].empty() && remainings[tpSystem] > 0) {
+        return getNext(tpSystem);
+      }
+    }
+
+    // While remainings[tpHi] > 0, return the first Hi-priority thread
+    if (!queues[tpHi].empty() && remainings[tpHi] > 0) {
+      return getNext(tpHi);
+    }
+
+    // While remainings[tpMiddle] > 0, return the first Middle-priority thread
+    if (!queues[tpMiddle].empty() && remainings[tpMiddle] > 0) {
+      return getNext(tpMiddle);
+    }
+    // remainings[tpLow] is not used, always return the first Low-priority thread
+    if (!queues[tpLow].empty()) {
+      return getNext(tpLow);
+    }
+  } while (!empty()); // might not be empty if all remainings were 0
+
+  return nullptr;
+}
+
+Runnable* ThreadPool::getNext(ThreadPriority priority) {
+  return queues[priority].front();
+}
+
+Runnable* ThreadPool::popNext(bool includeSystemThreads) {
+  do {
+    if (includeSystemThreads) {
+      // Thread system must execute once before all others
+      if (!queues[tpSystem].empty() && remainings[tpSystem] > 0) {
+        remainings[tpSystem]--;
+        return popNext(tpSystem);
+      }
+
+      // Reset remainings[tpSystem] to the maximum value
+      remainings[tpSystem] = queues[tpSystem].size();
+    }
+
     // While remainings[tpHi] > 0, return the first Hi-priority thread
     if (!queues[tpHi].empty() && remainings[tpHi] > 0) {
       remainings[tpHi]--;

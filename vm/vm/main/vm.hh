@@ -118,9 +118,12 @@ VirtualMachine::~VirtualMachine() {
 }
 
 bool VirtualMachine::testPreemption() {
-  return testAndClearPreemptRequested() ||
-    (_envUseDynamicPreemption && environment.testDynamicPreemption()) ||
-    gc.isGCRequired();
+  if (_currentThread && !_currentThread->isPreemptible())
+    return false;
+  else
+    return testAndClearPreemptRequested() ||
+      (_envUseDynamicPreemption && environment.testDynamicPreemption()) ||
+      gc.isGCRequired();
 }
 
 void VirtualMachine::setCurrentSpace(Space* space) {

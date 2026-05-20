@@ -77,16 +77,17 @@ public:
     remainings[tpLow] = 0;
     remainings[tpMiddle] = 0;
     remainings[tpHi] = 0;
+    remainings[tpSystem] = 0;
   }
 
   bool empty() {
     // ordered from most probably non-empty too most probably empty
-    return empty(tpMiddle) && empty(tpHi) && empty(tpLow);
+    return empty(tpMiddle) && empty(tpHi) && empty(tpLow) && empty(tpSystem);
   }
 
   size_t getRunnableCount() {
     return queues[tpLow].size() + queues[tpMiddle].size() +
-      queues[tpHi].size() + 1; // 1 for the currently running thread
+      queues[tpHi].size() + queues[tpSystem].size() + 1; // 1 for the currently running thread
   }
 
   void schedule(Runnable* thread) {
@@ -99,6 +100,7 @@ public:
     queues[tpLow].remove(thread);
     queues[tpMiddle].remove(thread);
     queues[tpHi].remove(thread);
+    queues[tpSystem].remove(thread);
   }
 
   void reschedule(Runnable* thread) {
@@ -110,15 +112,20 @@ public:
     queues[tpLow].gCollect(gc);
     queues[tpMiddle].gCollect(gc);
     queues[tpHi].gCollect(gc);
+    queues[tpSystem].gCollect(gc);
   }
 
   inline
-  Runnable* popNext();
+  Runnable* getNext(bool includeSystemThreads = true);
+
+  inline
+  Runnable* popNext(bool includeSystemThreads = true);
 
   void dump() {
     queues[tpLow].dump();
     queues[tpMiddle].dump();
     queues[tpHi].dump();
+    queues[tpSystem].dump();
   }
 private:
   friend class Introspection;
@@ -128,14 +135,18 @@ private:
   }
 
   inline
+  Runnable* getNext(ThreadPriority priority);
+
+  inline
   Runnable* popNext(ThreadPriority priority);
 
   bool isScheduled(Runnable* thread) {
     return queues[tpMiddle].isScheduled(thread) ||
       queues[tpHi].isScheduled(thread) ||
-      queues[tpLow].isScheduled(thread);
+      queues[tpLow].isScheduled(thread) ||
+      queues[tpSystem].isScheduled(thread);
   }
-
+  
   ThreadQueue queues[tpCount];
   int remainings[tpCount];
 };

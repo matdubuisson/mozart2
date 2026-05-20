@@ -274,10 +274,7 @@ public:
 
   /** Runs the thread */
   void run();
-
-  /** Tells if the runnable is a normal thread */
-  bool isEmulatedThread() { return true; }
-
+  
   /** Kills the thread */
   void kill() {
     Super::kill();

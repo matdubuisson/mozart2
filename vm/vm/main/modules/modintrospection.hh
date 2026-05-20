@@ -57,6 +57,17 @@ public:
       outValue = Numeric(inValue).add(vm, 1);
     }
   };
+  
+  class GetNextScheduledThread: public Builtin<GetNextScheduledThread> {
+  public:
+    GetNextScheduledThread(): Builtin("getNextScheduledThread") {}
+
+    static void call(VM vm, In boolean, Out result) {
+      bool includeSystemThreads = getArgument<bool>(vm, boolean);
+      result = ReifiedThread::build(vm,
+        vm->getIntrospection().getNextScheduledThread(vm, includeSystemThreads));
+    }
+  };
 
   class GetActiveThreadsCount: public Builtin<GetActiveThreadsCount> {
   public:

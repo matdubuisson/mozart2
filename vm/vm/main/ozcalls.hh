@@ -227,25 +227,28 @@ struct OutputProcessing<inputIdx, outputIdx, nullable<T&>&, Tail...>
 
 } // namespace internal
 
-void asyncOzCall(VM vm, Space* space, RichNode callable) {
-  new (vm) Thread(vm, space, callable, 0, nullptr);
-}
+// Thread* asyncOzCall(VM vm, Space* space, RichNode callable) {
+//   return new (vm) Thread(vm, space, callable, 0, nullptr);
+// }
 
 template <typename... Args>
-void asyncOzCall(VM vm, Space* space, RichNode callable, Args&&... args) {
+Thread* asyncOzCall(VM vm, Space* space, RichNode callable, Args&&... args) {
   constexpr size_t argc = sizeof...(args);
+  
+  if (argc == 0)
+    return new (vm) Thread(vm, space, callable, 0, nullptr);
 
   UnstableNode unstableArgs[argc];
   RichNode arguments[argc];
   internal::initInputArguments<false>(
     vm, unstableArgs, arguments, std::forward<Args>(args)...);
 
-  new (vm) Thread(vm, space, callable, argc, arguments);
+  return new (vm) Thread(vm, space, callable, argc, arguments);
 }
 
 template <typename... Args>
-void asyncOzCall(VM vm, RichNode callable, Args&&... args) {
-  asyncOzCall(vm, vm->getCurrentSpace(), callable,
+Thread* asyncOzCall(VM vm, RichNode callable, Args&&... args) {
+  return asyncOzCall(vm, vm->getCurrentSpace(), callable,
               std::forward<Args>(args)...);
 }
 

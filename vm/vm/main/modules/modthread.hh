@@ -26,6 +26,7 @@
 #define MOZART_MODTHREAD_H
 
 #include "../mozartcore.hh"
+#include "../emulate.hh"
 
 #ifndef MOZART_GENERATOR
 
@@ -72,8 +73,9 @@ public:
   public:
     GetID(): Builtin("getID") {}
 
-    static void call(VM vm, Out result) {
-      result = build(vm, vm->getCurrentThread()->getID());
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->getID());
     }
   };
 
@@ -81,8 +83,9 @@ public:
   public:
     GetKindID(): Builtin("getKindID") {}
 
-    static void call(VM vm, Out result) {
-      result = build(vm, vm->getCurrentThread()->getKindID());
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->getKindID());
     }
   };
 
@@ -90,8 +93,9 @@ public:
   public:
     GetGenerationID(): Builtin("getGenerationID") {}
 
-    static void call(VM vm, Out result) {
-      result = build(vm, vm->getCurrentThread()->getGenerationID());
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->getGenerationID());
     }
   };
 
@@ -106,6 +110,7 @@ public:
         case tpLow: result = build(vm, "low"); break;
         case tpMiddle: result = build(vm, "medium"); break;
         case tpHi: result = build(vm, "high"); break;
+        case tpSystem: result = build(vm, "system"); break;
 
         default: assert(false);
       }
@@ -127,13 +132,46 @@ public:
         prio = tpMiddle;
       } else if (matches(vm, priority, "high")) {
         prio = tpHi;
+      } else if (matches(vm, priority, "system")) {
+        prio = tpSystem;
       } else {
-        raiseTypeError(vm, "low, medium or high", priority);
+        raiseTypeError(vm, "low, medium, high or system", priority);
       }
 
       ThreadLike(thread).setThreadPriority(vm, prio);
     }
   };
+
+  class IsPreemptible: public Builtin<IsPreemptible> {
+  public:
+    IsPreemptible(): Builtin("isPreemptible") {}
+
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->isPreemptible());
+    }
+  };
+
+  class SetPreemptible: public Builtin<SetPreemptible> {
+  public:
+    SetPreemptible(): Builtin("setPreemptible") {}
+
+    static void call(VM vm, In thread, In boolean) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      bool b = getArgument<bool>(vm, boolean);
+      runnable->setPreemptible(b);
+    }
+  };
+
+  // class SetNonPreemptible: public Builtin<SetNonPreemptible> {
+  // public:
+  //   SetNonPreemptible(): Builtin("setNonPreemptible") {}
+
+  //   static void call(VM vm, In thread, In priority) {
+  //     Runnable* runnable = getArgument<Runnable*>(vm, thread);
+  //     runnable->setPreemptible(false);
+  //   }
+  // };
 
   class InjectException: public Builtin<InjectException> {
   public:

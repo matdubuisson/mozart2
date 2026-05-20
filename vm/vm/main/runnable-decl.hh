@@ -37,7 +37,7 @@ namespace mozart {
 // tpCount reflects the number of valid ThreadPriority's
 // And you probably don't want to add or remove existing ThreadPriority's
 enum ThreadPriority {
-  tpLow, tpMiddle, tpHi,
+  tpLow, tpMiddle, tpHi, tpSystem,
   tpCount
 };
 
@@ -212,11 +212,15 @@ public:
   /** Tells if the thread is terminated */
   bool isTerminated() { return _terminated; }
 
-  /** Tells if the thread is deaddisp */
+  /** Tells if the thread is dead */
   bool isDead() { return _dead; }
 
-  /** Tells if the runnable is a normal thread */
-  virtual bool isEmulatedThread() { return false; }
+  /** Tells if the thread is preemptible */
+  bool isPreemptible() { return _preemptible; }
+
+  void setPreemptible(bool preemptible) {
+    _preemptible = preemptible;
+  }
 
   /**
    * Resumes the thread
@@ -346,6 +350,7 @@ private:
   bool _runnable;
   bool _terminated;
   bool _dead;
+  bool _preemptible;
 
   bool _raiseOnBlock;
 

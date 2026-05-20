@@ -71,6 +71,16 @@ VirtualMachine::run_return_type VirtualMachine::run() {
     // Run the thread
     assert(currentThread->isRunnable());
     _currentThread = currentThread;
+
+    std::string priority = "";
+    switch (currentThread->getPriority()) {
+      case tpLow: priority = "low"; break;
+      case tpMiddle: priority = "middle"; break;
+      case tpHi: priority = "high"; break;
+      case tpSystem: priority = "system"; break;
+    }
+    std::cout << "Execute thread " << currentThread->getID() << " " << priority << std::endl;
+
     currentThread->run();
     _currentThread = nullptr;
 
