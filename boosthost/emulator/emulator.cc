@@ -437,7 +437,13 @@ int main(int argc, char** argv) {
       auto ImportRecord = buildRecord(
         vm, buildArity(vm, "import", "Boot"), BootModule);
 
-      ozcalls::asyncOzCall(vm, ApplyProc, ImportRecord, OptVar::build(vm));
+      Thread *debuggerThread = ozcalls::asyncOzCall(vm, ApplyProc, ImportRecord, OptVar::build(vm));
+      if (!debuggerThread) {
+        std::cerr << "panic: could not access debugger thread" << std::endl;
+        return false;
+      }
+      debuggerThread->setPriority(ThreadPriority::tpSystem);
+      debuggerThread->setPreemptible(false); // The thread is responsible of its own preemption
 
       debuggerFunctor.reset();
     }
