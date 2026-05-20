@@ -26,9 +26,17 @@
 %%
 %% Module
 %%
-Bool = bool(is:      IsBool
-            and:     And
-            'or':    Or
-            'not':   Not
-            'true':  true
-            'false': false)
+local
+   proc {BoolToString Boolean ?String}
+      if Boolean then String = "true"
+      else String = "false" end
+   end
+in
+   Bool = bool(is:      IsBool
+               and:     And
+               'or':    Or
+               'not':   Not
+               'true':  true
+               'false': false
+               toString: BoolToString)
+end
