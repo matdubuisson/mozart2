@@ -183,39 +183,6 @@ public:
     );
   }
 
-  // class GetThreadStates: public Builtin<GetThreadStates> {
-  // public:
-  //   GetThreadStates(): Builtin("getThreadStates") {}
-
-  //   static void call(VM vm, In idNode, In fromNode, In toNode, Out result) {
-  //     size_t id = getArgument<size_t>(vm, idNode);
-  //     size_t from = getArgument<size_t>(vm, fromNode);
-  //     size_t to = getArgument<size_t>(vm, toNode);
-
-  //     OzListBuilder builder(vm);
-
-  //     RunnableList& runnables = vm->getIntrospection().getThreads(vm);
-  //     size_t i = 0;
-  //     for (RunnableList::iterator iter = runnables.begin();
-  //       iter != runnables.end() && i < to; iter++, i++) {
-  //       if (i < from) continue;
-
-  //       Runnable* runnable = static_cast<Runnable*>(*iter);
-  //       builder.push_back(vm, buildThreadStateRecord(vm, runnable));
-  //     }
-
-  //     result = buildRecord(vm,
-  //       buildArity(vm,
-  //         "threadStates",
-  //         "length",
-  //         "list"
-  //       ),
-  //       build(vm, runnables.size()),
-  //       builder.get(vm)
-  //     );
-  //   }
-  // };
-
   class GetThreadStatus: public Builtin<GetThreadStatus> {
   public:
     GetThreadStatus(): Builtin("getThreadStatus") {}
@@ -300,6 +267,80 @@ public:
     }
   };
 
+  static inline
+  UnstableNode getThreadIdsList(VM vm, size_t from, size_t to) {
+    OzListBuilder builder(vm);
+
+    RunnableList& runnables = vm->getIntrospection().getThreads(vm);
+    size_t i = 0;
+    for (RunnableList::iterator iter = runnables.begin();
+      iter != runnables.end() && i < to; iter++, i++) {
+      if (i < from) continue;
+
+      Runnable* runnable = static_cast<Runnable*>(*iter);
+      builder.push_back(vm, build(vm, runnable->getId()));
+    }
+
+    return builder.get(vm);
+  }
+
+  class GetThreadIds: public Builtin<GetThreadIds> {
+  public:
+    GetThreadIds(): Builtin("getThreadIds") {}
+
+    static void call(VM vm, In fromNode, In toNode, Out result) {
+      size_t from = getArgument<size_t>(vm, fromNode);
+      size_t to = getArgument<size_t>(vm, toNode);
+      result = getThreadIdsList(vm, from, to);
+    }
+  };
+
+  class GetAllThreadIds: public Builtin<GetAllThreadIds> {
+  public:
+    GetAllThreadIds(): Builtin("getAllThreadIds") {}
+
+    static void call(VM vm, Out result) {
+      result = getThreadIdsList(vm, 0, SIZE_MAX);
+    }
+  };
+
+  static inline
+  UnstableNode getThreadStatesList(VM vm, size_t from, size_t to) {
+    OzListBuilder builder(vm);
+
+    RunnableList& runnables = vm->getIntrospection().getThreads(vm);
+    size_t i = 0;
+    for (RunnableList::iterator iter = runnables.begin();
+      iter != runnables.end() && i < to; iter++, i++) {
+      if (i < from) continue;
+
+      Runnable* runnable = static_cast<Runnable*>(*iter);
+      builder.push_back(vm, buildThreadStateRecord(vm, runnable));
+    }
+
+    return builder.get(vm);
+  }
+
+  class GetThreadStates: public Builtin<GetThreadStates> {
+  public:
+    GetThreadStates(): Builtin("getThreadStates") {}
+
+    static void call(VM vm, In fromNode, In toNode, Out result) {
+      size_t from = getArgument<size_t>(vm, fromNode);
+      size_t to = getArgument<size_t>(vm, toNode);
+      result = getThreadStatesList(vm, from, to);
+    }
+  };
+
+  class GetAllThreadStates: public Builtin<GetAllThreadStates> {
+  public:
+    GetAllThreadStates(): Builtin("getAllThreadStates") {}
+
+    static void call(VM vm, Out result) {
+      result = getThreadStatesList(vm, 0, SIZE_MAX);
+    }
+  };
+
   class DisplayThread: public Builtin<DisplayThread> {
   public:
     DisplayThread(): Builtin("displayThread") {}
@@ -330,13 +371,13 @@ public:
     }
   };
 
-  class GetTotalThreadsCount: public Builtin<GetTotalThreadsCount> {
+  class GetThreadsCount: public Builtin<GetThreadsCount> {
   public:
-    GetTotalThreadsCount(): Builtin("getTotalThreadsCount") {}
+    GetThreadsCount(): Builtin("getThreadsCount") {}
 
     static void call(VM vm, Out result) {
       Introspection introspection;
-      result = build(vm, vm->getIntrospection().getTotalThreadsCount(vm));
+      result = build(vm, vm->getIntrospection().getThreadsCount(vm));
     }
   };
 
@@ -407,12 +448,12 @@ public:
     }
   };
 
-  class GetTotalVariablesCount: public Builtin<GetTotalVariablesCount> {
+  class GetVariablesCount: public Builtin<GetVariablesCount> {
   public:
-    GetTotalVariablesCount(): Builtin("getTotalVariablesCount") {}
+    GetVariablesCount(): Builtin("getVariablesCount") {}
 
     static void call(VM vm, Out result) {
-      result = build(vm, vm->getIntrospection().getTotalVariablesCount(vm));
+      result = build(vm, vm->getIntrospection().getVariablesCount(vm));
     }
   };
 };

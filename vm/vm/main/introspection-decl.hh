@@ -57,7 +57,7 @@ public:
 
   size_t getPassiveThreadsCount(VM vm);
 
-  size_t getTotalThreadsCount(VM vm);
+  size_t getThreadsCount(VM vm);
 
   /* ========== Nodes stats ========== */
 public:
@@ -150,7 +150,7 @@ public:
 
   size_t getUnBoundVariablesCount(VM vm);
 
-  size_t getTotalVariablesCount(VM vm);
+  size_t getVariablesCount(VM vm);
 };
 
 }

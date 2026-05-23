@@ -1,6 +1,6 @@
 %%%
 %%% Authors:
-%%%   
+%%%   Mattéo Dubuisson
 %%%
 %%% Contributors:
 %%%   
@@ -38,19 +38,19 @@ define
       threads: threads(
         active: {Boot_Introspection.getActiveThreadsCount $}
         passive: {Boot_Introspection.getPassiveThreadsCount $}
-        total: {Boot_Introspection.getTotalThreadsCount $}
+        total: {Boot_Introspection.getThreadsCount $}
       )
       variables: variables(
         bound: {Boot_Introspection.getBoundVariablesCount $}
         unbound: {Boot_Introspection.getUnBoundVariablesCount $}
-        total: {Boot_Introspection.getTotalVariablesCount $}
+        total: {Boot_Introspection.getVariablesCount $}
       )
     )
   end
 
   proc {GetThreadStatus Thread ?Status}
     Status = 'thread'(
-      id: {Boot_Thread.getID Thread $}
+      id: {Boot_Thread.getId Thread $}
       priority: {Boot_Thread.getPriority Thread $}
       preemptible: {Boot_Thread.isPreemptible Thread $}
     )
@@ -75,19 +75,27 @@ define
     in
       Status = {GetThreadStatus This $}
       
+      /*
+        It ensures the debugger will not be preempted during its analysis
+        and so risking to produce an inconsistent result. However it is
+        responsible to release the VM often to let other threads
+        enough running time
+      */
       if Status.preemptible andthen NonPreemptible then
         {Boot_Thread.setPreemptible This false}
       end
       
+      % Shows the next running thread along with the next byte code instruction
       local
         NextThread = {Boot_Introspection.getNextScheduledThread false $}
       in
         {Boot_System.printVS MARKER#": "#
           "Next scheduled thread is: "#
-          {Int.toString {Boot_Thread.getID NextThread $} $}
+          {Int.toString {Boot_Thread.getId NextThread $} $}
         false true}
       end
 
+      % Shows the debugger's thread status
       {Boot_System.printVS MARKER#
         "(id: "#{Int.toString Status.id $}#
         ", "#
@@ -97,11 +105,64 @@ define
         "): "
         false false}
 
+      /*
+        Terminal commands management and execution of them
+      */
       Command = {Boot_System.inputVS $}
 
       %%%%%%%% help
       case Command of "help" then
         {Boot_System.printVS "Useful help doc will be here" false true}
+        {DefaultLoop}
+
+      [] "count" then
+        Arguments = {Boot_System.inputVSLine $}
+        SplitArguments = {String.tokens Arguments 32 $}.2 % "First argument is ' '"
+      in
+        {Boot_System.printRepr SplitArguments false true}
+        case SplitArguments of Aggregate|Options then
+          case Aggregate of "threads" then
+            case Options of nil then
+              {Boot_System.printVS
+                "\t=>Active threads count: "#
+                {Int.toString
+                  {Boot_Introspection.getActiveThreadsCount $} $
+                }#
+                "\n\t=>Passive threads count: "#
+                {Int.toString
+                  {Boot_Introspection.getPassiveThreadsCount $} $
+                }#
+                "\n\t=>Threads count: "#
+                {Int.toString
+                  {Boot_Introspection.getThreadsCount $} $
+                }
+                false true}
+            [] ["active"] then
+              {Boot_System.printVS "\t=>Active threads count: "#
+                {Int.toString
+                  {Boot_Introspection.getActiveThreadsCount $} $
+                }
+                false true}
+            [] ["passive"] then
+              {Boot_System.printVS "\t=>Passive threads count: "#
+                {Int.toString
+                  {Boot_Introspection.getPassiveThreadsCount $} $
+                }
+                false true}
+            [] ["all"] then
+              {Boot_System.printVS "\t=>Threads count: "#
+                {Int.toString
+                  {Boot_Introspection.getThreadsCount $} $
+                }
+                false true}
+            else
+              {Boot_System.printVS MARKER#": invalid options for aggregate '"#Aggregate#"'" true true}
+            end
+          else
+            {Boot_System.printVS MARKER#": invalid aggregate '"#Aggregate#"'" true true}
+          end
+        end
+
         {DefaultLoop}
 
       %%%%%%%% preemptible
@@ -173,6 +234,13 @@ define
         {DefaultLoop}
       end
     else
+      /*
+        As every system threads run once before running only one other thread,
+        to let execute N threads before running the debugger with have to
+        request preemption N times. Once the counter comes back to 0 it means
+        N thread have been scheduled N times however the number of executed
+        instructions is not determined with this action
+      */
       {Boot_Thread.requestPreemption This}
       {Loop NonPreemptible NContinues - 1}
     end

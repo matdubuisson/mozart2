@@ -108,7 +108,7 @@ void Introspection::displayThread(VM vm, Runnable* runnable) {
 /* ========== Threads stats ========== */
 
 inline
-size_t getThreadsCount(RunnableList& threads, std::function<bool(Runnable*)> condition) {
+size_t getThreadsAggregate(RunnableList& threads, std::function<bool(Runnable*)> condition) {
   size_t count = 0;
 
   for (iterator iter = threads.begin(); iter != threads.end(); iter++) {
@@ -122,21 +122,21 @@ size_t getThreadsCount(RunnableList& threads, std::function<bool(Runnable*)> con
 
 inline
 size_t Introspection::getActiveThreadsCount(VM vm) {
-  return getThreadsCount(vm->aliveThreads, [](Runnable* thread) {
+  return getThreadsAggregate(vm->aliveThreads, [](Runnable* thread) {
     return thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
   });
 }
 
 inline
 size_t Introspection::getPassiveThreadsCount(VM vm) {
-  return getThreadsCount(vm->aliveThreads, [](Runnable* thread) {
+  return getThreadsAggregate(vm->aliveThreads, [](Runnable* thread) {
     return !thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
   });
 }
 
 inline
-size_t Introspection::getTotalThreadsCount(VM vm) {
-  return getThreadsCount(vm->aliveThreads, [](Runnable* thread) {
+size_t Introspection::getThreadsCount(VM vm) {
+  return getThreadsAggregate(vm->aliveThreads, [](Runnable* thread) {
     return !thread->isDead() && !thread->isTerminated();
   });
 }
@@ -279,7 +279,7 @@ size_t Introspection::getUnBoundVariablesCount(VM vm) {
 }
 
 inline
-size_t Introspection::getTotalVariablesCount(VM vm) {
+size_t Introspection::getVariablesCount(VM vm) {
   return 0;
 }
 
