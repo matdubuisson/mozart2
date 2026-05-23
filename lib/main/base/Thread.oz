@@ -29,42 +29,71 @@
 %% Module
 %%
 local
-   GetID             = Boot_Thread.getID
-   GetKindID         = Boot_Thread.getKindID
-   GetGenerationID   = Boot_Thread.getGenerationID
-   GetThreadPriority = Boot_Thread.getPriority
-   SetThreadPriority = Boot_Thread.setPriority
-   ThisThread        = Boot_Thread.this
-   fun {GetThisPriority}
-      {GetThreadPriority {ThisThread}}
-   end
-   proc {SetThisPriority I}
-      {SetThreadPriority {ThisThread} I}
-   end
-in
+   % Thread getters
+   This                 = Boot_Thread.this
+   GetThread            = Boot_Thread.getThread
 
-   Thread= 'thread'(getID:              GetID
-                    getKindID:          GetKindID
-                    getGenerationID:    GetGenerationID
-                    setPriority:        SetThreadPriority
-                    getPriority:        GetThreadPriority
-                    setThisPriority:    SetThisPriority
-                    getThisPriority:    GetThisPriority
-                    this:               ThisThread
-                    is:                 IsThread
-                    /*suspend:            Boot_Thread.suspend
-                    resume:             Boot_Thread.resume*/
-                    preempt:            proc {$ T}
-                                           % TODO
-                                           skip
-                                        end
-                    terminate:          proc {$ T}
-                                           {Thread.injectException T
-                                            {Exception.system
-                                             kernel(terminate)}}
-                                        end
-                    injectException:    Boot_Thread.injectException
-                    state:              Boot_Thread.state
-                    /*isSuspended:        Boot_Thread.isSuspended*/)
+   % Ids getters
+   GetId                = Boot_Thread.getId
+   GetKindId            = Boot_Thread.getKindId
+   GetGenerationId      = Boot_Thread.getGenerationId
+
+   % Priority control
+   GetPriority          = Boot_Thread.getPriority
+   SetPriority          = Boot_Thread.setPriority
+
+   % State getters
+   IsRunnable           = Boot_Thread.isRunnable
+   IsTerminated         = Boot_Thread.isRunnable
+   IsDead               = Boot_Thread.isRunnable
+   State                = Boot_Thread.state
+   GetState             = Boot_Thread.getState
+
+   % Exception injection
+   InjectException      = Boot_Thread.injectException
+
+   % Preemption control
+   IsPreempted          = Boot_Thread.isPreempted
+   IsPreemptible        = Boot_Thread.isPreemptible
+   SetPreemptible       = Boot_Thread.setPreemptible
+
+   Resume               = Boot_Thread.resume
+   Suspend              = Boot_Thread.suspend
+   Preempt              = Boot_Thread.preempt
+   Kill                 = Boot_Thread.kill
+in
+   Thread = 'thread'(is:                  IsThread
+                     this:                This
+                     getThread:           GetThread
+
+                     getId:               GetId
+                     getKindId:           GetKindId
+                     getGenerationId:     GetGenerationId
+
+                     getPriority:         GetPriority
+                     setPriority:         SetPriority
+                     
+                     isRunnable:          IsRunnable
+                     isTerminated:        IsTerminated
+                     isDead:              IsDead
+                     state:               State
+                     getState:            GetState
+
+                     injectException:     InjectException
+
+                     isPreempted:         IsPreempted
+                     isPreemptible:       IsPreemptible
+                     setPreemptible:      SetPreemptible
+
+                     resume:              Resume
+                     suspend:             Suspend
+                     preempt:             Preempt
+                     kill:                Kill
+                     terminate:           proc {$ T}
+                                                {Thread.injectException T
+                                                   {Exception.system
+                                                   kernel(terminate)}}
+                                          end
+   )
 
 end

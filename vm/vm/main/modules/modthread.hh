@@ -10,11 +10,11 @@
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// THIS SOFTWARE IS PROVIdED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 // ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIdENTAL, SPECIAL, EXEMPLARY, OR
 // CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -60,6 +60,11 @@ public:
     }
   };
 
+  /**
+   * @brief Thread getters
+   * 
+   */
+
   class This: public Builtin<This> {
   public:
     This(): Builtin("this") {}
@@ -69,35 +74,56 @@ public:
     }
   };
 
-  class GetID: public Builtin<GetID> {
+  class GetThread: public Builtin<GetThread> {
   public:
-    GetID(): Builtin("getID") {}
+    GetThread(): Builtin("getThread") {}
 
-    static void call(VM vm, In thread, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, thread);
-      result = build(vm, runnable->getID());
+    static void call(VM vm, In threadId, Out result) {
+      size_t id = getArgument<size_t>(vm, threadId);
+      result = ReifiedThread::build(vm,
+        vm->getIntrospection().getThread(vm, id));
     }
   };
 
-  class GetKindID: public Builtin<GetKindID> {
+  /**
+   * @brief Ids getters
+   * 
+   */
+
+  class GetId: public Builtin<GetId> {
   public:
-    GetKindID(): Builtin("getKindID") {}
+    GetId(): Builtin("getId") {}
 
     static void call(VM vm, In thread, Out result) {
       Runnable* runnable = getArgument<Runnable*>(vm, thread);
-      result = build(vm, runnable->getKindID());
+      result = build(vm, runnable->getId());
     }
   };
 
-  class GetGenerationID: public Builtin<GetGenerationID> {
+  class GetKindId: public Builtin<GetKindId> {
   public:
-    GetGenerationID(): Builtin("getGenerationID") {}
+    GetKindId(): Builtin("getKindId") {}
 
     static void call(VM vm, In thread, Out result) {
       Runnable* runnable = getArgument<Runnable*>(vm, thread);
-      result = build(vm, runnable->getGenerationID());
+      result = build(vm, runnable->getKindId());
     }
   };
+
+  class GetGenerationId: public Builtin<GetGenerationId> {
+  public:
+    GetGenerationId(): Builtin("getGenerationId") {}
+
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->getGenerationId());
+    }
+  };
+
+  /**
+   * @brief Priority control
+   * 
+   */
 
   class GetPriority: public Builtin<GetPriority> {
   public:
@@ -142,6 +168,95 @@ public:
     }
   };
 
+  /**
+   * @brief Status getters
+   * 
+   */
+
+  class IsRunnable: public Builtin<IsRunnable> {
+  public:
+    IsRunnable(): Builtin("isRunnable") {}
+
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->isRunnable());
+    }
+  };
+
+  class IsTerminated: public Builtin<IsTerminated> {
+  public:
+    IsTerminated(): Builtin("isTerminated") {}
+
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->isTerminated());
+    }
+  };
+
+  class IsDead: public Builtin<IsDead> {
+  public:
+    IsDead(): Builtin("isDead") {}
+
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->isDead());
+    }
+  };
+
+  class State: public Builtin<State> {
+  public:
+    State(): Builtin("state") {}
+
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+
+      if (runnable->isTerminated())
+        result = build(vm, "terminated");
+      else if (runnable->isRunnable())
+        result = build(vm, "runnable");
+      else
+        result = build(vm, "blocked");
+    }
+  };
+
+  class GetState: public Builtin<GetState> {
+  public:
+    GetState(): Builtin("getState") {}
+
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = ModIntrospection::buildThreadStatusRecord(vm, runnable);
+    }
+  };
+
+  /**
+   * @brief Exception injection
+   * 
+   */
+  class InjectException: public Builtin<InjectException> {
+  public:
+    InjectException(): Builtin("injectException") {}
+
+    static void call(VM vm, In thread, In exception) {
+      ThreadLike(thread).injectException(vm, exception);
+    }
+  };
+
+  /**
+   * @brief Preemption control
+   * 
+   */
+
+  class IsPreempted: public Builtin<IsPreempted> {
+  public:
+    IsPreempted(): Builtin("isPreempted") {}
+
+    static void call(VM vm, In thread, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      result = build(vm, runnable->isPreempted());
+    }
+  };
+
   class IsPreemptible: public Builtin<IsPreemptible> {
   public:
     IsPreemptible(): Builtin("isPreemptible") {}
@@ -163,48 +278,43 @@ public:
     }
   };
 
-  class RequestPreemption: public Builtin<RequestPreemption> {
+  class Resume: public Builtin<Resume> {
   public:
-    RequestPreemption(): Builtin("requestPreemption") {}
+    Resume(): Builtin("resume") {}
 
     static void call(VM vm, In thread) {
       Runnable* runnable = getArgument<Runnable*>(vm, thread);
-      runnable->requestPreemption();
+      runnable->resume();
     }
   };
 
-  // class SetNonPreemptible: public Builtin<SetNonPreemptible> {
-  // public:
-  //   SetNonPreemptible(): Builtin("setNonPreemptible") {}
-
-  //   static void call(VM vm, In thread, In priority) {
-  //     Runnable* runnable = getArgument<Runnable*>(vm, thread);
-  //     runnable->setPreemptible(false);
-  //   }
-  // };
-
-  class InjectException: public Builtin<InjectException> {
+  class Suspend: public Builtin<Suspend> {
   public:
-    InjectException(): Builtin("injectException") {}
+    Suspend(): Builtin("suspend") {}
 
-    static void call(VM vm, In thread, In exception) {
-      ThreadLike(thread).injectException(vm, exception);
-    }
-  };
-
-  class State: public Builtin<State> {
-  public:
-    State(): Builtin("state") {}
-
-    static void call(VM vm, In thread, Out result) {
+    static void call(VM vm, In thread) {
       Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      runnable->suspend();
+    }
+  };
 
-      if (runnable->isTerminated())
-        result = build(vm, "terminated");
-      else if (runnable->isRunnable())
-        result = build(vm, "runnable");
-      else
-        result = build(vm, "blocked");
+  class Preempt: public Builtin<Preempt> {
+  public:
+    Preempt(): Builtin("preempt") {}
+
+    static void call(VM vm, In thread) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      runnable->preempt();
+    }
+  };
+
+  class Kill: public Builtin<Kill> {
+  public:
+    Kill(): Builtin("kill") {}
+
+    static void call(VM vm, In thread) {
+      Runnable* runnable = getArgument<Runnable*>(vm, thread);
+      runnable->kill();
     }
   };
 };
