@@ -53,7 +53,7 @@ private:
       gr->copyUnstableNode(_value, from._value);
     }
 
-    size_t run(size_t _) {
+    size_t doRun(size_t _) {
       MOZART_TRY(vm) {
         unify(vm, _var, _value);
       } MOZART_CATCH(vm, kind, node) {

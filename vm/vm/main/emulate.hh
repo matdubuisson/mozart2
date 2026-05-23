@@ -240,6 +240,11 @@ private:
 
   static constexpr size_t InitXRegisters = 64;
 public:
+  struct Statistics {
+    size_t operationsCount = 0;
+    size_t bindsCount = 0;
+  };
+public:
   /**
    * Creates a new light weight thread without arguments
    * @param vm The virtual machine
@@ -272,8 +277,15 @@ public:
   inline
   Thread(GR gr, Thread& from);
 
-  /** Runs the thread */
-  size_t run(size_t maxInstructionsNumber);
+  /**
+   * @brief Executes some instructions of the current thread until a preemption
+   * is requested or the thread being suspended
+   * 
+   * @param maxInstructionsNumber An optional maximum number of operations to
+   * execute (default SIZE_MAX)
+   * @return The number of executed operations
+   */
+  size_t doRun(size_t maxInstructionsNumber);
   
   /** Kills the thread */
   void kill() {
@@ -284,6 +296,10 @@ public:
   /** Gets a reference on the termination variable returned by the thread at end of life */
   StableNode& getTerminationVar() {
     return _terminationVar;
+  }
+
+  Statistics getStatistics() {
+    return _statistics;
   }
 
   /**
@@ -412,7 +428,6 @@ private:
             StaticArray<StableNode>& gregs,
             StaticArray<StableNode>& kregs,
             DebugEntry&& debugEntry,
-            bool& preempted,
             std::ptrdiff_t opcodeArgCount = 2);
 
   /**
@@ -426,8 +441,7 @@ private:
                StaticArray<UnstableNode>& yregs,
                StaticArray<StableNode>& gregs,
                StaticArray<StableNode>& kregs,
-               DebugEntry&& debugEntry,
-               bool& preempted);
+               DebugEntry&& debugEntry);
 
   /**
    * Gets call information for a reflective target containing a callable object
@@ -475,8 +489,7 @@ private:
                     XRegArray* xregs,
                     StaticArray<UnstableNode>& yregs,
                     StaticArray<StableNode>& gregs,
-                    StaticArray<StableNode>& kregs,
-                    bool& preempted);
+                    StaticArray<StableNode>& kregs);
 
   /**
    * Applies a failure on the provided information for the thread.
@@ -574,6 +587,8 @@ private:
   ThreadStack stack;
   StableNode* injectedException;
   StableNode _terminationVar;
+
+  Statistics _statistics;
 };
 
 }

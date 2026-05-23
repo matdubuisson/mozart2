@@ -63,7 +63,7 @@ namespace internal {
 
     DummyThread(GR gr, DummyThread& from): Runnable(gr, from) {}
 
-    size_t run(size_t _) {
+    size_t doRun(size_t _) {
       terminate();
       return 0;
     }

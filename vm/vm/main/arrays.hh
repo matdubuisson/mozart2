@@ -30,6 +30,8 @@
 
 #include "core-forward-decl.hh"
 
+#include <iostream>
+
 namespace mozart {
 
 /**
@@ -38,6 +40,37 @@ namespace mozart {
  */
 template <class T>
 class StaticArray {
+public:
+  struct iterator {
+  public:
+    iterator(size_t i, T* array): i(i), array(array) {}
+
+    bool operator==(const iterator& other) {
+      return i == other.i;
+    }
+
+    bool operator!=(const iterator& other) {
+      return i != other.i;
+    }
+
+    iterator operator++() {
+      ++i;
+      return *this;
+    }
+    
+    iterator operator++(int) {
+      iterator oldIterator = *this;
+      ++i;
+      return oldIterator;
+    }
+
+    T* operator*() {
+      return &array[i];
+    }
+  private:
+    size_t i;
+    T* array;
+  };
 public:
   /** Create an array with s elements */
   StaticArray(T* array, size_t s) : _array(array) {
@@ -52,6 +85,14 @@ public:
   /** Convert from nullptr */
   StaticArray(std::nullptr_t nullp) : _array(nullptr) {
     _size = 0;
+  }
+
+  iterator begin() {
+    return iterator(0, _array);
+  }
+
+  iterator end() {
+    return iterator(_size, _array);
   }
 
   /** Gets the size of the array */

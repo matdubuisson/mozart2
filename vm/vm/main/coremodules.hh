@@ -56,6 +56,8 @@
 #include "modules/modserializer.hh"
 #include "modules/modspace.hh"
 #include "modules/modsystem.hh"
+#include "modules/modvirtualmachine.hh"
+#include "modules/modintrospection.hh"
 #include "modules/modthread.hh"
 #include "modules/modtime.hh"
 #include "modules/modtuple.hh"
@@ -63,7 +65,5 @@
 #include "modules/modvirtualbytestring.hh"
 #include "modules/modvirtualstring.hh"
 #include "modules/modweakref.hh"
-#include "modules/modintrospection.hh"
-#include "modules/modvirtualmachine.hh"
 
 #endif // MOZART_COREMODULES_H

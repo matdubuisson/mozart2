@@ -74,19 +74,19 @@ VirtualMachine::run_return_type VirtualMachine::run() {
     assert(currentThread->isRunnable());
     _currentThread = currentThread;
 
-    std::string priority = "";
-    switch (currentThread->getPriority()) {
-      case tpLow: priority = "low"; break;
-      case tpMiddle: priority = "middle"; break;
-      case tpHi: priority = "high"; break;
-      case tpSystem: priority = "system"; break;
-    }
-    std::cout << "=> Execute thread " << currentThread->getID() << " " << priority << std::endl;
+    // std::string priority = "";
+    // switch (currentThread->getPriority()) {
+    //   case tpLow: priority = "low"; break;
+    //   case tpMiddle: priority = "middle"; break;
+    //   case tpHi: priority = "high"; break;
+    //   case tpSystem: priority = "system"; break;
+    // }
+    // std::cout << "=> Execute thread " << currentThread->getID() << " " << priority << std::endl;
 
     size_t nOperations = currentThread->run(
       _nOperationsWithoutSystemThreads);
 
-    std::cout << "==> " << nOperations << " operations executed for thread " << currentThread->getID() << " " << priority << std::endl;
+    // std::cout << "==> " << nOperations << " operations executed for thread " << currentThread->getID() << " " << priority << std::endl;
 
     _currentThread = nullptr;
 

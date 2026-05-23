@@ -10,11 +10,11 @@
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// THIS SOFTWARE IS PROVIdED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 // ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIdENTAL, SPECIAL, EXEMPLARY, OR
 // CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 // SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -148,6 +148,13 @@ private:
 class Runnable {
 public:
   static size_t _everCreatedThreadsCount;
+
+  struct Statistics {
+    size_t runsCount = 0;
+    size_t resumesCount = 0;
+    size_t suspendsCount = 0;
+    size_t suspendsOnVarCount = 0;
+  };
 public:
   /**
    * Initializes a thread defined as a VM, a space and a priority level
@@ -178,20 +185,22 @@ public:
   /** @returns The thread id representing that the thread is the 'id' th
    * thread ever created
    */
-  size_t getID() { return _id; }
+  size_t getId() { return _id; }
 
   /** @returns The thread kind id representing from which code this thread
    * has been generated
    */
-  size_t getKindID() { return _kindId; }
+  size_t getKindId() { return _kindId; }
 
   /** @returns The thread generation id representing the nth thread generated
    * from the same code
    */
-  size_t getGenerationID() { return _generationId; }
+  size_t getGenerationId() { return _generationId; }
 
   /** @returns The priority of the thread */
   ThreadPriority getPriority() { return _priority; }
+
+  Statistics getStatistics() { return _statistics; }
 
   /**
    * Sets the priority of the thread
@@ -204,16 +213,34 @@ public:
   /**
    * Runs the thread
    */
-  virtual size_t run(size_t maxInstructionsNumber = SIZE_MAX) = 0;
+  inline
+  size_t run(size_t maxInstructionsNumber = SIZE_MAX) {
+    _statistics.runsCount++;
+    _statistics.resumesCount++;
+
+    _preempted = false;
+
+    return doRun(maxInstructionsNumber);
+  }
+
+  virtual size_t doRun(size_t maxInstructionsNumber) = 0;
 
   /** Tells if the thread is runnable */
+  inline
   bool isRunnable() { return _runnable; }
 
   /** Tells if the thread is terminated */
+  inline
   bool isTerminated() { return _terminated; }
 
   /** Tells if the thread is dead */
+  inline
   bool isDead() { return _dead; }
+
+  inline
+  bool isPreempted() {
+    return _preempted || _terminated || _dead || !_runnable;
+  }
 
   /** Tells if the thread is preemptible */
   bool isPreemptible() { return _preemptible; }
@@ -248,6 +275,11 @@ public:
   inline
   void suspendOnVar(VM vm, RichNode variable, bool skipUnschedule = true);
 
+  inline
+  void preempt() {
+    _preempted = true;
+  }
+
   /**
    * Kills/Disposes the thread
    * @note The thread must not be dead or terminated
@@ -272,16 +304,6 @@ public:
   /** Sets raise on block */
   void setRaiseOnBlock(bool value) {
     _raiseOnBlock = value;
-  }
-
-  bool doesRequestPreemption() {
-    bool value = _preemptOnNextExecution;
-    _preemptOnNextExecution = false;
-    return value;
-  }
-
-  void requestPreemption() {
-    _preemptOnNextExecution = true;
   }
 
   /** Gets intermediate state */
@@ -357,14 +379,15 @@ private:
 
   ThreadPriority _priority;
 
+  Statistics _statistics;
+
   bool _runnable;
   bool _terminated;
   bool _dead;
-  bool _preemptible;
+  bool _preempted; // Is the thread preempted right now ?
+  bool _preemptible; // Can be the thread preempted during its execution ? => For system threads
 
   bool _raiseOnBlock;
-  bool _preemptOnNextExecution;
-
   StableNode _reification;
 
   IntermediateState _intermediateState;

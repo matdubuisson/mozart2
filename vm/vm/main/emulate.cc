@@ -306,7 +306,7 @@ Thread::Thread(GR gr, Thread& from): Runnable(gr, from) {
   gr->copyStableNode(_terminationVar, from._terminationVar);
 }
 
-size_t Thread::run(size_t maxInstructionsNumber) {
+size_t Thread::doRun(size_t maxInstructionsNumber) {
   // Local variable cache of fields
 
   VM const vm = this->vm;
@@ -337,10 +337,6 @@ size_t Thread::run(size_t maxInstructionsNumber) {
 #define GPC(offset) (gregs)[PC[offset]]
 #define KPC(offset) (kregs)[PC[offset]]
 
-  // Preemption
-
-  bool preempted = false;
-
   // Backup of the PC for some complex opcodes
 
   bool hasBackupPC = false;
@@ -361,9 +357,10 @@ size_t Thread::run(size_t maxInstructionsNumber) {
 
     // The big loop
 
-    while (!preempted && !doesRequestPreemption()
-      && instructionsNumber < maxInstructionsNumber) {
+    while (!isPreempted() && instructionsNumber < maxInstructionsNumber) {
       instructionsNumber++;
+
+      _statistics.operationsCount++;
 
       OpCode op = *PC;
 
@@ -566,112 +563,112 @@ size_t Thread::run(size_t maxInstructionsNumber) {
         case OpCallX: {
           call(XPC(1), IntPC(2), false,
                vm, abstraction, PC, yregCount,
-               xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+               xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpCallY: {
           call(YPC(1), IntPC(2), false,
                vm, abstraction, PC, yregCount,
-               xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+               xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpCallG: {
           call(GPC(1), IntPC(2), false,
                vm, abstraction, PC, yregCount,
-               xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+               xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpCallK: {
           call(KPC(1), IntPC(2), false,
                vm, abstraction, PC, yregCount,
-               xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+               xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpTailCallX: {
           call(XPC(1), IntPC(2), true,
                vm, abstraction, PC, yregCount,
-               xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+               xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpTailCallY: {
           call(YPC(1), IntPC(2), true,
                vm, abstraction, PC, yregCount,
-               xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+               xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpTailCallG: {
           call(GPC(1), IntPC(2), true,
                vm, abstraction, PC, yregCount,
-               xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+               xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpTailCallK: {
           call(KPC(1), IntPC(2), true,
                vm, abstraction, PC, yregCount,
-               xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+               xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpSendMsgX: {
           sendMsg(XPC(1), KPC(2), IntPC(3), false,
                   vm, abstraction, PC, yregCount,
-                  xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+                  xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpSendMsgY: {
           sendMsg(YPC(1), KPC(2), IntPC(3), false,
                   vm, abstraction, PC, yregCount,
-                  xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+                  xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpSendMsgG: {
           sendMsg(GPC(1), KPC(2), IntPC(3), false,
                   vm, abstraction, PC, yregCount,
-                  xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+                  xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpSendMsgK: {
           sendMsg(KPC(1), KPC(2), IntPC(3), false,
                   vm, abstraction, PC, yregCount,
-                  xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+                  xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpTailSendMsgX: {
           sendMsg(XPC(1), KPC(2), IntPC(3), true,
                   vm, abstraction, PC, yregCount,
-                  xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+                  xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpTailSendMsgY: {
           sendMsg(YPC(1), KPC(2), IntPC(3), true,
                   vm, abstraction, PC, yregCount,
-                  xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+                  xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpTailSendMsgG: {
           sendMsg(GPC(1), KPC(2), IntPC(3), true,
                   vm, abstraction, PC, yregCount,
-                  xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+                  xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
         case OpTailSendMsgK: {
           sendMsg(KPC(1), KPC(2), IntPC(3), true,
                   vm, abstraction, PC, yregCount,
-                  xregs, yregs, gregs, kregs, std::move(debugEntry), preempted);
+                  xregs, yregs, gregs, kregs, std::move(debugEntry));
           break;
         }
 
@@ -680,7 +677,6 @@ size_t Thread::run(size_t maxInstructionsNumber) {
 
           if (stack.empty()) {
             terminate();
-            preempted = true;
             break;
           }
 
@@ -768,22 +764,19 @@ size_t Thread::run(size_t maxInstructionsNumber) {
 
         case OpPatternMatchX: {
           patternMatch(vm, XPC(1), KPC(2),
-                       abstraction, PC, yregCount, xregs, yregs, gregs, kregs,
-                       preempted);
+                       abstraction, PC, yregCount, xregs, yregs, gregs, kregs);
           break;
         }
 
         case OpPatternMatchY: {
           patternMatch(vm, YPC(1), KPC(2),
-                       abstraction, PC, yregCount, xregs, yregs, gregs, kregs,
-                       preempted);
+                       abstraction, PC, yregCount, xregs, yregs, gregs, kregs);
           break;
         }
 
         case OpPatternMatchG: {
           patternMatch(vm, GPC(1), KPC(2),
-                       abstraction, PC, yregCount, xregs, yregs, gregs, kregs,
-                       preempted);
+                       abstraction, PC, yregCount, xregs, yregs, gregs, kregs);
           break;
         }
 
@@ -976,9 +969,11 @@ size_t Thread::run(size_t maxInstructionsNumber) {
               *writeDest = std::move(createdStruct);
             } else if (readDest.is<OptVar>()) {
               // Make sure to give an r-value ref, to avoid stabilizing the node
+              _statistics.bindsCount++;
               readDest.as<OptVar>().bind(vm, std::move(createdStruct));
               isStoreMode = true;
             } else if (readDest.is<Variable>()) {
+              _statistics.bindsCount++;
               readDest.as<Variable>().bind(vm, createdStruct);
               isStoreMode = true;
             } else {
@@ -991,6 +986,7 @@ size_t Thread::run(size_t maxInstructionsNumber) {
               for (size_t i = 0; i < length; i++)
                 array[i].init(vm, OptVar::build(vm));
 
+              _statistics.bindsCount++;
               DataflowVariable(readDest).bind(vm, createdStruct);
             }
           } else { // isStoreMode || readDest.isTransient()
@@ -1315,7 +1311,6 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
                   StaticArray<StableNode>& gregs,
                   StaticArray<StableNode>& kregs,
                   DebugEntry&& debugEntry,
-                  bool& preempted,
                   std::ptrdiff_t opcodeArgCount) {
   size_t formalArity = 0;
   ProgramCounter start = nullptr;
@@ -1366,8 +1361,8 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
 
   // Test for preemption
   // (there is no infinite execution path that does not traverse a call)
-  if (vm->testPreemption())
-    preempted = true;
+  if (isPreemptible() && vm->testPreemption())
+    preempt();
 }
 
 void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,
@@ -1378,8 +1373,7 @@ void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,
                      StaticArray<UnstableNode>& yregs,
                      StaticArray<StableNode>& gregs,
                      StaticArray<StableNode>& kregs,
-                     DebugEntry&& debugEntry,
-                     bool& preempted) {
+                     DebugEntry&& debugEntry) {
   // "Just make it work" implementation that always delegates to call()
 
   derefReflectiveTarget(vm, target);
@@ -1421,7 +1415,7 @@ void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,
   (*xregs)[0] = std::move(message);
   call(target, 1, isTailCall,
        vm, abstraction, PC, yregCount,
-       xregs, yregs, gregs, kregs, std::move(debugEntry), preempted, 3);
+       xregs, yregs, gregs, kregs, std::move(debugEntry), 3);
 }
 
 void Thread::doGetCallInfo(VM vm, RichNode& target, size_t& arity,
@@ -1451,8 +1445,7 @@ void Thread::patternMatch(VM vm, RichNode value, RichNode patterns,
                           XRegArray* xregs,
                           StaticArray<UnstableNode>& yregs,
                           StaticArray<StableNode>& gregs,
-                          StaticArray<StableNode>& kregs,
-                          bool& preempted) {
+                          StaticArray<StableNode>& kregs) {
   using namespace patternmatching;
 
   assert(patterns.is<Tuple>());
@@ -1562,10 +1555,9 @@ void Thread::applyRaise(VM vm, RichNode exception,
     // TODO Figure something better here that can cope with Mozart exceptions
     if (!handler.isTransient() && Callable(handler).isProcedure(vm) &&
         (Callable(handler).procedureArity(vm) == 1)) {
-      bool dummyPreempted = false;
       call(handler, 1, true,
            vm, abstraction, PC, yregCount, xregs, yregs, gregs, kregs,
-           std::move(debugEntry), dummyPreempted, -1);
+           std::move(debugEntry), -1);
     } else {
       // Uncaught exception
       std::cout << "Uncaught exception" << std::endl;

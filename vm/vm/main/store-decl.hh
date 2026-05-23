@@ -74,11 +74,13 @@ private:
     Accessor<T>::init(data.type, data.value, vm, std::forward<Args>(args)...);
   }
 
+public:
   /** Gets the type of the node */
   Type type() {
     return data.type;
   }
 
+private:
   /**
    * Gets access to the value of the node
    * @returns The value of the node TO-COMPLETE : what is the type ?

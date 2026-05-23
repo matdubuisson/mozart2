@@ -53,11 +53,9 @@ void ThreadQueue::dump() {
 
 Runnable* ThreadPool::getNext(bool includeSystemThreads) {
   do {
-    if (includeSystemThreads) {
-      // Thread system must execute once before all others
-      if (!queues[tpSystem].empty() && remainings[tpSystem] > 0) {
-        return getNext(tpSystem);
-      }
+    if (includeSystemThreads
+      && !queues[tpSystem].empty() && remainings[tpSystem] > 0) {
+      return getNext(tpSystem);
     }
 
     // While remainings[tpHi] > 0, return the first Hi-priority thread
@@ -84,12 +82,11 @@ Runnable* ThreadPool::getNext(ThreadPriority priority) {
 
 Runnable* ThreadPool::popNext(bool includeSystemThreads) {
   do {
-    if (includeSystemThreads) {
-      // Thread system must execute once before all others
-      if (!queues[tpSystem].empty() && remainings[tpSystem] > 0) {
-        remainings[tpSystem]--;
-        return popNext(tpSystem);
-      }
+    // Thread system must execute once before all others
+    if (includeSystemThreads
+      && !queues[tpSystem].empty() && remainings[tpSystem] > 0) {
+      remainings[tpSystem]--;
+      return popNext(tpSystem);
     }
 
     // Reset remainings[tpSystem] to the maximum value

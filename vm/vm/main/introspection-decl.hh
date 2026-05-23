@@ -46,6 +46,10 @@ public:
   RunnableList& getThreads(VM vm);
 
   Runnable* getThread(VM vm, size_t id);
+  
+  void displayNode(VM vm, UnstableNode& node);
+  // Tmp function for me testing stuff
+  void displayThread(VM vm, Runnable* runnable);
 
   /* ========== Threads stats ========== */
 
@@ -55,6 +59,91 @@ public:
 
   size_t getTotalThreadsCount(VM vm);
 
+  /* ========== Nodes stats ========== */
+public:
+  struct NodesProperties {
+    size_t nVariableNodes = 0;
+    size_t nValueNodes = 0;
+    size_t nStructuralNodes = 0;
+    size_t nTokenNodes = 0;
+
+    size_t nStableNodes = 0;
+    size_t nUnstableNodes = 0;
+
+    size_t nXNodes = 0;
+    size_t nYNodes = 0;
+    size_t nGNodes = 0;
+    size_t nKNodes = 0;
+
+    size_t stackDepth = 0; // Is irrelevant for an aggregate of several threads
+
+    size_t nNodes = 0;
+  };
+private:
+  void getNodesProperties(VM vm, Runnable* runnable, NodesProperties& properties);
+public:
+  NodesProperties getNodesProperties(VM vm);
+
+  NodesProperties getNodesProperties(VM vm, Runnable *runnable);
+
+public:
+  enum NodeStore {
+    xRegister,
+    yRegister,
+    gRegister,
+    kRegister
+  };
+
+  struct NodeDescription {
+    std::string type;
+    StructuralBehavior behavior;
+    bool isStable;
+    NodeStore store;
+    size_t index;
+  };
+// public:
+//   NodeDescription getNodeDescription(VM vm, Runnable* runnable, size_t index);
+
+//   StaticArray<NodeDescription> getNodeDescriptions(VM vm, Runnable* runnable,
+//     size_t from = 0, size_t to = SIZE_MAX);
+
+//   StaticArray<NodeDescription> getNodeDescriptions(VM vm,
+//     size_t from = 0, size_t to = SIZE_MAX);
+public:
+  inline
+  size_t getVariableNodesCount(VM vm) {
+    return getNodesProperties(vm).nVariableNodes;
+  }
+
+  inline
+  size_t getValueNodesCount(VM vm) {
+    return getNodesProperties(vm).nValueNodes;
+  }
+
+  inline
+  size_t getStructuralNodesCount(VM vm) {
+    return getNodesProperties(vm).nStructuralNodes;
+  }
+
+  inline
+  size_t getTokenNodesCount(VM vm) {
+    return getNodesProperties(vm).nTokenNodes;
+  }
+
+  inline
+  size_t getStableNodesCount(VM vm) {
+    return getNodesProperties(vm).nStableNodes;
+  }
+
+  inline
+  size_t getUnstableNodesCount(VM vm) {
+    return getNodesProperties(vm).nUnstableNodes;
+  }
+
+  inline
+  size_t getNodesCount(VM vm) {
+    return getNodesProperties(vm).nNodes;
+  }
 public:
   /* ========== Variables stats ========== */
   size_t getBoundVariablesCount(VM vm);

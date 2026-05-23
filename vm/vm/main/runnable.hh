@@ -98,8 +98,8 @@ void IntermediateState::rewind(VM vm) {
 Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
   vm(vm), _space(space), _priority(priority),
   _runnable(false), _terminated(false),
-  _dead(false), _preemptible(true), _raiseOnBlock(false),
-  _preemptOnNextExecution(false), _intermediateState(vm),
+  _dead(false), _preempted(false), _preemptible(true),
+  _raiseOnBlock(false), _intermediateState(vm),
   _replicate(nullptr), _id(_everCreatedThreadsCount++),
   _kindId(0), _generationId(0) {
 
@@ -121,10 +121,10 @@ Runnable::Runnable(GR gr, Runnable& from) :
   _runnable = from._runnable;
   _terminated = from._terminated;
   _dead = from._dead;
+  _preempted = from._preempted;
   _preemptible = from._preemptible;
 
   _raiseOnBlock = from._raiseOnBlock;
-  _preemptOnNextExecution = from._preemptOnNextExecution;
 
   _reification.init(vm, ReifiedThread::build(vm, this));
 
@@ -151,6 +151,9 @@ void Runnable::resume(bool skipSchedule) {
   assert(!_dead && !_terminated);
   assert(!_runnable);
 
+  _statistics.resumesCount++;
+
+  _preempted = false;
   _runnable = true;
   _space->notifyThreadResumed();
 
@@ -162,6 +165,9 @@ void Runnable::suspend(bool skipUnschedule) {
   assert(!_dead && !_terminated);
   assert(_runnable);
 
+  _statistics.suspendsCount++;
+
+  _preempted = true;
   _runnable = false;
   _space->notifyThreadSuspended();
 
@@ -171,6 +177,8 @@ void Runnable::suspend(bool skipUnschedule) {
 
 void Runnable::suspendOnVar(VM vm, RichNode variable, bool skipUnschedule) {
   assert(variable.isTransient() && !variable.is<FailedValue>());
+
+  _statistics.suspendsOnVarCount++;
 
   suspend(skipUnschedule);
 
@@ -211,6 +219,7 @@ void Runnable::terminate() {
   assert(!_dead && !_terminated);
   assert(_runnable);
 
+  _preempted = true;
   _runnable = false;
   _terminated = true;
 
@@ -220,6 +229,7 @@ void Runnable::terminate() {
 }
 
 void Runnable::dispose() {
+  _preempted = true;
   _runnable = false;
   _dead = true;
 
