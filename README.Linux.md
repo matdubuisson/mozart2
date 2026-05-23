@@ -230,6 +230,7 @@ Here we describe how to make a full compilation of the Mozart project : all pre-
 
 ```bash
 $ cmake -S . -B build/ -DMOZART_CACHED_BUILD=OFF -DClang_DIR=/usr/lib/cmake/clang/ -DLLVM_DIR=/usr/lib/cmake/llvm/ -DCMAKE_BUILD_TYPE=Release
+$ cd build/
 $ make -B gensources genboostsources && make
 ```
 

@@ -7,6 +7,7 @@
 # http://www.opensource.org/licenses/mit-license.php for terms and conditions.
 
 set(GMP_PREFIX "" CACHE PATH "Path to GMP prefix")
+log("GMP prefix: ${GMP_PREFIX}")
 
 find_path(GMP_INCLUDE_DIR gmp.h PATHS ${GMP_PREFIX}/include /usr/include /usr/local/include)
 find_library(GMP_LIBRARY libgmp.a PATHS ${GMP_PREFIX}/lib /usr/lib /usr/local/lib)
@@ -16,7 +17,7 @@ if(GMP_INCLUDE_DIR AND GMP_LIBRARY)
 endif()
 
 if(GMP_FOUND)
-  MESSAGE(STATUS "Found GMP: ${GMP_INCLUDE_DIR}/gmp.h and ${GMP_LIBRARY}")
+  log("Found GMP: ${GMP_INCLUDE_DIR}/gmp.h and ${GMP_LIBRARY}")
 else()
-  MESSAGE(STATUS "GMP not found")
+  log("GMP not found")
 endif()

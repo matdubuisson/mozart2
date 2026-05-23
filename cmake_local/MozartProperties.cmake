@@ -2,6 +2,8 @@ find_package(Git)
 
 include(TargetArch)
 
+log("CMake current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+
 # platform.os
 
 if(WIN32)
@@ -9,15 +11,18 @@ if(WIN32)
 else()
   string(TOLOWER "${CMAKE_SYSTEM_NAME}" MOZART_PROP_PLATFORM_OS)
 endif()
+log("Mozart properties platform os: ${MOZART_PROP_PLATFORM_OS}")
 
 # platform.arch
 
 target_architecture(MOZART_PROP_PLATFORM_ARCH)
+log("Mozart property platform architecture: ${MOZART_PROP_PLATFORM_ARCH}")
 
 # For source tarballs, oz.version and os.date
 # are exported id MozartConfigVersion.cmake
 include(MozartConfigVersion
 	RESULT_VARIABLE MOZART_SOURCE_TARBALL_BUILD OPTIONAL)
+log("Try to include optional MozartConfigVersion: ${MOZART_SOURCE_TARBALL_BUILD} (Mozart source tarball build)")
 
 # oz.version
 
@@ -28,6 +33,7 @@ if(NOT MOZART_SOURCE_TARBALL_BUILD)
     OUTPUT_VARIABLE git_describe_output
     ERROR_QUIET
     OUTPUT_STRIP_TRAILING_WHITESPACE)
+  log("Execute: ${GIT_EXECUTABLE} describe --dirty")
 
   if("${git_describe_output}" MATCHES "^v[0-9].+-[0-9]+-g[0-9a-f]+(-dirty)?$")
     string(REGEX REPLACE "^v(.+)-([0-9]+)-g([0-9a-f]+)((-dirty)?)$" "\\1+build.\\2.\\3\\4"
@@ -42,6 +48,8 @@ if(NOT MOZART_SOURCE_TARBALL_BUILD)
 
   unset(git_describe_output)
 endif()
+
+log("Mozart property OZ version: ${MOZART_PROP_OZ_VERSION}")
 
 # oz.date
 
@@ -58,6 +66,8 @@ if(NOT MOZART_SOURCE_TARBALL_BUILD)
   unset(git_date_output)
 endif()
 
+log("Mozart property OZ date: ${MOZART_PROP_OZ_DATE}")
+
 # Display which version we found
 
-message(STATUS "Mozart ${MOZART_PROP_OZ_VERSION} (${MOZART_PROP_OZ_DATE})")
+log("Mozart ${MOZART_PROP_OZ_VERSION} (${MOZART_PROP_OZ_DATE})")
