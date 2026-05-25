@@ -62,22 +62,22 @@ public:
   /* ========== Nodes stats ========== */
 public:
   struct NodesProperties {
-    size_t nVariableNodes = 0;
-    size_t nValueNodes = 0;
-    size_t nStructuralNodes = 0;
-    size_t nTokenNodes = 0;
+    size_t variableNodesCount = 0;
+    size_t valueNodesCount = 0;
+    size_t structuralNodesCount = 0;
+    size_t tokenNodesCount = 0;
 
-    size_t nStableNodes = 0;
-    size_t nUnstableNodes = 0;
+    size_t stableNodesCount = 0;
+    size_t unstableNodesCount = 0;
 
-    size_t nXNodes = 0;
-    size_t nYNodes = 0;
-    size_t nGNodes = 0;
-    size_t nKNodes = 0;
+    size_t xNodesCount = 0;
+    size_t yNodesCount = 0;
+    size_t gNodesCount = 0;
+    size_t kNodesCount = 0;
 
     size_t stackDepth = 0; // Is irrelevant for an aggregate of several threads
 
-    size_t nNodes = 0;
+    size_t nodesCount = 0;
   };
 private:
   void getNodesProperties(VM vm, Runnable* runnable, NodesProperties& properties);
@@ -112,37 +112,62 @@ public:
 public:
   inline
   size_t getVariableNodesCount(VM vm) {
-    return getNodesProperties(vm).nVariableNodes;
+    return getNodesProperties(vm).variableNodesCount;
   }
 
   inline
   size_t getValueNodesCount(VM vm) {
-    return getNodesProperties(vm).nValueNodes;
+    return getNodesProperties(vm).valueNodesCount;
   }
 
   inline
   size_t getStructuralNodesCount(VM vm) {
-    return getNodesProperties(vm).nStructuralNodes;
+    return getNodesProperties(vm).structuralNodesCount;
   }
 
   inline
   size_t getTokenNodesCount(VM vm) {
-    return getNodesProperties(vm).nTokenNodes;
+    return getNodesProperties(vm).tokenNodesCount;
   }
 
   inline
   size_t getStableNodesCount(VM vm) {
-    return getNodesProperties(vm).nStableNodes;
+    return getNodesProperties(vm).stableNodesCount;
   }
 
   inline
   size_t getUnstableNodesCount(VM vm) {
-    return getNodesProperties(vm).nUnstableNodes;
+    return getNodesProperties(vm).unstableNodesCount;
+  }
+
+  inline
+  size_t getXNodesCount(VM vm) {
+    return getNodesProperties(vm).xNodesCount;
+  }
+
+  inline
+  size_t getYNodesCount(VM vm) {
+    return getNodesProperties(vm).yNodesCount;
+  }
+
+  inline
+  size_t getGNodesCount(VM vm) {
+    return getNodesProperties(vm).gNodesCount;
+  }
+
+  inline
+  size_t getKNodesCount(VM vm) {
+    return getNodesProperties(vm).kNodesCount;
+  }
+
+  inline
+  size_t getStackDepth(VM vm) {
+    return getNodesProperties(vm).stackDepth;
   }
 
   inline
   size_t getNodesCount(VM vm) {
-    return getNodesProperties(vm).nNodes;
+    return getNodesProperties(vm).nodesCount;
   }
 public:
   /* ========== Variables stats ========== */

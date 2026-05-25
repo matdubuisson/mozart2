@@ -167,10 +167,10 @@ inline
 void updateNodesPropertiesFromNode(VM vm, NodesProperties& properties,
   Node* node) {
   switch (node->type()->getStructuralBehavior()) {
-    case sbVariable: properties.nVariableNodes++; return;
-    case sbValue: properties.nValueNodes++; return;
-    case sbStructural: properties.nStructuralNodes++; return;
-    case sbTokenEq: properties.nTokenNodes++; return;
+    case sbVariable: properties.variableNodesCount++; return;
+    case sbValue: properties.valueNodesCount++; return;
+    case sbStructural: properties.structuralNodesCount++; return;
+    case sbTokenEq: properties.tokenNodesCount++; return;
     default: assert(false);
   }
 }
@@ -179,8 +179,8 @@ inline
 void updateNodesPropertiesFromStaticArray(VM vm, NodesProperties& properties,
   StaticArray<StableNode> array) {
   size_t size = array.size();
-  properties.nStableNodes += size;
-  properties.nNodes += size;
+  properties.stableNodesCount += size;
+  properties.nodesCount += size;
 
   for (StaticArray<StableNode>::iterator iter = array.begin();
     iter != array.end(); iter++) {
@@ -193,8 +193,8 @@ inline
 void updateNodesPropertiesFromStaticArray(VM vm, NodesProperties& properties,
   StaticArray<UnstableNode>& array) {
   size_t size = array.size();
-  properties.nUnstableNodes += size;
-  properties.nNodes += size;
+  properties.unstableNodesCount += size;
+  properties.nodesCount += size;
 
   for (StaticArray<UnstableNode>::iterator iter = array.begin();
     iter != array.end(); iter++) {
@@ -207,7 +207,7 @@ inline
 void Introspection::getNodesProperties(VM vm, Runnable* runnable, NodesProperties& properties) {
   if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
     StaticArray<UnstableNode>& xregs = thread->xregs._array;
-    properties.nXNodes += xregs.size();
+    properties.xNodesCount += xregs.size();
     updateNodesPropertiesFromStaticArray(vm, properties, xregs);
 
     ThreadStack& stack = thread->stack;
@@ -219,9 +219,9 @@ void Introspection::getNodesProperties(VM vm, Runnable* runnable, NodesPropertie
       StaticArray<StableNode>& gregs = entry->gregs;
       StaticArray<StableNode>& kregs = entry->kregs;
 
-      properties.nYNodes += yregs.size();
-      properties.nGNodes += gregs.size();
-      properties.nKNodes += kregs.size();
+      properties.yNodesCount += yregs.size();
+      properties.gNodesCount += gregs.size();
+      properties.kNodesCount += kregs.size();
 
       updateNodesPropertiesFromStaticArray(vm, properties, yregs);
       updateNodesPropertiesFromStaticArray(vm, properties, gregs);

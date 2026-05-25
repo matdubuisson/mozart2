@@ -71,7 +71,142 @@ public:
     }
   };
 
+  // class Magic: public Builtin<Magic> {
+  // public:
+  //   Magic(): Builtin("magic") {}
+
+  //   static void call(VM vm, In recordNode) {
+  //     Record* record = getArgument<Record*>(vm, recordNode);
+  //     std::cout << record->getElement(0) << std::endl;
+  //   }
+  // };
+
   /* ========== Threads stats ========== */
+
+  static inline
+  UnstableNode getThreadAggregatesList(VM vm, size_t from, size_t to,
+    std::function<void(VM vm, OzListBuilder& builder, Runnable* runnable)> lambda) {
+    OzListBuilder builder(vm);
+
+    RunnableList& runnables = vm->getIntrospection().getThreads(vm);
+    size_t i = 0;
+    for (RunnableList::iterator iter = runnables.begin();
+      iter != runnables.end() && i < to; iter++, i++) {
+      if (i < from) continue;
+
+      Runnable* runnable = static_cast<Runnable*>(*iter);
+      lambda(vm, builder, runnable);
+    }
+
+    return builder.get(vm);
+  }
+
+  class GetThreadIds: public Builtin<GetThreadIds> {
+  public:
+    GetThreadIds(): Builtin("getThreadIds") {}
+
+    static void call(VM vm, In fromNode, In toNode, Out result) {
+      size_t from = getArgument<size_t>(vm, fromNode);
+      size_t to = getArgument<size_t>(vm, toNode);
+      result = getThreadAggregatesList(vm, from, to,
+        [](VM vm, OzListBuilder& builder, Runnable* runnable) {
+        builder.push_back(vm, build(vm, runnable->getId()));
+      });
+    }
+  };
+
+  class GetThreads: public Builtin<GetThreads> {
+  public:
+    GetThreads(): Builtin("getThreads") {}
+
+    static void call(VM vm, In fromNode, In toNode, Out result) {
+      size_t from = getArgument<size_t>(vm, fromNode);
+      size_t to = getArgument<size_t>(vm, toNode);
+      result = getThreadAggregatesList(vm, from, to,
+        [](VM vm, OzListBuilder& builder, Runnable* runnable) {
+        builder.push_back(vm,
+          ReifiedThread::build(vm, runnable));
+      });
+    }
+  };
+
+  class GetThread: public Builtin<GetThread> {
+  public:
+    GetThread(): Builtin("getThread") {}
+
+    static void call(VM vm, In threadId, Out result) {
+      size_t id = getArgument<size_t>(vm, threadId);
+      result = ReifiedThread::build(vm,
+        vm->getIntrospection().getThread(vm, id));
+    }
+  };
+
+  class GetThreadInfo: public Builtin<GetThreadInfo> {
+  public:
+    GetThreadInfo(): Builtin("getThreadInfo") {}
+
+    static void call(VM vm, In threadNode, In aggregate, Out result) {
+      using namespace patternmatching;
+
+      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+      
+      if (matches(vm, aggregate, "id")) {
+        result = build(vm, runnable->getId());
+      } else if (matches(vm, aggregate, "kindId")) {
+        result = build(vm, runnable->getKindId());
+      } else if (matches(vm, aggregate, "generationId")) {
+        result = build(vm, runnable->getGenerationId());
+      } else if (matches(vm, aggregate, "priority")) {
+        switch (runnable->getPriority()) {
+          case tpLow: result = build(vm, "low"); break;
+          case tpMiddle: result = build(vm, "medium"); break;
+          case tpHi: result = build(vm, "high"); break;
+          case tpSystem: result = build(vm, "system"); break;
+          default: assert(false);
+        }
+      } else if (matches(vm, aggregate, "runnable")) {
+        result = build(vm, runnable->isRunnable());
+      } else if (matches(vm, aggregate, "terminated")) {
+        result = build(vm, runnable->isTerminated());
+      } else if (matches(vm, aggregate, "dead")) {
+        result = build(vm, runnable->isDead());
+      } else if (matches(vm, aggregate, "preempted")) {
+        result = build(vm, runnable->isPreempted());
+      } else if (matches(vm, aggregate, "preemptible")) {
+        result = build(vm, runnable->isPreemptible());
+      } else if (matches(vm, aggregate, "runsCount")) {
+        result = build(vm, runnable->Runnable::getStatistics().runsCount);
+      } else if (matches(vm, aggregate, "resumesCount")) {
+        result = build(vm, runnable->Runnable::getStatistics().resumesCount);
+      } else if (matches(vm, aggregate, "suspendsCount")) {
+        result = build(vm, runnable->Runnable::getStatistics().suspendsCount);
+      } else if (matches(vm, aggregate, "suspendsOnVarCount")) {
+        result = build(vm, runnable->Runnable::getStatistics().suspendsOnVarCount);
+      } else if (matches(vm, aggregate, "operationsCount")) {
+        if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+          result = build(vm, thread->getStatistics().operationsCount);
+        } else {
+          result = build(vm, 0);
+        }
+      } else if (matches(vm, aggregate, "bindsCount")) {
+        if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+          result = build(vm, thread->getStatistics().bindsCount);
+        } else {
+          result = build(vm, 0);
+        }
+      } else if (matches(vm, aggregate, "type")) {
+        if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+          result = build(vm, "thread");
+        } else {
+          result = build(vm, "runnable");
+        }
+      } else {
+        result = build(vm, "none");
+      }
+    }
+  };
+
+  /* =================================== */
 
   static inline
   UnstableNode buildThreadStatusRecord(VM vm, Runnable* runnable) {
@@ -82,8 +217,11 @@ public:
     UnstableNode isPreempted = build(vm, runnable->isPreempted());
     UnstableNode isPreemptible = build(vm, runnable->isPreemptible());
 
-    if (Thread* thread = static_cast<Thread*>(runnable)) {
-      UnstableNode priority;
+    UnstableNode type;
+    UnstableNode priority;
+
+    if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+      type = build(vm, "thread");
       switch (thread->getPriority()) {
         case tpLow: priority = build(vm, "low"); break;
         case tpMiddle: priority = build(vm, "medium"); break;
@@ -91,33 +229,24 @@ public:
         case tpSystem: priority = build(vm, "system"); break;
         default: assert(false);
       }
-
-      return buildRecord(vm,
-        buildArity(vm,
-          "status",
-          "id",
-          "runnable", "terminated", "dead",
-          "preempted", "preemptible",
-          "priority"
-        ),
-        std::move(id),
-        std::move(isRunnable), std::move(isTerminated), std::move(isDead),
-        std::move(isPreempted), std::move(isPreemptible),
-        std::move(priority)
-      );
     } else {
-      return buildRecord(vm,
-        buildArity(vm,
-          "status",
-          "id",
-          "runnable", "terminated", "dead",
-          "preempted", "preemptible"
-        ),
-        std::move(id),
-        std::move(isRunnable), std::move(isTerminated), std::move(isDead),
-        std::move(isPreempted), std::move(isPreemptible)
-      );
+      type = build(vm, "runnable");
+      priority = build(vm, "none");
     }
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "status",
+        "id", "type",
+        "runnable", "terminated", "dead",
+        "preempted", "preemptible",
+        "priority"
+      ),
+      std::move(id), std::move(type),
+      std::move(isRunnable), std::move(isTerminated), std::move(isDead),
+      std::move(isPreempted), std::move(isPreemptible),
+      std::move(priority)
+    );
   }
 
   static inline
@@ -170,13 +299,20 @@ public:
 
   static inline
   UnstableNode buildThreadStateRecord(VM vm, Runnable* runnable) {
+    std::string type;
+    if (dynamic_cast<Thread*>(runnable)) type = "thread";
+    else type = "runnable";
+
     return buildRecord(vm,
       buildArity(vm,
         "state",
+        "type",
         "status",
         "statistics",
         "nodesProperties"
       ),
+      dynamic_cast<Thread*>(runnable) ? build(vm, "thread") :
+        build(vm, "runnable"),
       buildThreadStatusRecord(vm, runnable),
       buildThreadStatisticsRecord(vm, runnable),
       buildThreadNodesPropertiesRecord(vm, runnable)
@@ -268,57 +404,39 @@ public:
   };
 
   static inline
-  UnstableNode getThreadIdsList(VM vm, size_t from, size_t to) {
-    OzListBuilder builder(vm);
-
-    RunnableList& runnables = vm->getIntrospection().getThreads(vm);
-    size_t i = 0;
-    for (RunnableList::iterator iter = runnables.begin();
-      iter != runnables.end() && i < to; iter++, i++) {
-      if (i < from) continue;
-
-      Runnable* runnable = static_cast<Runnable*>(*iter);
-      builder.push_back(vm, build(vm, runnable->getId()));
-    }
-
-    return builder.get(vm);
+  UnstableNode getThreadStatusesList(VM vm, size_t from, size_t to) {
+    return getThreadAggregatesList(vm, from, to,
+      [](VM vm, OzListBuilder& builder, Runnable* runnable) {
+        builder.push_back(vm, buildThreadStatusRecord(vm, runnable));
+      });
   }
 
-  class GetThreadIds: public Builtin<GetThreadIds> {
+  class GetThreadStatuses: public Builtin<GetThreadStatuses> {
   public:
-    GetThreadIds(): Builtin("getThreadIds") {}
+    GetThreadStatuses(): Builtin("getThreadStatuses") {}
 
     static void call(VM vm, In fromNode, In toNode, Out result) {
       size_t from = getArgument<size_t>(vm, fromNode);
       size_t to = getArgument<size_t>(vm, toNode);
-      result = getThreadIdsList(vm, from, to);
+      result = getThreadStatusesList(vm, from, to);
     }
   };
 
-  class GetAllThreadIds: public Builtin<GetAllThreadIds> {
+  class GetAllThreadStatuses: public Builtin<GetAllThreadStatuses> {
   public:
-    GetAllThreadIds(): Builtin("getAllThreadIds") {}
+    GetAllThreadStatuses(): Builtin("getAllThreadStatuses") {}
 
     static void call(VM vm, Out result) {
-      result = getThreadIdsList(vm, 0, SIZE_MAX);
+      result = getThreadStatusesList(vm, 0, SIZE_MAX);
     }
   };
 
   static inline
   UnstableNode getThreadStatesList(VM vm, size_t from, size_t to) {
-    OzListBuilder builder(vm);
-
-    RunnableList& runnables = vm->getIntrospection().getThreads(vm);
-    size_t i = 0;
-    for (RunnableList::iterator iter = runnables.begin();
-      iter != runnables.end() && i < to; iter++, i++) {
-      if (i < from) continue;
-
-      Runnable* runnable = static_cast<Runnable*>(*iter);
-      builder.push_back(vm, buildThreadStateRecord(vm, runnable));
-    }
-
-    return builder.get(vm);
+    return getThreadAggregatesList(vm, from, to,
+      [](VM vm, OzListBuilder& builder, Runnable* runnable) {
+        builder.push_back(vm, buildThreadStateRecord(vm, runnable));
+      });
   }
 
   class GetThreadStates: public Builtin<GetThreadStates> {
@@ -389,30 +507,30 @@ public:
       buildArity(vm,
         "nodesProperties",
         "nVariableNodes",
-        "nValueNodes",
-        "nStructuralNodes",
-        "nTokenNodes",
-        "nStableNodes",
-        "nUnstableNodes",
-        "nXNodes",
-        "nYNodes",
-        "nGNodes",
-        "nKNodes",
+        "valueNodesCount",
+        "structuralNodesCount",
+        "tokenNodesCount",
+        "stableNodesCount",
+        "unstableNodesCount",
+        "xNodesCount",
+        "yNodesCount",
+        "gNodesCount",
+        "kNodesCount",
         "stackDepth",
-        "nNodes"
+        "nodesCount"
       ),
-      build(vm, properties.nVariableNodes),
-      build(vm, properties.nValueNodes),
-      build(vm, properties.nStructuralNodes),
-      build(vm, properties.nTokenNodes),
-      build(vm, properties.nStableNodes),
-      build(vm, properties.nUnstableNodes),
-      build(vm, properties.nXNodes),
-      build(vm, properties.nYNodes),
-      build(vm, properties.nGNodes),
-      build(vm, properties.nKNodes),
+      build(vm, properties.variableNodesCount),
+      build(vm, properties.valueNodesCount),
+      build(vm, properties.structuralNodesCount),
+      build(vm, properties.tokenNodesCount),
+      build(vm, properties.stableNodesCount),
+      build(vm, properties.unstableNodesCount),
+      build(vm, properties.xNodesCount),
+      build(vm, properties.yNodesCount),
+      build(vm, properties.gNodesCount),
+      build(vm, properties.kNodesCount),
       build(vm, properties.stackDepth),
-      build(vm, properties.nNodes)
+      build(vm, properties.nodesCount)
     );
   }
 
@@ -424,6 +542,126 @@ public:
       Introspection::NodesProperties properties =
         vm->getIntrospection().getNodesProperties(vm);
       result = buildNodesPropertiesRecord(vm, properties);
+    }
+  };
+
+  class GetVariableNodesCount: public Builtin<GetVariableNodesCount> {
+  public:
+    GetVariableNodesCount(): Builtin("getVariableNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getVariableNodesCount(vm));
+    }
+  };
+
+  class GetValueNodesCount: public Builtin<GetValueNodesCount> {
+  public:
+    GetValueNodesCount(): Builtin("getValueNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getValueNodesCount(vm));
+    }
+  };
+
+  class GetStructuralNodesCount: public Builtin<GetStructuralNodesCount> {
+  public:
+    GetStructuralNodesCount(): Builtin("getStructuralNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getStructuralNodesCount(vm));
+    }
+  };
+
+  class GetTokenNodesCount: public Builtin<GetTokenNodesCount> {
+  public:
+    GetTokenNodesCount(): Builtin("getTokenNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getTokenNodesCount(vm));
+    }
+  };
+
+  class GetStableNodesCount: public Builtin<GetStableNodesCount> {
+  public:
+    GetStableNodesCount(): Builtin("getStableNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getStableNodesCount(vm));
+    }
+  };
+
+  class GetUnstableNodesCount: public Builtin<GetUnstableNodesCount> {
+  public:
+    GetUnstableNodesCount(): Builtin("getUnstableNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getUnstableNodesCount(vm));
+    }
+  };
+
+  class GetXNodesCount: public Builtin<GetXNodesCount> {
+  public:
+    GetXNodesCount(): Builtin("getXNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getXNodesCount(vm));
+    }
+  };
+
+  class GetYNodesCount: public Builtin<GetYNodesCount> {
+  public:
+    GetYNodesCount(): Builtin("getYNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getYNodesCount(vm));
+    }
+  };
+
+  class GetGNodesCount: public Builtin<GetGNodesCount> {
+  public:
+    GetGNodesCount(): Builtin("getGNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getGNodesCount(vm));
+    }
+  };
+
+  class GetKNodesCount: public Builtin<GetKNodesCount> {
+  public:
+    GetKNodesCount(): Builtin("getKNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getKNodesCount(vm));
+    }
+  };
+
+  class GetStackDepth: public Builtin<GetStackDepth> {
+  public:
+    GetStackDepth(): Builtin("getStackDepth") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getStackDepth(vm));
+    }
+  };
+
+  class GetNodesCount: public Builtin<GetNodesCount> {
+  public:
+    GetNodesCount(): Builtin("getNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getNodesCount(vm));
     }
   };
 
