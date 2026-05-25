@@ -49,14 +49,27 @@ define
   end
 
   proc {GetThreadStatus Thread ?Status}
-    Status = 'thread'(
-      id: {Boot_Thread.getId Thread $}
-      priority: {Boot_Thread.getPriority Thread $}
-      preemptible: {Boot_Thread.isPreemptible Thread $}
+    Status = 'status'(
+      id: {Boot_Introspection.getThreadInfo Thread id $}
+      type: {Boot_Introspection.getThreadInfo Thread type $}
+      runnable: {Boot_Introspection.getThreadInfo Thread runnable $}
+      terminated: {Boot_Introspection.getThreadInfo Thread terminated $}
+      dead: {Boot_Introspection.getThreadInfo Thread dead $}
+      preempted: {Boot_Introspection.getThreadInfo Thread preempted $}
+      preemptible: {Boot_Introspection.getThreadInfo Thread preemptible $}
+      priority: {Boot_Introspection.getThreadInfo Thread priority $}
     )
   end
 
   MARKER = "[DEBUGGER]"
+
+  proc {PrintLog String}
+    {Boot_System.printVS MARKER#": "#String false true}
+  end
+
+  proc {PrintError String}
+    {Boot_System.printVS MARKER#": "#String true true}
+  end
 
   proc {Loop
     NonPreemptible
@@ -68,171 +81,179 @@ define
         NonPreemptible
         NContinues}
     end
+
+    proc {PrintOptions Aggregate Options IsError}
+      Print = if IsError then PrintError else PrintLog end
+
+      proc {PrintOptions Options}
+        case Options of nil then skip
+        [] Option|NextOptions then
+          case Option of option(Name Description) then
+            {Print "\t=> "#Name#": "#Description}
+          [] option(Name Description _) then
+            {Print "\t=> "#Name#": "#Description}
+          else
+            {Print "\t=> "#Option}
+          end
+          {PrintOptions NextOptions}
+        end
+      end
+    in
+      {Print Aggregate#" has "#{List.length Options $}#" options :"}
+      {PrintOptions Options}
+    end
+
+    proc {ExecuteOptions Aggregate Options SelectedOptionNames}
+      proc {ExecuteAllOptions Options}
+        case Options of nil then skip
+        [] Option|NextOptions then
+          case Option of option(_ _ Execute) then {Execute} end
+          {ExecuteAllOptions NextOptions}
+        end
+      end
+
+      proc {SelectOption Options SelectedOptionName ?Result}
+        case Options of nil then Result = none
+        [] Option|NextOptions then
+          case Option of option(Name _ _) then
+            if Name == SelectedOptionName then
+              Result = Option
+            else
+              {SelectOption NextOptions SelectedOptionName Result}
+            end
+          end
+        end
+      end
+
+      proc {Loop SelectedOptionNames}
+        case SelectedOptionNames of nil then skip
+        [] SelectedOptionName|NextSelectedOptionNames then
+          case SelectedOptionName of "help" then
+            {PrintOptions Aggregate Options false}
+          else
+            Option = {SelectOption Options SelectedOptionName $}
+          in
+            case Option of none then
+              {PrintError "invalid option '"#SelectedOptionName#"'"}
+              {PrintOptions Aggregate Options false}
+            [] option(_ _ Execute) then {Execute} end
+          end
+
+          {Loop NextSelectedOptionNames}
+        end
+      end
+    in
+      case SelectedOptionNames of nil then
+        {ExecuteAllOptions Options}
+      else
+        {Loop SelectedOptionNames}
+      end
+    end
+
+    proc {GetIntValueFromArgument Inputs Argument DefaultValue ?IntValue}
+      case Inputs of nil then IntValue = DefaultValue
+      [] Input|NextInputs then
+        if Input == Argument then
+          case NextInputs of nil then
+            {PrintError "missing following integer value for argument '"#
+              Argument#"'"}
+            [] Value|_ then
+              try
+                IntValue = {String.toInt Value $}
+              catch _ then
+                IntValue = DefaultValue
+                {PrintError "invalid following integer value '"#
+                  Value#"' for argument '"#Argument#"'"}
+              end
+            end
+        else
+          {GetIntValueFromArgument
+            NextInputs Argument DefaultValue IntValue}
+        end
+      end
+    end
   in
     if NContinues == 0 then
-      Status
-      Command
-    in
-      Status = {GetThreadStatus This $}
-      
-      /*
-        It ensures the debugger will not be preempted during its analysis
-        and so risking to produce an inconsistent result. However it is
-        responsible to release the VM often to let other threads
-        enough running time
-      */
-      if Status.preemptible andthen NonPreemptible then
-        {Boot_Thread.setPreemptible This false}
+
+      local
+        Status = {GetThreadStatus This $}
+      in
+        % Shows the debugger's thread status
+        {Boot_System.printRepr Status false true}
+        
+        /*
+          It ensures the debugger will not be preempted during its analysis
+          and so risking to produce an inconsistent result. However it is
+          responsible to release the VM often to let other threads
+          enough running time
+        */
+        if Status.preemptible andthen NonPreemptible then
+          {Boot_Thread.setPreemptible This false}
+        end
       end
       
       % Shows the next running thread along with the next byte code instruction
       local
         NextThread = {Boot_Introspection.getNextScheduledThread false $}
       in
-        {Boot_System.printVS MARKER#": "#
+        {PrintLog
           "Next scheduled thread is: "#
-          {Int.toString {Boot_Thread.getId NextThread $} $}
-        false true}
+          {Int.toString {Boot_Thread.getId NextThread $} $}}
       end
-
-      % Shows the debugger's thread status
-      {Boot_System.printVS MARKER#
-        "(id: "#{Int.toString Status.id $}#
-        ", "#
-        "priority: "#{Atom.toString Status.priority $}#
-        ", "#
-        "preemptible: "#{Bool.toString Status.preemptible $}#
-        "): "
-        false false}
 
       /*
         Terminal commands management and execution of them
       */
-      Command = {Boot_System.inputVS $}
-
-      %%%%%%%% help
-      case Command of "help" then
-        {Boot_System.printVS "Useful help doc will be here" false true}
-        {DefaultLoop}
-
-      [] "count" then
-        Arguments = {Boot_System.inputVSLine $}
-        SplitArguments = {String.tokens Arguments 32 $}.2 % "First argument is ' '"
+      local
+        Input = {Boot_System.inputVSLine $}
+        Inputs = {String.tokens Input 32 $}
+        Command|Arguments = Inputs
       in
-        {Boot_System.printRepr SplitArguments false true}
-        case SplitArguments of Aggregate|Options then
-          case Aggregate of "threads" then
-            case Options of nil then
-              {Boot_System.printVS
-                "\t=>Active threads count: "#
-                {Int.toString
-                  {Boot_Introspection.getActiveThreadsCount $} $
-                }#
-                "\n\t=>Passive threads count: "#
-                {Int.toString
-                  {Boot_Introspection.getPassiveThreadsCount $} $
-                }#
-                "\n\t=>Threads count: "#
-                {Int.toString
-                  {Boot_Introspection.getThreadsCount $} $
-                }
-                false true}
-            [] ["active"] then
-              {Boot_System.printVS "\t=>Active threads count: "#
-                {Int.toString
-                  {Boot_Introspection.getActiveThreadsCount $} $
-                }
-                false true}
-            [] ["passive"] then
-              {Boot_System.printVS "\t=>Passive threads count: "#
-                {Int.toString
-                  {Boot_Introspection.getPassiveThreadsCount $} $
-                }
-                false true}
-            [] ["all"] then
-              {Boot_System.printVS "\t=>Threads count: "#
-                {Int.toString
-                  {Boot_Introspection.getThreadsCount $} $
-                }
-                false true}
-            else
-              {Boot_System.printVS MARKER#": invalid options for aggregate '"#Aggregate#"'" true true}
-            end
-          else
-            {Boot_System.printVS MARKER#": invalid aggregate '"#Aggregate#"'" true true}
-          end
-        end
-
-        {DefaultLoop}
-
-      %%%%%%%% preemptible
-      [] "preemptible" then
-        Activated = {Boot_System.inputVS $}
-      in
-        case Activated of "true" then
-          {Loop false 0}
-        [] "false" then
-          {Loop true 0}
+        case Command of "count" then
+          \insert CountCommand
+        [] "threads" then
+          \insert ThreadsCommand
         else
-          {Boot_System.printVS MARKER#": preemptible command takes one boolean argument true or false" true true}
-          {DefaultLoop}
+          {PrintError "unknown command '"#Command#"', try help to get more infos"}
         end
-        
-      %%%%%%%% status
-      [] "status" then
-        Status = {GetVMStatus $}
-      in
-        {Boot_System.printVS "VM status:\n"#
-          "\tThreads:\n"#
-          "\t\t- "#Status.threads.active#" active\n"#
-          "\t\t- "#Status.threads.passive#" passive\n"#
-          "\t\t- "#Status.threads.total#" in total\n"#
-          "\tVariables:\n"#
-          "\t\t- "#Status.variables.bound#" bound\n"#
-          "\t\t- "#Status.variables.unbound#" unbound\n"#
-          "\t\t- "#Status.variables.total#" in total\n"
-          false true}
-
-        {DefaultLoop}
-      
-      %%%%%%%% continue
-      [] "continue" then
-        Argument = {Boot_System.inputVS $}
-      in
-        try
-          NextNContinue = {String.toInt Argument $}
-        in
-          {Boot_System.printVS "Continue: "#NextNContinue false true}
-          {Boot_Thread.setPreemptible This true}
-          {Loop
-            NonPreemptible
-            NextNContinue}
-        catch _ then
-          {Boot_System.printVS MARKER#": continue takes one integer argument" true true}
-          {DefaultLoop}
-        end
-
-      %%%%%%%% continue
-      [] "noperations" then
-        Argument = {Boot_System.inputVS $}
-      in
-        try
-          NOperations = {String.toInt Argument $}
-        in
-          {Boot_System.printVS "NOperations: "#NOperations false true}
-          {Boot_VirtualMachine.setNOperationsWithoutSystemThreads NOperations}
-          {Boot_Thread.requestPreemption This}
-          {DefaultLoop}
-        catch _ then
-          {Boot_System.printVS MARKER#": noperations takes one integer argument" true true}
-          {DefaultLoop}
-        end
-
-      %%%%%%%% unknown command
-      else
-        {Boot_System.printVS MARKER#": unknown command '"#Command#"', try help to get more infos" true true}
-        {DefaultLoop}
       end
+
+      {DefaultLoop}
+
+      %   %%%%%%%% continue
+      
+      %   [] "continue" then
+      %     Argument = {Boot_System.inputVS $}
+      %   in
+      %     try
+      %       NextNContinue = {String.toInt Argument $}
+      %     in
+      %       {PrintLog "Continue: "#NextNContinue}
+      %       {Boot_Thread.setPreemptible This true}
+      %       {Loop NonPreemptible NextNContinue}
+      %     catch _ then
+      %       {PrintError "continue takes one integer argument"}
+      %       {DefaultLoop}
+      %     end
+
+      %   %%%%%%%% continue
+      %   [] "noperations" then
+      %     Argument = {Boot_System.inputVS $}
+      %   in
+      %     try
+      %       NOperations = {String.toInt Argument $}
+      %     in
+      %       {PrintLog "NOperations: "#NOperations}
+      %       {Boot_VirtualMachine.setNOperationsWithoutSystemThreads NOperations}
+      %       {Boot_Thread.requestPreemption This}
+      %       {DefaultLoop}
+      %     catch _ then
+      %       {PrintError "noperations takes one integer argument"}
+      %       {DefaultLoop}
+      %     end
+
+      %   %%%%%%%% unknown command
+      % end
     else
       /*
         As every system threads run once before running only one other thread,
@@ -246,7 +267,5 @@ define
     end
   end
 in
-  {Loop
-    true
-    0}
+  {Loop true 0}
 end
