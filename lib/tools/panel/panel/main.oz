@@ -69,7 +69,7 @@ in
 	 lock
 	    if @ThisPanelTop==unit then
 	       ThisPanelTop <- thread
-				  {Thread.setThisPriority high}
+				  {Thread.setPriority {Thread.this $} high}
 				  {New PanelTop init(manager:self
 						     options:self.Options)}
 			       end

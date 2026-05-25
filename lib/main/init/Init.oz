@@ -81,7 +81,7 @@ prepare
          case Exc of system(kernel(terminate) ...) then skip
          else
             try
-               {Thread.setThisPriority high}
+               {Thread.setPriority {Thread.this $} high}
                {Debug.setRaiseOnBlock {Thread.this} true}
                {Error.printException Exc}
                {Debug.setRaiseOnBlock {Thread.this} false}

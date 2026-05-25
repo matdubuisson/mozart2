@@ -578,7 +578,7 @@ define
       %% Start reading wish's output
       thread
          try
-            {Thread.setThisPriority high}
+            {Thread.setPriority {Thread.this $} high}
             {TkReadLoop RetStream}
          catch _ then
             raise system(tk(engineCrashed)) end
