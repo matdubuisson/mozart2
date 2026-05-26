@@ -1,7 +1,9 @@
 local
   Options = [
     option("status" "The thread statuses")
-    option("statistics" "The thread statuses")
+    option("identity" "The thread identities")
+    option("statistics" "The thread stats counts")
+    option("nodes" "The thread nodes counts")
   ]
 
   proc {ForEachThread Threads Execute}
@@ -12,7 +14,7 @@ local
     end
   end
 in
-  case Arguments of Option|NextArguments then
+  case Arguments of Option|_ then
     Threads
   in
     local
@@ -51,6 +53,26 @@ in
             "\t\t"#Preemptible#" "#
             "\t\t"#Priority}
         end}
+    [] "identity" then
+      {PrintLog "\tID \tTYPE \tKINDID \tGENID \tPRIORITY"}
+      {ForEachThread Threads proc {$ Thread}
+          Id = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread id $} $}
+          Type = {Atom.toString
+            {Boot_Introspection.getThreadInfo Thread type $} $}
+          KindId = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread kindId $} $}
+          GenerationId = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread generationId $} $}
+          Priority = {Atom.toString
+            {Boot_Introspection.getThreadInfo Thread priority $} $}
+        in
+          {PrintLog "\t"#Id#" "#
+            "\t"#Type#" "#
+            "\t"#KindId#" "#
+            "\t"#GenerationId#" "#
+            "\t"#Priority}
+        end}
     [] "statistics" then
       {PrintLog "\tID \tTYPE \tRUNS \tRESUMES \tSUSPENDS \tSUSPENDSONVAR \tOPERATIONS \tBINDS"}
       {ForEachThread Threads proc {$ Thread}
@@ -79,6 +101,58 @@ in
             "\t\t"#SuspendsOnVarCount#" "#
             "\t\t"#OperationsCount#" "#
             "\t\t"#BindsCount}
+        end}
+    [] "nodes" then
+      {PrintLog "\tID \tTYPE \tVARS \tVALS \tSTRUS \tTOKS \tSTABS \tUSTABS"#
+        "\tXNODES \tYNODES \tGNODES \tKNODES \tSDEPTH \tNODES"}
+      {ForEachThread Threads proc {$ Thread}
+          Id = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread id $} $}
+          Type = {Atom.toString
+            {Boot_Introspection.getThreadInfo Thread type $} $}
+          
+          VariableNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread variableNodesCount $} $}
+          ValueNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread valueNodesCount $} $}
+          StructuralNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread structuralNodesCount $} $}
+          TokenNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread tokenNodesCount $} $}
+          
+          StableNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread stableNodesCount $} $}
+          UnstableNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread unstableNodesCount $} $}
+          
+          XNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread xNodesCount $} $}
+          YNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread yNodesCount $} $}
+          GNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread gNodesCount $} $}
+          KNodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread kNodesCount $} $}
+          
+          StackDepth = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread stackDepth $} $}
+          NodesCount = {Int.toString
+            {Boot_Introspection.getThreadInfo Thread nodesCount $} $}
+        in
+          {PrintLog "\t"#Id#" "#
+            "\t"#Type#" "#
+            "\t"#VariableNodesCount#" "#
+            "\t"#ValueNodesCount#" "#
+            "\t"#StructuralNodesCount#" "#
+            "\t"#TokenNodesCount#" "#
+            "\t"#StableNodesCount#" "#
+            "\t"#UnstableNodesCount#" "#
+            "\t"#XNodesCount#" "#
+            "\t"#YNodesCount#" "#
+            "\t"#GNodesCount#" "#
+            "\t"#KNodesCount#" "#
+            "\t"#StackDepth#" "#
+            "\t"#NodesCount}
         end}
     [] "help" then
       {PrintOptions "threads" Options false}

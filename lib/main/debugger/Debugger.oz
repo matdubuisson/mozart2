@@ -174,7 +174,6 @@ define
     end
   in
     if NContinues == 0 then
-
       local
         Status = {GetThreadStatus This $}
       in
@@ -208,9 +207,48 @@ define
         Input = {Boot_System.inputVSLine $}
         Inputs = {String.tokens Input 32 $}
         Command|Arguments = Inputs
+
+        proc {GetArgument Arguments TargetedArgument Type DefaultValue ?Result}
+          case Arguments of nil then Result = DefaultValue
+          [] Argument|NextArguments then
+            if Argument == TargetedArgument then
+              case Type of flag then
+                Result = found
+              else
+                case NextArguments of Value|_ then
+                  try
+                    case Type of bool then
+                      Result = {String.toAtom Value $}
+                    [] atom then
+                      Result = {String.toAtom Value $}
+                    [] string then
+                      Result = Value
+                    [] int then
+                      Result = {String.toInt Value $}
+                    [] float then
+                      Result = {String.toFloat Value $}
+                    else
+                      Result = Value
+                    end
+                  catch _ then
+                    Value = DefaultValue
+                    {PrintError "Inconsistent '"#Type#"' value provided for argument '"#Argument#"'"}
+                  end
+                else
+                  Value = DefaultValue
+                  {PrintError "No value was provided for argument '"#Argument#"'"}
+                end
+              end
+            else
+              {GetArgument NextArguments Name Type DefaultValue Result}
+            end
+          end
+        end
       in
         case Command of "count" then
           \insert CountCommand
+        [] "thread" then
+          \insert ThreadCommand
         [] "threads" then
           \insert ThreadsCommand
         else

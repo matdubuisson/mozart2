@@ -136,8 +136,12 @@ public:
 
     static void call(VM vm, In threadId, Out result) {
       size_t id = getArgument<size_t>(vm, threadId);
-      result = ReifiedThread::build(vm,
-        vm->getIntrospection().getThread(vm, id));
+      Runnable* runnable = vm->getIntrospection().getThread(vm, id);
+
+      if (runnable)
+        result = ReifiedThread::build(vm, runnable);
+      else
+        result = build(vm, "none");
     }
   };
 
@@ -199,6 +203,46 @@ public:
           result = build(vm, "thread");
         } else {
           result = build(vm, "runnable");
+        }
+      } else if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+        if (matches(vm, aggregate, "variableNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).variableNodesCount);
+        } else if (matches(vm, aggregate, "valueNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).valueNodesCount);
+        } else if (matches(vm, aggregate, "structuralNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).structuralNodesCount);
+        } else if (matches(vm, aggregate, "tokenNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).tokenNodesCount);
+        } else if (matches(vm, aggregate, "stableNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).stableNodesCount);
+        } else if (matches(vm, aggregate, "unstableNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).unstableNodesCount);
+        } else if (matches(vm, aggregate, "xNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).xNodesCount);
+        } else if (matches(vm, aggregate, "yNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).yNodesCount);
+        } else if (matches(vm, aggregate, "gNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).gNodesCount);
+        } else if (matches(vm, aggregate, "kNodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).kNodesCount);
+        } else if (matches(vm, aggregate, "stackDepth")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).stackDepth);
+        } else if (matches(vm, aggregate, "nodesCount")) {
+          result = build(vm,
+            vm->getIntrospection().getNodesProperties(vm).nodesCount);
+        } else {
+          result = build(vm, "none");
         }
       } else {
         result = build(vm, "none");
