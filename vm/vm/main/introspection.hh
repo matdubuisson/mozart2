@@ -143,6 +143,61 @@ size_t Introspection::getThreadsCount(VM vm) {
 
 /* ========== Nodes stats ========== */
 
+template<class T>
+inline
+T* getNodePointerFromArray(StaticArray<T> array, size_t index) {
+  if (index < array.size()) return &array[index];
+  else return nullptr;
+}
+
+inline
+StackEntry* getStackEntryPointerFromThreadStack(ThreadStack& stack, size_t depth) {
+  size_t i = 0;
+  for (ThreadStack::iterator entry = stack.begin();
+    entry != stack.end(); entry++, i++) {    
+    if (i == depth)
+      return &(*entry);
+  }
+  return nullptr;
+}
+
+inline
+UnstableNode* Introspection::getXNode(VM vm, Runnable* runnable, size_t index) {
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    return getNodePointerFromArray<UnstableNode>(thread->xregs._array, index);
+  } else return nullptr;
+}
+
+inline
+UnstableNode* Introspection::getYNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    StackEntry* entry = getStackEntryPointerFromThreadStack(thread->stack, depth);
+    if (entry)
+      return getNodePointerFromArray<UnstableNode>(entry->yregs, index);
+  }
+  return nullptr;
+}
+
+inline
+StableNode* Introspection::getGNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    StackEntry* entry = getStackEntryPointerFromThreadStack(thread->stack, depth);
+    if (entry)
+      return getNodePointerFromArray<StableNode>(entry->gregs, index);
+  }
+  return nullptr;
+}
+
+inline
+StableNode* Introspection::getKNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    StackEntry* entry = getStackEntryPointerFromThreadStack(thread->stack, depth);
+    if (entry)
+      return getNodePointerFromArray<StableNode>(entry->kregs, index);
+  }
+  return nullptr;
+}
+
 inline
 void forEachThread(RunnableList& threads,
   std::function<void(Runnable*)> lambda) {

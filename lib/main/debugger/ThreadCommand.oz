@@ -5,102 +5,87 @@ local
   ]
 
   proc {DisplayThread Thread Id}
-    Type = {Atom.toString
-      {Boot_Introspection.getThreadInfo Thread type $} $}
-    Priority = {Atom.toString
-      {Boot_Introspection.getThreadInfo Thread priority $} $}
-    KindId = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread kindId $} $}
-    GenerationId = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread generationId $} $}
-
-    Runnable = {Boot_Introspection.getThreadInfo Thread runnable $}
-    Terminated = {Boot_Introspection.getThreadInfo Thread terminated $}
-    Dead = {Boot_Introspection.getThreadInfo Thread dead $}
-    Preempted = {Boot_Introspection.getThreadInfo Thread preempted $}
-    Preemptible = {Boot_Introspection.getThreadInfo Thread preemptible $}
-    
-    RunsCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread runsCount $} $}
-    ResumesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread resumesCount $} $}
-    SuspendsCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread suspendsCount $} $}
-    SuspendsOnVarCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread suspendsOnVarCount $} $}
-    OperationsCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread operationsCount $} $}
-    BindsCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread bindsCount $} $}
-
-    VariableNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread variableNodesCount $} $}
-    ValueNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread valueNodesCount $} $}
-    StructuralNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread structuralNodesCount $} $}
-    TokenNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread tokenNodesCount $} $}
-    
-    StableNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread stableNodesCount $} $}
-    UnstableNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread unstableNodesCount $} $}
-    
-    XNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread xNodesCount $} $}
-    YNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread yNodesCount $} $}
-    GNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread gNodesCount $} $}
-    KNodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread kNodesCount $} $}
-    
-    StackDepth = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread stackDepth $} $}
-    NodesCount = {Int.toString
-      {Boot_Introspection.getThreadInfo Thread nodesCount $} $}
+    State = {Boot_Introspection.getThreadState Thread $}
   in
-    {PrintLog "Thread "#Id#":"}
-    {PrintLog "\tType: "#Type}
-    {PrintLog "\tPriority: "#Priority}
-    {PrintLog "\tKind id: "#KindId}
-    {PrintLog "\tGeneration id: "#GenerationId}
+    case State of state(nodes:Nodes statistics:Statistics status:Status) then
+      case Status of status(
+        id: Id
+        type: Type
+        priority: Priority
+        kindId: KindId
+        generationId: GenerationId
+        runnable: Runnable
+        terminated: Terminated
+        dead: Dead
+        preempted: Preempted
+        preemptible: Preemptible
+      ) then
+        {PrintLog "Thread "#Id#":"}
+        {PrintLog "\tType: "#Type}
+        {PrintLog "\tPriority: "#Priority}
+        {PrintLog "\tKind id: "#KindId}
+        {PrintLog "\tGeneration id: "#GenerationId}
 
-    {PrintLog "\tStatus: "#
-      if Dead then "dead" else "alive" end#
-      " "#
-      if Terminated then "terminated" elseif Runnable then "runnable"
-        else "non-runnable" end}
+        {PrintLog "\tStatus: "#
+          if Dead then "dead" else "alive" end#
+          " "#
+          if Terminated then "terminated" elseif Runnable then "runnable"
+            else "non-runnable" end}
 
-    {PrintLog "\tPreemption: "#
-      if Preempted then "preempted" else "non-preempted" end#
-      if Preemptible then "preemptible" else "non-preemptible" end}
-    
-    {PrintLog "\tStatistics:"}
-    {PrintLog "\t\t=> Runs: "#RunsCount}
-    {PrintLog "\t\t=> Resumes: "#ResumesCount}
-    {PrintLog "\t\t=> Suspends: "#SuspendsCount}
-    {PrintLog "\t\t=> SuspendsOnVar: "#SuspendsOnVarCount}
-    {PrintLog "\t\t=> Operations: "#OperationsCount}
-    {PrintLog "\t\t=> Binds: "#BindsCount}
+        {PrintLog "\tPreemption: "#
+          if Preempted then "preempted" else "running" end#" "#
+          if Preemptible then "preemptible" else "non-preemptible" end}
+      end
 
-    {PrintLog "\tNodes:"}
-    {PrintLog "\t\t=> Variable nodes: "#VariableNodesCount}
-    {PrintLog "\t\t=> Value nodes: "#ValueNodesCount}
-    {PrintLog "\t\t=> Structural nodes: "#StructuralNodesCount}
-    {PrintLog "\t\t=> Token nodes: "#TokenNodesCount}
+      case Statistics of statistics(
+        runsCount: RunsCount
+        resumesCount: ResumesCount
+        suspendsCount: SuspendsCount
+        suspendsOnVarCount: SuspendsOnVarCount
+        operationsCount: OperationsCount
+        bindsCount: BindsCount
+      ) then        
+        {PrintLog "\tStatistics:"}
+        {PrintLog "\t\t=> Runs: "#RunsCount}
+        {PrintLog "\t\t=> Resumes: "#ResumesCount}
+        {PrintLog "\t\t=> Suspends: "#SuspendsCount}
+        {PrintLog "\t\t=> SuspendsOnVar: "#SuspendsOnVarCount}
+        {PrintLog "\t\t=> Operations: "#OperationsCount}
+        {PrintLog "\t\t=> Binds: "#BindsCount}
+      end
 
-    {PrintLog "\t\t=> Stable nodes: "#StableNodesCount}
-    {PrintLog "\t\t=> Unstable nodes: "#UnstableNodesCount}
+      case Nodes of nodes(
+        variableNodesCount: VariableNodesCount
+        valueNodesCount: ValueNodesCount
+        structuralNodesCount: StructuralNodesCount
+        tokenNodesCount: TokenNodesCount
+        stableNodesCount: StableNodesCount
+        unstableNodesCount: UnstableNodesCount
+        xNodesCount: XNodesCount
+        yNodesCount: YNodesCount
+        gNodesCount: GNodesCount
+        kNodesCount: KNodesCount
+        stackDepth: StackDepth
+        nodesCount: NodesCount
+      ) then
+        {PrintLog "\tNodes:"}
+        {PrintLog "\t\t=> Variable nodes: "#VariableNodesCount}
+        {PrintLog "\t\t=> Value nodes: "#ValueNodesCount}
+        {PrintLog "\t\t=> Structural nodes: "#StructuralNodesCount}
+        {PrintLog "\t\t=> Token nodes: "#TokenNodesCount}
 
-    {PrintLog "\t\t=> X nodes: "#XNodesCount}
-    {PrintLog "\t\t=> Y nodes: "#YNodesCount}
-    {PrintLog "\t\t=> G nodes: "#GNodesCount}
-    {PrintLog "\t\t=> K nodes: "#KNodesCount}
+        {PrintLog "\t\t=> Stable nodes: "#StableNodesCount}
+        {PrintLog "\t\t=> Unstable nodes: "#UnstableNodesCount}
 
-    {PrintLog "\t\t=> Stack depth: "#StackDepth}
-    {PrintLog "\t\t=> Total nodes: "#NodesCount}
+        {PrintLog "\t\t=> X nodes: "#XNodesCount}
+        {PrintLog "\t\t=> Y nodes: "#YNodesCount}
+        {PrintLog "\t\t=> G nodes: "#GNodesCount}
+        {PrintLog "\t\t=> K nodes: "#KNodesCount}
+
+        {PrintLog "\t\t=> Stack depth: "#StackDepth}
+        {PrintLog "\t\t=> Total nodes: "#NodesCount}
+      end
+    end
   end
 
   proc {FindAndDisplayThread IdString}

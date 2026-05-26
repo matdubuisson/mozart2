@@ -54,7 +54,12 @@ public:
     Value(): Builtin("value") {}
 
     static void call(VM vm, In inValue, Out outValue) {
-      outValue = Numeric(inValue).add(vm, 1);
+      outValue = buildRecord(vm,
+        buildArity(vm, "test", "a", "b", "c"),
+        build(vm, 1),
+        build(vm, 2),
+        build(vm, 3)
+      );
     }
   };
 
@@ -253,8 +258,50 @@ public:
   /* =================================== */
 
   static inline
+  UnstableNode buildThreadIdentityRecord(VM vm, Runnable* runnable) {
+    UnstableNode id = build(vm, runnable->getId());
+    UnstableNode kindId = build(vm, runnable->getKindId());
+    UnstableNode generationId = build(vm, runnable->getGenerationId());
+
+    UnstableNode type;
+    UnstableNode priority;
+
+    if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+      type = build(vm, "thread");
+      switch (thread->getPriority()) {
+        case tpLow: priority = build(vm, "low"); break;
+        case tpMiddle: priority = build(vm, "medium"); break;
+        case tpHi: priority = build(vm, "high"); break;
+        case tpSystem: priority = build(vm, "system"); break;
+        default: assert(false);
+      }
+    } else {
+      type = build(vm, "runnable");
+      priority = build(vm, "none");
+    }
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "identity",
+        "generationId",
+        "id",
+        "kindId",
+        "priority",
+        "type"
+      ),
+      generationId,
+      id,
+      kindId,
+      priority,
+      type
+    );
+  }
+
+  static inline
   UnstableNode buildThreadStatusRecord(VM vm, Runnable* runnable) {
-    UnstableNode id = build(vm, (nativeint) runnable->getId());
+    UnstableNode id = build(vm, runnable->getId());
+    UnstableNode kindId = build(vm, runnable->getKindId());
+    UnstableNode generationId = build(vm, runnable->getGenerationId());
     UnstableNode isRunnable = build(vm, runnable->isRunnable());
     UnstableNode isTerminated = build(vm, runnable->isTerminated());
     UnstableNode isDead = build(vm, runnable->isDead());
@@ -281,15 +328,27 @@ public:
     return buildRecord(vm,
       buildArity(vm,
         "status",
-        "id", "type",
-        "runnable", "terminated", "dead",
-        "preempted", "preemptible",
-        "priority"
+        "dead",
+        "generationId",
+        "id",
+        "kindId",
+        "preempted",
+        "preemptible",
+        "priority",
+        "runnable",
+        "terminated",
+        "type"
       ),
-      std::move(id), std::move(type),
-      std::move(isRunnable), std::move(isTerminated), std::move(isDead),
-      std::move(isPreempted), std::move(isPreemptible),
-      std::move(priority)
+      isDead,
+      generationId,
+      id,
+      kindId,
+      isPreempted,
+      isPreemptible,
+      priority,
+      isRunnable,
+      isTerminated,
+      type
     );
   }
 
@@ -304,41 +363,30 @@ public:
   UnstableNode buildThreadStatisticsRecord(VM vm, Runnable* runnable) {
     Runnable::Statistics runnableStatistics = runnable->Runnable::getStatistics();
 
+    size_t operationsCount = 0, bindsCount = 0;
     if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
       Thread::Statistics threadStatistics = thread->getStatistics();
-
-      return buildRecord(vm,
-        buildArity(vm,
-          "statistics",
-          "runsCount",
-          "resumesCount",
-          "suspendsCount",
-          "suspendsOnVarCount",
-          "operationsCount",
-          "bindsCount"
-        ),
-        build(vm, runnableStatistics.runsCount),
-        build(vm, runnableStatistics.resumesCount),
-        build(vm, runnableStatistics.suspendsCount),
-        build(vm, runnableStatistics.suspendsOnVarCount),
-        build(vm, threadStatistics.operationsCount),
-        build(vm, threadStatistics.bindsCount)
-      );
-    } else {
-      return buildRecord(vm,
-        buildArity(vm,
-          "statistics",
-          "runsCount",
-          "resumesCount",
-          "suspendsCount",
-          "suspendsOnVarCount"
-        ),
-        build(vm, runnableStatistics.runsCount),
-        build(vm, runnableStatistics.resumesCount),
-        build(vm, runnableStatistics.suspendsCount),
-        build(vm, runnableStatistics.suspendsOnVarCount)
-      );
+      operationsCount = threadStatistics.operationsCount;
+      bindsCount = threadStatistics.bindsCount;
     }
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "statistics",
+        "bindsCount",
+        "operationsCount",
+        "resumesCount",
+        "runsCount",
+        "suspendsCount",
+        "suspendsOnVarCount"
+      ),
+      build(vm, bindsCount),
+      build(vm, operationsCount),
+      build(vm, runnableStatistics.resumesCount),
+      build(vm, runnableStatistics.runsCount),
+      build(vm, runnableStatistics.suspendsCount),
+      build(vm, runnableStatistics.suspendsOnVarCount)
+    );
   }
 
   static inline
@@ -350,18 +398,36 @@ public:
     return buildRecord(vm,
       buildArity(vm,
         "state",
-        "type",
-        "status",
+        "nodes",
         "statistics",
-        "nodesProperties"
+        "status"
       ),
-      dynamic_cast<Thread*>(runnable) ? build(vm, "thread") :
-        build(vm, "runnable"),
-      buildThreadStatusRecord(vm, runnable),
+      buildThreadNodesPropertiesRecord(vm, runnable),
       buildThreadStatisticsRecord(vm, runnable),
-      buildThreadNodesPropertiesRecord(vm, runnable)
+      buildThreadStatusRecord(vm, runnable)
     );
   }
+
+  class GetThreadIdentity: public Builtin<GetThreadIdentity> {
+  public:
+    GetThreadIdentity(): Builtin("getThreadIdentity") {}
+
+    static void call(VM vm, In threadNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+      result = buildThreadIdentityRecord(vm, runnable);
+    }
+  };
+
+  class GetThreadIdentityById: public Builtin<GetThreadIdentityById> {
+  public:
+    GetThreadIdentityById(): Builtin("getThreadIdentityById") {}
+
+    static void call(VM vm, In threadId, Out result) {
+      size_t id = getArgument<size_t>(vm, threadId);
+      Runnable* runnable = vm->getIntrospection().getThread(vm, id);
+      result = buildThreadIdentityRecord(vm, runnable);
+    }
+  };
 
   class GetThreadStatus: public Builtin<GetThreadStatus> {
   public:
@@ -549,32 +615,32 @@ public:
   UnstableNode buildNodesPropertiesRecord(VM vm, NodesProperties& properties) {
     return buildRecord(vm,
       buildArity(vm,
-        "nodesProperties",
-        "nVariableNodes",
-        "valueNodesCount",
-        "structuralNodesCount",
-        "tokenNodesCount",
-        "stableNodesCount",
-        "unstableNodesCount",
-        "xNodesCount",
-        "yNodesCount",
+        "nodes",
         "gNodesCount",
         "kNodesCount",
+        "nodesCount",
+        "stableNodesCount",
         "stackDepth",
-        "nodesCount"
+        "structuralNodesCount",
+        "tokenNodesCount",
+        "unstableNodesCount",
+        "valueNodesCount",
+        "variableNodesCount",
+        "xNodesCount",
+        "yNodesCount"
       ),
-      build(vm, properties.variableNodesCount),
-      build(vm, properties.valueNodesCount),
-      build(vm, properties.structuralNodesCount),
-      build(vm, properties.tokenNodesCount),
-      build(vm, properties.stableNodesCount),
-      build(vm, properties.unstableNodesCount),
-      build(vm, properties.xNodesCount),
-      build(vm, properties.yNodesCount),
       build(vm, properties.gNodesCount),
       build(vm, properties.kNodesCount),
+      build(vm, properties.nodesCount),
+      build(vm, properties.stableNodesCount),
       build(vm, properties.stackDepth),
-      build(vm, properties.nodesCount)
+      build(vm, properties.structuralNodesCount),
+      build(vm, properties.tokenNodesCount),
+      build(vm, properties.unstableNodesCount),
+      build(vm, properties.valueNodesCount),
+      build(vm, properties.variableNodesCount),
+      build(vm, properties.xNodesCount),
+      build(vm, properties.yNodesCount)
     );
   }
 

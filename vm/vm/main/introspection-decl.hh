@@ -82,6 +82,14 @@ public:
 private:
   void getNodesProperties(VM vm, Runnable* runnable, NodesProperties& properties);
 public:
+  UnstableNode* getXNode(VM vm, Runnable* runnable, size_t index);
+
+  UnstableNode* getYNode(VM vm, Runnable* runnable, size_t depth, size_t index);
+
+  StableNode* getGNode(VM vm, Runnable* runnable, size_t depth, size_t index);
+
+  StableNode* getKNode(VM vm, Runnable* runnable, size_t depth, size_t index);
+
   NodesProperties getNodesProperties(VM vm);
 
   NodesProperties getNodesProperties(VM vm, Runnable *runnable);

@@ -245,6 +245,7 @@ define
           end
         end
       in
+
         case Command of "count" then
           \insert CountCommand
         [] "thread" then
