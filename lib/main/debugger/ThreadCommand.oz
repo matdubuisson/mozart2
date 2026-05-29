@@ -103,7 +103,7 @@ local
       Th = {Boot_Introspection.getThread Id $}
     in
       if Th == none then
-        {PrintError "Thread "#Id#" is not found"}
+        {PrintError "Thread "#Id#" does not exist"}
       else
         {DisplayThread Th Id}
       end
