@@ -142,6 +142,16 @@ public:
     return first == nullptr;
   }
 
+  T& operator[](size_t index) {
+    size_t i = 0;
+    for (auto iter = begin(); iter != end(); ++iter) {
+      if (i == index)
+        return *iter;
+      i++;
+    }
+    assert(false);
+  }
+
   void push_back(MM mm, const T& item) {
     if (last == nullptr) {
       first = last = newNode(mm, nullptr, item);
