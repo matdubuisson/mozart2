@@ -76,6 +76,8 @@ define
     NContinues}
 
     This = {Boot_Thread.this $}
+    ThisId = {Boot_Thread.getId This $}
+
     proc {DefaultLoop}
       {Loop
         NonPreemptible
@@ -213,7 +215,7 @@ define
           [] Argument|NextArguments then
             if Argument == TargetedArgument then
               case Type of flag then
-                Result = found
+                Result = {Not DefaultValue}
               else
                 case NextArguments of Value|_ then
                   try
@@ -240,22 +242,31 @@ define
                 end
               end
             else
-              {GetArgument NextArguments Name Type DefaultValue Result}
+              {GetArgument NextArguments TargetedArgument Type DefaultValue Result}
             end
           end
         end
       in
-
         case Command of "count" then
           \insert CountCommand
         [] "thread" then
           \insert ThreadCommand
         [] "threads" then
           \insert ThreadsCommand
+        [] "nodes" then
+          \insert NodesCommand
+        [] "register" then
+          \insert RegisterCommand
+        [] "registers" then
+          \insert RegistersCommand
         else
           {PrintError "unknown command '"#Command#"', try help to get more infos"}
         end
       end
+
+
+
+
 
       {DefaultLoop}
 
