@@ -253,8 +253,6 @@ define
           \insert ThreadCommand
         [] "threads" then
           \insert ThreadsCommand
-        [] "nodes" then
-          \insert NodesCommand
         [] "register" then
           \insert RegisterCommand
         [] "registers" then
