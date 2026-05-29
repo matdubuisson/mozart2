@@ -212,40 +212,40 @@ public:
       } else if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
         if (matches(vm, aggregate, "variableNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).variableNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).variableNodesCount);
         } else if (matches(vm, aggregate, "valueNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).valueNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).valueNodesCount);
         } else if (matches(vm, aggregate, "structuralNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).structuralNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).structuralNodesCount);
         } else if (matches(vm, aggregate, "tokenNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).tokenNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).tokenNodesCount);
         } else if (matches(vm, aggregate, "stableNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).stableNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).stableNodesCount);
         } else if (matches(vm, aggregate, "unstableNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).unstableNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).unstableNodesCount);
         } else if (matches(vm, aggregate, "xNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).xNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).xNodesCount);
         } else if (matches(vm, aggregate, "yNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).yNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).yNodesCount);
         } else if (matches(vm, aggregate, "gNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).gNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).gNodesCount);
         } else if (matches(vm, aggregate, "kNodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).kNodesCount);
+            vm->getIntrospection().getNodesCounts(vm).kNodesCount);
         } else if (matches(vm, aggregate, "stackDepth")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).stackDepth);
+            vm->getIntrospection().getNodesCounts(vm).stackDepth);
         } else if (matches(vm, aggregate, "nodesCount")) {
           result = build(vm,
-            vm->getIntrospection().getNodesProperties(vm).nodesCount);
+            vm->getIntrospection().getNodesCounts(vm).nodesCount);
         } else {
           result = build(vm, "none");
         }
@@ -353,10 +353,10 @@ public:
   }
 
   static inline
-  UnstableNode buildThreadNodesPropertiesRecord(VM vm, Runnable* runnable) {
-    Introspection::NodesProperties properties =
-      vm->getIntrospection().getNodesProperties(vm, runnable);
-    return buildNodesPropertiesRecord(vm, properties);
+  UnstableNode buildThreadNodesCountsRecord(VM vm, Runnable* runnable) {
+    Introspection::NodesCounts properties =
+      vm->getIntrospection().getNodesCounts(vm, runnable);
+    return buildNodesCountsRecord(vm, properties);
   }
 
   static inline
@@ -402,7 +402,7 @@ public:
         "statistics",
         "status"
       ),
-      buildThreadNodesPropertiesRecord(vm, runnable),
+      buildThreadNodesCountsRecord(vm, runnable),
       buildThreadStatisticsRecord(vm, runnable),
       buildThreadStatusRecord(vm, runnable)
     );
@@ -418,34 +418,12 @@ public:
     }
   };
 
-  class GetThreadIdentityById: public Builtin<GetThreadIdentityById> {
-  public:
-    GetThreadIdentityById(): Builtin("getThreadIdentityById") {}
-
-    static void call(VM vm, In threadId, Out result) {
-      size_t id = getArgument<size_t>(vm, threadId);
-      Runnable* runnable = vm->getIntrospection().getThread(vm, id);
-      result = buildThreadIdentityRecord(vm, runnable);
-    }
-  };
-
   class GetThreadStatus: public Builtin<GetThreadStatus> {
   public:
     GetThreadStatus(): Builtin("getThreadStatus") {}
 
     static void call(VM vm, In threadNode, Out result) {
       Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-      result = buildThreadStatusRecord(vm, runnable);
-    }
-  };
-
-  class GetThreadStatusById: public Builtin<GetThreadStatusById> {
-  public:
-    GetThreadStatusById(): Builtin("getThreadStatusById") {}
-
-    static void call(VM vm, In threadId, Out result) {
-      size_t id = getArgument<size_t>(vm, threadId);
-      Runnable* runnable = vm->getIntrospection().getThread(vm, id);
       result = buildThreadStatusRecord(vm, runnable);
     }
   };
@@ -460,35 +438,13 @@ public:
     }
   };
 
-  class GetThreadStatisticsById: public Builtin<GetThreadStatisticsById> {
+  class GetThreadNodesCounts: public Builtin<GetThreadNodesCounts> {
   public:
-    GetThreadStatisticsById(): Builtin("getThreadStatisticsById") {}
-
-    static void call(VM vm, In threadId, Out result) {
-      size_t id = getArgument<size_t>(vm, threadId);
-      Runnable* runnable = vm->getIntrospection().getThread(vm, id);
-      result = buildThreadStatisticsRecord(vm, runnable);
-    }
-  };
-
-  class GetThreadNodesProperties: public Builtin<GetThreadNodesProperties> {
-  public:
-    GetThreadNodesProperties(): Builtin("getThreadNodesProperties") {}
+    GetThreadNodesCounts(): Builtin("getThreadNodesCounts") {}
 
     static void call(VM vm, In threadNode, Out result) {
       Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-      result = buildThreadNodesPropertiesRecord(vm, runnable);
-    }
-  };
-
-  class GetThreadNodesPropertiesById: public Builtin<GetThreadNodesPropertiesById> {
-  public:
-    GetThreadNodesPropertiesById(): Builtin("getThreadNodesPropertiesById") {}
-
-    static void call(VM vm, In threadId, Out result) {
-      size_t id = getArgument<size_t>(vm, threadId);
-      Runnable* runnable = vm->getIntrospection().getThread(vm, id);
-      result = buildThreadNodesPropertiesRecord(vm, runnable);
+      result = buildThreadNodesCountsRecord(vm, runnable);
     }
   };
 
@@ -498,17 +454,6 @@ public:
 
     static void call(VM vm, In threadNode, Out result) {
       Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-      result = buildThreadStateRecord(vm, runnable);
-    }
-  };
-
-  class GetThreadStateById: public Builtin<GetThreadStateById> {
-  public:
-    GetThreadStateById(): Builtin("getThreadStateById") {}
-
-    static void call(VM vm, In threadId, Out result) {
-      size_t id = getArgument<size_t>(vm, threadId);
-      Runnable* runnable = vm->getIntrospection().getThread(vm, id);
       result = buildThreadStateRecord(vm, runnable);
     }
   };
@@ -569,16 +514,6 @@ public:
     }
   };
 
-  class DisplayThread: public Builtin<DisplayThread> {
-  public:
-    DisplayThread(): Builtin("displayThread") {}
-
-    static void call(VM vm, In threadNode) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-      vm->getIntrospection().displayThread(vm, runnable);
-    }
-  };
-
   class GetActiveThreadsCount: public Builtin<GetActiveThreadsCount> {
   public:
     GetActiveThreadsCount(): Builtin("getActiveThreadsCount") {}
@@ -612,7 +547,530 @@ public:
   /* ========== Nodes stats ========== */
 
   static inline
-  UnstableNode buildNodesPropertiesRecord(VM vm, NodesProperties& properties) {
+  std::string getMemWordString(VM vm, MemWord& word) {
+    nativeint value = word.get<nativeint>();
+    std::stringstream stream;
+    stream << std::hex <<
+      std::uppercase << std::setfill('0') <<
+      std::setw(2 * sizeof(nativeint)) << value;
+    return stream.str();
+  }
+
+  enum NodesAggregate {
+    AggregateNone,
+    AggregateIdentity,
+    AggregateStatus,
+    AggregateValue,
+    AggregateState
+  };
+
+  // static inline
+  // NodesAggregate getNodeAggregate(VM vm, In aggregate) {
+  //   using namespace patternmatching;
+
+  //   if (matches(vm, aggregate, "identity"))
+  //     return Identity;
+  //   else if (matches(vm, aggregate, "status"))
+  //     return Status;
+  //   else if (matches(vm, aggregate, "value"))
+  //     return Value;
+  //   else if (matches(vm, aggregate, "all"))
+  //     return All;
+  //   else
+  //     return None;
+  // }
+
+  static inline
+  std::string nodeStructuralBehaviorToString(StructuralBehavior behavior) {
+    switch (behavior) {
+      case sbVariable: return "variable";
+      case sbValue: return "value";
+      case sbStructural: return "structural";
+      case sbTokenEq: return "tokenEq";
+      default: assert(false);
+    }
+  }
+
+  static inline
+  UnstableNode buildNodeRecord(VM vm, Node* node, NodesAggregate aggregate) {
+    if (node == nullptr)
+      return build(vm, "none");
+
+    Introspection& introspection = vm->getIntrospection();
+    Type type = introspection.getNodeType(vm, node);
+    MemWord value = introspection.getNodeValue(vm, node);
+
+    switch (aggregate) {
+      case AggregateNone: return build(vm, "none");
+      case AggregateIdentity: return
+        buildRecord(vm,
+          buildArity(vm,
+            "node",
+            "name",
+            "uuid"
+          ),
+          build(vm, type->getName().c_str()),
+          build(vm, type->getUUID())
+        );
+      case AggregateStatus: return
+        buildRecord(vm,
+          buildArity(vm,
+            "node",
+            "bindingPriority",
+            "name",
+            "structuralBehavior"
+          ),
+          build(vm, type->getBindingPriority()),
+          build(vm, type->getName().c_str()),
+          build(vm,
+            nodeStructuralBehaviorToString(
+              type->getStructuralBehavior()
+            ).c_str()
+          )
+        );
+      case AggregateValue: return
+        buildRecord(vm,
+          buildArity(vm,
+            "node",
+            "copyable",
+            "feature",
+            "name",
+            "transient",
+            "value"
+          ),
+          build(vm, type->isCopyable()),
+          build(vm, type->isFeature()),
+          build(vm, type->getName().c_str()),
+          build(vm, type->isTransient()),
+          build(vm, getMemWordString(vm, value).c_str())
+        );
+      case AggregateState: return
+        buildRecord(vm,
+          buildArity(vm,
+            "node",
+            "bindingPriority",
+            "copyable",
+            "feature",
+            "name",
+            "structuralBehavior",
+            "transient",
+            "uuid",
+            "value"
+          ),
+          build(vm, type->getBindingPriority()),
+          build(vm, type->isCopyable()),
+          build(vm, type->isFeature()),
+          build(vm, type->getName().c_str()),
+          build(vm,
+            nodeStructuralBehaviorToString(
+              type->getStructuralBehavior()
+            ).c_str()
+          ),
+          build(vm, type->isTransient()),
+          build(vm, type->getUUID()),
+          build(vm, getMemWordString(vm, value).c_str())
+        );
+      default: assert(false);
+    }
+  }
+
+  typedef Introspection::NodesRegister NodesRegister;
+
+  static inline
+  std::string getRegisterName(NodesRegister nodesRegister) {
+    switch (nodesRegister) {
+      case NodesRegister::xRegister: return "X";
+      case NodesRegister::yRegister: return "Y";
+      case NodesRegister::gRegister: return "G";
+      case NodesRegister::kRegister: return "K";
+      default: assert(false);
+    }
+  }
+
+  static inline
+  std::string getAggregateName(NodesAggregate nodesAggregate) {
+    switch (nodesAggregate) {
+      case AggregateIdentity: return "Identity";
+      case AggregateStatus: return "Status";
+      case AggregateValue: return "Value";
+      case AggregateState: return "State";
+      default: assert(false);
+    }
+  }
+
+  static inline
+  NodesAggregate getAggregate(VM vm, In aggregateNode) {
+    using namespace patternmatching;
+
+    if (matches(vm, aggregateNode, "identity"))
+      return AggregateIdentity;
+    else if (matches(vm, aggregateNode, "status"))
+      return AggregateStatus;
+    else if (matches(vm, aggregateNode, "value"))
+      return AggregateValue;
+    else if (matches(vm, aggregateNode, "state"))
+      return AggregateState;
+    else assert(false);
+  }
+
+  // For future work allowing declaration like that :
+  // template<NodesRegister nodesRegister, NodesAggregate nodesAggregate>
+  // template<NodesRegister nodesRegister>
+  // class GetThreadNodesCount: public Builtin<GetThreadNodesCount<nodesRegister>> {
+  // private:
+  //   static std::string getName() {
+  //     return std::string("GetThread") + getRegisterName(nodesRegister)
+  //       + std::string("NodesCount");
+  //   }
+  // public:
+  //   GetThreadNodesCount():
+  //     Builtin<GetThreadNodesCount<nodesRegister>>(getName()) {}
+
+  //   static void call(VM vm, In threadNode, Out result) {
+  //     Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+  //     Introspection& introspection = vm->getIntrospection();
+
+  //     size_t count;
+  //     switch (nodesRegister) {
+  //       case NodesRegister::xRegister:
+  //         count = introspection.getXNodesCount(vm, runnable); break;
+  //       case NodesRegister::yRegister:
+  //         count = introspection.getYNodesCount(vm, runnable); break;
+  //       case NodesRegister::gRegister:
+  //         count = introspection.getGNodesCount(vm, runnable); break;
+  //       case NodesRegister::kRegister:
+  //         count = introspection.getKNodesCount(vm, runnable); break;
+  //       default: assert(false);
+  //     }
+
+  //     result = build(vm, count);
+  //   }
+  // };
+
+  static inline
+  UnstableNode getThreadNodesCount(VM vm, In threadNode, NodesRegister nodesRegister) {
+    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+    Introspection& introspection = vm->getIntrospection();
+
+    size_t count;
+    switch (nodesRegister) {
+      case NodesRegister::xRegister:
+        count = introspection.getXNodesCount(vm, runnable); break;
+      case NodesRegister::yRegister:
+        count = introspection.getYNodesCount(vm, runnable); break;
+      case NodesRegister::gRegister:
+        count = introspection.getGNodesCount(vm, runnable); break;
+      case NodesRegister::kRegister:
+        count = introspection.getKNodesCount(vm, runnable); break;
+      case NodesRegister::anyRegister:
+        count = introspection.getNodesCount(vm, runnable);
+      default: assert(false);
+    }
+
+    return build(vm, count);
+  }
+
+  class GetThreadXNodesCount: public Builtin<GetThreadXNodesCount> {
+  public:
+    GetThreadXNodesCount(): Builtin("getThreadXNodesCount") {}
+
+    static void call(VM vm, In threadNode, Out result) {
+      result = getThreadNodesCount(vm, threadNode, NodesRegister::xRegister);
+    }
+  };
+
+  class GetThreadYNodesCount: public Builtin<GetThreadYNodesCount> {
+  public:
+    GetThreadYNodesCount(): Builtin("getThreadYNodesCount") {}
+
+    static void call(VM vm, In threadNode, Out result) {
+      result = getThreadNodesCount(vm, threadNode, NodesRegister::yRegister);
+    }
+  };
+
+  class GetThreadGNodesCount: public Builtin<GetThreadGNodesCount> {
+  public:
+    GetThreadGNodesCount(): Builtin("getThreadGNodesCount") {}
+
+    static void call(VM vm, In threadNode, Out result) {
+      result = getThreadNodesCount(vm, threadNode, NodesRegister::gRegister);
+    }
+  };
+
+  class GetThreadKNodesCount: public Builtin<GetThreadKNodesCount> {
+  public:
+    GetThreadKNodesCount(): Builtin("getThreadKNodesCount") {}
+
+    static void call(VM vm, In threadNode, Out result) {
+      result = getThreadNodesCount(vm, threadNode, NodesRegister::kRegister);
+    }
+  };
+
+  class GetThreadNodesCount: public Builtin<GetThreadNodesCount> {
+  public:
+    GetThreadNodesCount(): Builtin("getThreadNodesCount") {}
+
+    static void call(VM vm, In threadNode, Out result) {
+      result = getThreadNodesCount(vm, threadNode, NodesRegister::anyRegister);
+    }
+  };
+
+  class GetThreadStackDepth: public Builtin<GetThreadStackDepth> {
+  public:
+    GetThreadStackDepth(): Builtin("getThreadStackDepth") {}
+
+    static void call(VM vm, In threadNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+      result = build(vm,
+        vm->getIntrospection().getStackDepth(vm, runnable));
+    }
+  };
+
+  static inline
+  UnstableNode getThreadNodesRegisterSize(VM vm, In threadNode, In depthNode,
+    NodesRegister nodesRegister) {
+    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+    size_t depth = getArgument<size_t>(vm, depthNode);
+    Introspection& introspection = vm->getIntrospection();
+
+    size_t count;
+    switch (nodesRegister) {
+      case NodesRegister::yRegister:
+        count = introspection.getYNodesRegisterSize(vm, runnable, depth); break;
+      case NodesRegister::gRegister:
+        count = introspection.getGNodesRegisterSize(vm, runnable, depth); break;
+      case NodesRegister::kRegister:
+        count = introspection.getKNodesRegisterSize(vm, runnable, depth); break;
+      default: assert(false);
+    }
+
+    return build(vm, count);
+  }
+
+  class GetThreadXNodesRegisterSize: public Builtin<GetThreadXNodesRegisterSize> {
+  public:
+    GetThreadXNodesRegisterSize(): Builtin("getThreadXNodesRegisterSize") {}
+
+    static void call(VM vm, In threadNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+      result = build(vm,
+        vm->getIntrospection().getXNodesRegisterSize(vm, runnable));
+    }
+  };
+
+  class GetThreadYNodesRegisterSize: public Builtin<GetThreadYNodesRegisterSize> {
+  public:
+    GetThreadYNodesRegisterSize(): Builtin("getThreadYNodesRegisterSize") {}
+
+    static void call(VM vm, In threadNode, In depthNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+      result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
+        NodesRegister::yRegister);
+    }
+  };
+
+  class GetThreadGNodesRegisterSize: public Builtin<GetThreadGNodesRegisterSize> {
+  public:
+    GetThreadGNodesRegisterSize(): Builtin("getThreadGNodesRegisterSize") {}
+
+    static void call(VM vm, In threadNode, In depthNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+      result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
+        NodesRegister::gRegister);
+    }
+  };
+
+  class GetThreadKNodesRegisterSize: public Builtin<GetThreadKNodesRegisterSize> {
+  public:
+    GetThreadKNodesRegisterSize(): Builtin("getThreadKNodesRegisterSize") {}
+
+    static void call(VM vm, In threadNode, In depthNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+      result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
+        NodesRegister::kRegister);
+    }
+  };
+
+  static inline
+  UnstableNode getThreadXNodeAggregate(VM vm, In threadNode, In indexNode, In aggregateNode) {
+    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+    size_t index = getArgument<size_t>(vm, indexNode);
+    NodesAggregate aggregate = getAggregate(vm, aggregateNode);
+    Introspection& introspection = vm->getIntrospection();
+
+    assert(index < introspection.getXNodesRegisterSize(vm, runnable));
+    Node* node = introspection.getXNode(vm, runnable, index);
+    return buildNodeRecord(vm, node, aggregate);
+  }
+
+  static inline
+  UnstableNode getThreadNodeAggregate(VM vm, In threadNode, In depthNode, In indexNode,
+    In aggregateNode, NodesRegister nodesRegister) {
+    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+    size_t depth = getArgument<size_t>(vm, depthNode);
+    size_t index = getArgument<size_t>(vm, indexNode);
+    NodesAggregate aggregate = getAggregate(vm, aggregateNode);
+    Introspection& introspection = vm->getIntrospection();
+
+    assert(depth < introspection.getStackDepth(vm, runnable));
+    Node* node;
+    switch (nodesRegister) {
+      case NodesRegister::yRegister: {
+        assert(index < introspection.getYNodesRegisterSize(vm, runnable, depth));
+        node = introspection.getYNode(vm, runnable, depth, index);
+        break;
+      } case NodesRegister::gRegister: {
+        assert(index < introspection.getGNodesRegisterSize(vm, runnable, depth));
+        node = introspection.getGNode(vm, runnable, depth, index);
+        break;
+      } case NodesRegister::kRegister: {
+        assert(index < introspection.getKNodesRegisterSize(vm, runnable, depth));
+        node = introspection.getKNode(vm, runnable, depth, index);
+        break;
+      } default: assert(false);
+    }
+
+    return buildNodeRecord(vm, node, aggregate);
+  }
+
+  class GetThreadXNodeAggregate: public Builtin<GetThreadXNodeAggregate> {
+  public:
+    GetThreadXNodeAggregate(): Builtin("getThreadXNodeAggregate") {}
+
+    static void call(VM vm, In threadNode, In indexNode, In aggregateNode, Out result) {
+      result = getThreadXNodeAggregate(vm, threadNode, indexNode, aggregateNode);
+    }
+  };
+
+  class GetThreadYNodeAggregate: public Builtin<GetThreadYNodeAggregate> {
+  public:
+    GetThreadYNodeAggregate(): Builtin("getThreadYNodeAggregate") {}
+
+    static void call(VM vm, In threadNode, In depthNode, In indexNode, In aggregateNode, Out result) {
+      result = getThreadNodeAggregate(vm, threadNode, depthNode, indexNode, aggregateNode,
+        NodesRegister::yRegister);
+    }
+  };
+
+  class GetThreadGNodeAggregate: public Builtin<GetThreadGNodeAggregate> {
+  public:
+    GetThreadGNodeAggregate(): Builtin("getThreadGNodeAggregate") {}
+
+    static void call(VM vm, In threadNode, In depthNode, In indexNode, In aggregateNode, Out result) {
+      result = getThreadNodeAggregate(vm, threadNode, depthNode, indexNode, aggregateNode,
+        NodesRegister::gRegister);
+    }
+  };
+
+  class GetThreadKNodeAggregate: public Builtin<GetThreadKNodeAggregate> {
+  public:
+    GetThreadKNodeAggregate(): Builtin("getThreadKNodeAggregate") {}
+
+    static void call(VM vm, In threadNode, In depthNode, In indexNode, In aggregateNode, Out result) {
+      result = getThreadNodeAggregate(vm, threadNode, depthNode, indexNode, aggregateNode,
+        NodesRegister::kRegister);
+    }
+  };
+
+  static inline
+  UnstableNode getThreadXNodeAggregates(VM vm, In threadNode, In fromNode, In toNode, In aggregateNode) {
+    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+    size_t from = getArgument<size_t>(vm, fromNode);
+    size_t to = getArgument<size_t>(vm, toNode);
+    NodesAggregate aggregate = getAggregate(vm, aggregateNode);
+    Introspection& introspection = vm->getIntrospection();
+
+    assert(from < to);
+    assert(to < introspection.getXNodesRegisterSize(vm, runnable));
+
+    OzListBuilder builder(vm);
+    introspection.doForEachXNode(vm, runnable, from, to, [vm, &builder, aggregate](Node& node) {
+      builder.push_back(vm, buildNodeRecord(vm, &node, aggregate));
+    });
+    return builder.get(vm);
+  }
+
+  static inline
+  UnstableNode getThreadNodeAggregates(VM vm, In threadNode, In depthNode, In fromNode, In toNode, In aggregateNode,
+    NodesRegister nodesRegister) {
+    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+    size_t depth = getArgument<size_t>(vm, depthNode);
+    size_t from = getArgument<size_t>(vm, fromNode);
+    size_t to = getArgument<size_t>(vm, toNode);
+    NodesAggregate aggregate = getAggregate(vm, aggregateNode);
+    Introspection& introspection = vm->getIntrospection();
+
+    assert(depth < introspection.getStackDepth(vm, runnable));
+    assert(from < to);
+
+    OzListBuilder builder(vm);
+
+    switch (nodesRegister) {
+      case NodesRegister::yRegister: {
+        assert(to < introspection.getYNodesRegisterSize(vm, runnable, depth));
+        introspection.doForEachYNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](Node& node) {
+          builder.push_back(vm, buildNodeRecord(vm, &node, aggregate));
+        });
+        break;
+      } case NodesRegister::gRegister: {
+        assert(to < introspection.getGNodesRegisterSize(vm, runnable, depth));
+        introspection.doForEachGNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](Node& node) {
+          builder.push_back(vm, buildNodeRecord(vm, &node, aggregate));
+        });
+        break;
+      } case NodesRegister::kRegister: {
+        assert(to < introspection.getKNodesRegisterSize(vm, runnable, depth));
+        introspection.doForEachKNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](Node& node) {
+          builder.push_back(vm, buildNodeRecord(vm, &node, aggregate));
+        });
+        break;
+      } default: assert(false);
+    }
+
+    return builder.get(vm);
+  }
+
+  class GetThreadXNodeAggregates: public Builtin<GetThreadXNodeAggregates> {
+  public:
+    GetThreadXNodeAggregates(): Builtin("getThreadXNodeAggregates") {}
+
+    static void call(VM vm, In threadNode, In fromNode, In toNode, In aggregateNode, Out result) {
+      result = getThreadXNodeAggregates(vm, threadNode, fromNode, toNode, aggregateNode);
+    }
+  };
+
+  class GetThreadYNodeAggregates: public Builtin<GetThreadYNodeAggregates> {
+  public:
+    GetThreadYNodeAggregates(): Builtin("getThreadYNodeAggregates") {}
+
+    static void call(VM vm, In threadNode, In depthNode, In fromNode, In toNode, In aggregateNode, Out result) {
+      result = getThreadNodeAggregates(vm, threadNode, depthNode, fromNode, toNode, aggregateNode,
+        NodesRegister::yRegister);
+    }
+  };
+
+  class GetThreadGNodeAggregates: public Builtin<GetThreadGNodeAggregates> {
+  public:
+    GetThreadGNodeAggregates(): Builtin("getThreadGNodeAggregates") {}
+
+    static void call(VM vm, In threadNode, In depthNode, In fromNode, In toNode, In aggregateNode, Out result) {
+      result = getThreadNodeAggregates(vm, threadNode, depthNode, fromNode, toNode, aggregateNode,
+        NodesRegister::gRegister);
+    }
+  };
+
+  class GetThreadKNodeAggregates: public Builtin<GetThreadKNodeAggregates> {
+  public:
+    GetThreadKNodeAggregates(): Builtin("getThreadKNodeAggregates") {}
+
+    static void call(VM vm, In threadNode, In depthNode, In fromNode, In toNode, In aggregateNode, Out result) {
+      result = getThreadNodeAggregates(vm, threadNode, depthNode, fromNode, toNode, aggregateNode,
+        NodesRegister::kRegister);
+    }
+  };
+
+  static inline
+  UnstableNode buildNodesCountsRecord(VM vm, NodesCounts& properties) {
     return buildRecord(vm,
       buildArity(vm,
         "nodes",
@@ -644,14 +1102,14 @@ public:
     );
   }
 
-  class GetNodesProperties: public Builtin<GetNodesProperties> {
+  class GetNodesCounts: public Builtin<GetNodesCounts> {
   public:
-    GetNodesProperties(): Builtin("getNodesProperties") {}
+    GetNodesCounts(): Builtin("getNodesCounts") {}
 
     static void call(VM vm, Out result) {
-      Introspection::NodesProperties properties =
-        vm->getIntrospection().getNodesProperties(vm);
-      result = buildNodesPropertiesRecord(vm, properties);
+      Introspection::NodesCounts properties =
+        vm->getIntrospection().getNodesCounts(vm);
+      result = buildNodesCountsRecord(vm, properties);
     }
   };
 

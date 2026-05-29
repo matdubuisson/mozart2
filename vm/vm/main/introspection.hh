@@ -58,53 +58,6 @@ Runnable* Introspection::getThread(VM vm, size_t id) {
   return nullptr;
 }
 
-inline
-void Introspection::displayNode(VM vm, UnstableNode& node) {
-  std::cout << node.type()->getName() << std::endl;
-
-  const std::string& name = node.type()->getName();
-  switch (node.type().getStructuralBehavior()) {
-    case sbVariable: {
-      if (name == "ReadOnlyVariable") {
-        ReadOnlyVariable variable = node.access<ReadOnlyVariable>();
-      } else if (name == "ReadOnly") {
-        ReadOnly variable = node.access<ReadOnly>();
-      } else if (name == "FailedValue") {
-        FailedValue variable = node.access<FailedValue>();
-      } else if (name == "OptVar") {
-        OptVar variable = node.access<OptVar>();
-        std::cout << "Is opt var needed ? " << variable.isNeeded(vm) << std::endl;
-      } else if (name == "Variable") {
-        Variable variable = node.access<Variable>();
-      }
-      break;
-    } case sbValue: {
-
-      break;
-    } case sbStructural: {
-
-      break;
-    } case sbTokenEq: {
-
-      break;
-    } default: assert(false);
-  }
-}
-
-inline
-void Introspection::displayThread(VM vm, Runnable* runnable) {
-  if (Thread* thread = static_cast<Thread*>(runnable)) {
-    std::cout << "Prout" << std::endl;
-
-    StaticArray<UnstableNode>& array = thread->xregs._array;
-
-    for (size_t i = 0; i < array.size(); i++) {
-      UnstableNode& node = array[i];
-      displayNode(vm, node);
-    }
-  }
-}
-
 /* ========== Threads stats ========== */
 
 inline
@@ -143,59 +96,16 @@ size_t Introspection::getThreadsCount(VM vm) {
 
 /* ========== Nodes stats ========== */
 
-template<class T>
 inline
-T* getNodePointerFromArray(StaticArray<T> array, size_t index) {
-  if (index < array.size()) return &array[index];
-  else return nullptr;
+Type Introspection::getNodeType(VM vm, Node* node) {
+  assert(node != nullptr);
+  return node->data.type;
 }
 
 inline
-StackEntry* getStackEntryPointerFromThreadStack(ThreadStack& stack, size_t depth) {
-  size_t i = 0;
-  for (ThreadStack::iterator entry = stack.begin();
-    entry != stack.end(); entry++, i++) {    
-    if (i == depth)
-      return &(*entry);
-  }
-  return nullptr;
-}
-
-inline
-UnstableNode* Introspection::getXNode(VM vm, Runnable* runnable, size_t index) {
-  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-    return getNodePointerFromArray<UnstableNode>(thread->xregs._array, index);
-  } else return nullptr;
-}
-
-inline
-UnstableNode* Introspection::getYNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
-  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-    StackEntry* entry = getStackEntryPointerFromThreadStack(thread->stack, depth);
-    if (entry)
-      return getNodePointerFromArray<UnstableNode>(entry->yregs, index);
-  }
-  return nullptr;
-}
-
-inline
-StableNode* Introspection::getGNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
-  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-    StackEntry* entry = getStackEntryPointerFromThreadStack(thread->stack, depth);
-    if (entry)
-      return getNodePointerFromArray<StableNode>(entry->gregs, index);
-  }
-  return nullptr;
-}
-
-inline
-StableNode* Introspection::getKNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
-  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-    StackEntry* entry = getStackEntryPointerFromThreadStack(thread->stack, depth);
-    if (entry)
-      return getNodePointerFromArray<StableNode>(entry->kregs, index);
-  }
-  return nullptr;
+MemWord Introspection::getNodeValue(VM vm, Node* node) {
+  assert(node != nullptr);
+  return node->data.value;
 }
 
 inline
@@ -216,10 +126,10 @@ void parseStaticArray(StaticArray<UnstableNode>& array,
   }
 }
 
-typedef Introspection::NodesProperties NodesProperties;
+typedef Introspection::NodesCounts NodesCounts;
 
 inline
-void updateNodesPropertiesFromNode(VM vm, NodesProperties& properties,
+void updateNodesCountsFromNode(VM vm, NodesCounts& properties,
   Node* node) {
   switch (node->type()->getStructuralBehavior()) {
     case sbVariable: properties.variableNodesCount++; return;
@@ -230,40 +140,39 @@ void updateNodesPropertiesFromNode(VM vm, NodesProperties& properties,
   }
 }
 
+template<class T>
 inline
-void updateNodesPropertiesFromStaticArray(VM vm, NodesProperties& properties,
+void updateNodesCountsFromNodes(VM vm, NodesCounts& properties,
+  StaticArray<T> array) {
+  properties.nodesCount += array.size();
+
+  for (typename StaticArray<T>::iterator iter = array.begin();
+    iter != array.end(); iter++) {
+    T* node = static_cast<T*>(*iter);
+    updateNodesCountsFromNode(vm, properties, node);
+  }
+}
+
+inline
+void updateNodesCountsFromStaticArray(VM vm, NodesCounts& properties,
   StaticArray<StableNode> array) {
-  size_t size = array.size();
-  properties.stableNodesCount += size;
-  properties.nodesCount += size;
-
-  for (StaticArray<StableNode>::iterator iter = array.begin();
-    iter != array.end(); iter++) {
-    StableNode* node = static_cast<StableNode*>(*iter);
-    updateNodesPropertiesFromNode(vm, properties, node);
-  }
+  properties.stableNodesCount += array.size();
+  updateNodesCountsFromNodes<StableNode>(vm, properties, array);
 }
 
 inline
-void updateNodesPropertiesFromStaticArray(VM vm, NodesProperties& properties,
-  StaticArray<UnstableNode>& array) {
-  size_t size = array.size();
-  properties.unstableNodesCount += size;
-  properties.nodesCount += size;
-
-  for (StaticArray<UnstableNode>::iterator iter = array.begin();
-    iter != array.end(); iter++) {
-    UnstableNode* node = static_cast<UnstableNode*>(*iter);
-    updateNodesPropertiesFromNode(vm, properties, node);
-  }
+void updateNodesCountsFromStaticArray(VM vm, NodesCounts& properties,
+  StaticArray<UnstableNode> array) {
+  properties.unstableNodesCount += array.size();
+  updateNodesCountsFromNodes<UnstableNode>(vm, properties, array);
 }
 
 inline
-void Introspection::getNodesProperties(VM vm, Runnable* runnable, NodesProperties& properties) {
+void Introspection::getNodesCounts(VM vm, Runnable* runnable, NodesCounts& properties) {
   if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
     StaticArray<UnstableNode>& xregs = thread->xregs._array;
     properties.xNodesCount += xregs.size();
-    updateNodesPropertiesFromStaticArray(vm, properties, xregs);
+    updateNodesCountsFromStaticArray(vm, properties, xregs);
 
     ThreadStack& stack = thread->stack;
     for (ThreadStack::iterator entry = stack.begin();
@@ -278,54 +187,133 @@ void Introspection::getNodesProperties(VM vm, Runnable* runnable, NodesPropertie
       properties.gNodesCount += gregs.size();
       properties.kNodesCount += kregs.size();
 
-      updateNodesPropertiesFromStaticArray(vm, properties, yregs);
-      updateNodesPropertiesFromStaticArray(vm, properties, gregs);
-      updateNodesPropertiesFromStaticArray(vm, properties, kregs);
+      updateNodesCountsFromStaticArray(vm, properties, yregs);
+      updateNodesCountsFromStaticArray(vm, properties, gregs);
+      updateNodesCountsFromStaticArray(vm, properties, kregs);
     }
   }
 }
 
 inline
-NodesProperties Introspection::getNodesProperties(VM vm, Runnable* runnable) {
-  NodesProperties properties;
-  getNodesProperties(vm, runnable, properties);
-  return properties;
-}
-
-inline
-NodesProperties Introspection::getNodesProperties(VM vm) {
-  NodesProperties properties;
+NodesCounts Introspection::getNodesCounts(VM vm) {
+  NodesCounts properties;
   forEachThread(vm->aliveThreads, [this, vm, &properties](Runnable* runnable) {
     if (!runnable->isDead() && !runnable->isTerminated())
-      getNodesProperties(vm, runnable, properties);
+      getNodesCounts(vm, runnable, properties);
   });
   return properties;
 }
 
-typedef Introspection::NodeDescription NodeDescription;
+typedef Introspection::NodesRegister NodesRegister;
 
-// inline
-// NodeDescription Introspection::getNodeDescription(VM vm, Runnable* runnable, size_t index) {
+inline
+size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
+  NodesRegister nodesRegister, size_t depth) {
+  Thread* thread = dynamic_cast<Thread*>(runnable);
+  if (!thread)
+    return 0;
 
-// }
-
-// inline
-// StaticArray<NodeDescription> getNodeDescriptions(VM vm, Runnable* runnable,
-//   size_t from = 0, size_t to = SIZE_MAX) {
+  assert(depth < thread->stack.size());
+  StackEntry& entry = thread->stack[depth];
   
-// }
+  switch (nodesRegister) {
+    case xRegister: {
+      assert(depth == 0);
+      return thread->xregs._array.size();
+    } case yRegister: {
+      return entry.yregs.size();
+    } case gRegister: {
+      return entry.gregs.size();
+    } case kRegister: {
+      return entry.kregs.size();
+    } default: assert(false);
+  }
+}
 
-// StaticArray<NodeDescription> getNodeDescriptions(VM vm,
-//     size_t from = 0, size_t to = SIZE_MAX) {
+inline
+Node* Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+  size_t depth, size_t index) {
+  Thread* thread = dynamic_cast<Thread*>(runnable);
+  if (!thread)
+    return nullptr;
+
+  assert(depth < thread->stack.size());
+  StackEntry& entry = thread->stack[depth];
   
-// }
+  switch (nodesRegister) {
+    case xRegister: {
+      assert(depth == 0);
+      StaticArray<UnstableNode> xregs = thread->xregs._array;
+      assert(index < xregs.size());
+      return &xregs[index];
+    } case yRegister: {
+      StaticArray<UnstableNode> yregs = entry.yregs;
+      assert(index < yregs.size());
+      return &yregs[index];
+    } case gRegister: {
+      StaticArray<StableNode> gregs = entry.gregs;
+      assert(index < gregs.size());
+      return &gregs[index];
+    } case kRegister: {
+      StaticArray<StableNode> kregs = entry.kregs;
+      assert(index < kregs.size());
+      return &kregs[index];
+    } default: assert(false);
+  }
+}
+
+template<class T>
+inline
+void doForEachNodeFromStaticArray(VM vm, StaticArray<T> array,
+  size_t from, size_t to, std::function<void(Node&)> lambda) {
+  for (size_t i = from; i < to; i++) {
+    lambda(array[i]);
+  }
+}
+
+inline
+void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+  size_t depth, size_t from, size_t to, std::function<void(Node&)> lambda) {
+  assert(from < to);
+
+  Thread* thread = dynamic_cast<Thread*>(runnable);
+  if (!thread)
+    return;
+  
+  assert(depth < thread->stack.size());
+  StackEntry& entry = thread->stack[depth];
+  
+  switch (nodesRegister) {
+    case xRegister: {
+      assert(depth == 0);
+      StaticArray<UnstableNode> xregs = thread->xregs._array;
+      assert(to < xregs.size());
+      doForEachNodeFromStaticArray(vm, xregs, from, to, lambda);
+      return;
+    } case yRegister: {
+      StaticArray<UnstableNode> yregs = entry.yregs;
+      assert(to < yregs.size());
+      doForEachNodeFromStaticArray(vm, yregs, from, to, lambda);
+      return;
+    } case gRegister: {
+      StaticArray<StableNode> gregs = entry.gregs;
+      assert(to < gregs.size());
+      doForEachNodeFromStaticArray(vm, gregs, from, to, lambda);
+      return;
+    } case kRegister: {
+      StaticArray<StableNode> kregs = entry.kregs;
+      assert(to < kregs.size());
+      doForEachNodeFromStaticArray(vm, kregs, from, to, lambda);
+      return;
+    } default: assert(false);
+  }
+}
 
 /* ========== Variables stats ========== */
 
 inline
 size_t Introspection::getBoundVariablesCount(VM vm) {
-  size_t count = 0;
-  return count;
+  return 0;
 }
 
 inline
