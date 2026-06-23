@@ -1,8 +1,7 @@
 local
-  Options = [
-    option("id <value>" "Taking one integer representing a thread id")
-    option("ids <value0 .... valueN>" "Taking a chain of ids to display several threads")
-  ]
+  proc {DisplayOptions}
+    {PrintInfo "<id0> .... <idN>\tdisplay the state of one or several thread(s) specified by their id"}
+  end
 
   proc {DisplayThread Thread Id}
     State = {Boot_Introspection.getThreadState Thread $}
@@ -46,12 +45,12 @@ local
         bindsCount: BindsCount
       ) then        
         {PrintLog "\tStatistics:"}
-        {PrintLog "\t\t=> Runs: "#RunsCount}
-        {PrintLog "\t\t=> Resumes: "#ResumesCount}
-        {PrintLog "\t\t=> Suspends: "#SuspendsCount}
-        {PrintLog "\t\t=> SuspendsOnVar: "#SuspendsOnVarCount}
-        {PrintLog "\t\t=> Operations: "#OperationsCount}
-        {PrintLog "\t\t=> Binds: "#BindsCount}
+        {PrintLog "\t\tRuns: "#RunsCount}
+        {PrintLog "\t\tResumes: "#ResumesCount}
+        {PrintLog "\t\tSuspends: "#SuspendsCount}
+        {PrintLog "\t\tSuspendsOnVar: "#SuspendsOnVarCount}
+        {PrintLog "\t\tOperations: "#OperationsCount}
+        {PrintLog "\t\tBinds: "#BindsCount}
       end
 
       case Nodes of nodes(
@@ -69,21 +68,20 @@ local
         nodesCount: NodesCount
       ) then
         {PrintLog "\tNodes:"}
-        {PrintLog "\t\t=> Variable nodes: "#VariableNodesCount}
-        {PrintLog "\t\t=> Value nodes: "#ValueNodesCount}
-        {PrintLog "\t\t=> Structural nodes: "#StructuralNodesCount}
-        {PrintLog "\t\t=> Token nodes: "#TokenNodesCount}
+        {PrintLog "\t\tVariable nodes: "#VariableNodesCount}
+        {PrintLog "\t\tValue nodes: "#ValueNodesCount}
+        {PrintLog "\t\tStructural nodes: "#StructuralNodesCount}
+        {PrintLog "\t\tToken nodes: "#TokenNodesCount}
 
-        {PrintLog "\t\t=> Stable nodes: "#StableNodesCount}
-        {PrintLog "\t\t=> Unstable nodes: "#UnstableNodesCount}
+        {PrintLog "\t\tStable nodes: "#StableNodesCount}
+        {PrintLog "\t\tUnstable nodes: "#UnstableNodesCount}
 
-        {PrintLog "\t\t=> X nodes: "#XNodesCount}
-        {PrintLog "\t\t=> Y nodes: "#YNodesCount}
-        {PrintLog "\t\t=> G nodes: "#GNodesCount}
-        {PrintLog "\t\t=> K nodes: "#KNodesCount}
-
-        {PrintLog "\t\t=> Stack depth: "#StackDepth}
-        {PrintLog "\t\t=> Total nodes: "#NodesCount}
+        {PrintLog "\t\tX nodes: "#XNodesCount}
+        {PrintLog "\t\tY nodes: "#YNodesCount}
+        {PrintLog "\t\tG nodes: "#GNodesCount}
+        {PrintLog "\t\tK nodes: "#KNodesCount}
+        {PrintLog "\t\tStack depth: "#StackDepth}
+        {PrintLog "\t\tTotal nodes: "#NodesCount}
       end
     end
   end
@@ -98,7 +96,7 @@ local
     end
 
     if Id == none then
-      {PrintError "Bad provided id '"#IdString#"'"}
+      {PrintError "Argument '"#IdString#"' is not an id"}
     else
       Th = {Boot_Introspection.getThread Id $}
     in
@@ -109,30 +107,18 @@ local
       end
     end
   end
-in
-  case Arguments of Option|NextArguments then
-    case Option of "id" then
-      case NextArguments of IdString|_ then
-        {FindAndDisplayThread IdString}
-      else
-        {PrintError "Option id takes an integer value"}
-      end
-    [] "ids" then
-      proc {ForEachIdString IdStrings}
-        case IdStrings of nil then skip
-        [] IdString|NextIdStrings then
-          {FindAndDisplayThread IdString}
-          {ForEachIdString NextIdStrings}
-        end
-      end
-    in
-      {ForEachIdString NextArguments}
-    [] "help" then
-      {PrintOptions "threads" Options true}
-    else
-      {PrintOptions "threads" Options true}
+
+  proc {ForEach Arguments}
+    case Arguments of nil then skip
+    [] Argument|NextArguments then
+      {FindAndDisplayThread Argument}
+      {ForEach NextArguments}
     end
+  end
+in
+  case Arguments of nil then
+    {DisplayOptions}
   else
-    {PrintOptions "thread" Options false}
+    {ForEach Arguments}
   end
 end

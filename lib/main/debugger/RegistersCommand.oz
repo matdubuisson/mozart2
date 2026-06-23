@@ -1,8 +1,7 @@
 local
-  Options = [
-    option("id <value>" "Taking one integer representing a thread id")
-    option("ids <value0 .... valueN>" "Taking a chain of ids to display several threads")
-  ]
+  proc {DisplayOptions}
+    {PrintInfo "<id0> .... <idN>\tdisplay the state of one or several thread(s) specified by their id"}
+  end
 
   proc {DisplayThreadRegisters Thread Id}
     VMNodesCount = {Boot_Introspection.getNodesCount $}
@@ -49,51 +48,29 @@ local
     {PrintStack 0}
   end
 
-  proc {FindAndDisplayThreadRegisters IdString}
-    Id
-  in
-    try
-      Id = {String.toInt IdString $}
-    catch _ then
-      Id = none
-    end
-
-    if Id == none then
-      {PrintError "Bad provided id '"#IdString#"'"}
-    else
-      Th = {Boot_Introspection.getThread Id $}
+  proc {ForEach Arguments}
+    case Arguments of nil then skip
+    [] Argument|NextArguments then
+      ThreadId = {ExtractInput int Argument none $}
     in
-      if Th == none then
-        {PrintError "Thread "#Id#" does not exist"}
+      if ThreadId == none then
+        {PrintError "Provided thread id '"#Argument#"' is not an integer"}
       else
-        {DisplayThreadRegisters Th Id}
+        Thread = {Boot_Introspection.getThread ThreadId $}
+      in
+        if Thread == none then
+          {PrintError "Thread "#ThreadId#" does not exist"}
+        else
+          {DisplayThreadRegisters Thread ThreadId}
+          {ForEach NextArguments}
+        end
       end
     end
   end
 in
-  case Arguments of Option|NextArguments then
-    case Option of "id" then
-      case NextArguments of IdString|_ then
-        {FindAndDisplayThreadRegisters IdString}
-      else
-        {PrintError "Option id takes an integer value"}
-      end
-    [] "ids" then
-      proc {ForEachIdString IdStrings}
-        case IdStrings of nil then skip
-        [] IdString|NextIdStrings then
-          {FindAndDisplayThreadRegisters IdString}
-          {ForEachIdString NextIdStrings}
-        end
-      end
-    in
-      {ForEachIdString NextArguments}
-    [] "help" then
-      {PrintOptions "threads" Options true}
-    else
-      {PrintOptions "threads" Options true}
-    end
+  case Arguments of nil then
+    {DisplayOptions}
   else
-    {PrintOptions "thread" Options false}
+    {ForEach Arguments}
   end
 end

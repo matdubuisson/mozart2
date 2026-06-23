@@ -5,13 +5,24 @@ local
     {PrintLog "\t=> "#Message#": "#String}
   end
 
-  Options = [
-    option("threads" "display counters about threads")
-    option("variables" "display counters about variables")
-    option("nodes" "display counters about nodes")
-  ]
-in
-  case Arguments of "threads"|SelectedOptionNames then
+  % Aggregate options
+
+  proc {DisplayOptions}
+    {PrintInfo "threads\tdisplay counters related to threads"}
+    {PrintInfo "nodes\tdisplay counters related to nodes"}
+    {PrintInfo "variables\tdisplay counters related to variables"}
+  end
+
+  % Threads aggregates
+
+  proc {DisplayThreadsOptions}
+    {PrintInfo "active\tdisplay active threads counter"}
+    {PrintInfo "passive\tdisplay passive threads counter"}
+    {PrintInfo "total\tdisplay total threads counter"}
+    {PrintInfo "all\tdisplay all threads counters"}
+  end
+
+  proc {HandleThreadsOption Arguments}
     proc {PrintActiveThreadsCount}
       {PrintCount
         "Active threads count"
@@ -29,19 +40,56 @@ in
         "Threads count"
         {Boot_Introspection.getThreadsCount $}}
     end
-
-    Options = [
-      option("active" "display active threads counter"
-        PrintActiveThreadsCount)
-      option("passive" "display passive threads counter"
-        PrintPassiveThreadsCount)
-      option("all" "display threads counter"
-        PrintThreadsCount)
-    ]
   in
-    {ExecuteOptions "threads" Options SelectedOptionNames}
+    case Arguments of nil then
+      {DisplayThreadsOptions}
+    [] Argument|NextArguments then
+      case Argument of "help" then 
+        {DisplayThreadsOptions}
+      [] "active" then
+        {PrintActiveThreadsCount}
+      [] "passive" then
+        {PrintPassiveThreadsCount}
+      [] "total" then
+        {PrintThreadsCount}
+      [] "all" then
+        {PrintActiveThreadsCount}
+        {PrintPassiveThreadsCount}
+        {PrintThreadsCount}
+      else
+        {PrintError "Unexpected threads counter '"#Argument#"'"#TRYHELP}
+      end
 
-  [] "nodes"|SelectedOptionNames then
+      if NextArguments \= nil then
+        {HandleThreadsOption NextArguments}
+      end
+    end
+  end
+
+  % Nodes aggregates
+
+  proc {DisplayNodesOptions}
+   {PrintInfo "variable\tdisplay the counter of nodes behaving as variables"}
+   {PrintInfo "value\tdisplay the counter of nodes behaving as values"}
+   {PrintInfo "structural\tdisplay the counter of nodes behaving as structures"}
+   {PrintInfo "token\tdisplay the counter of nodes behaving as tokens"}
+
+   {PrintInfo "stable\tdisplay the stable nodes counter"}
+   {PrintInfo "unstable\tdisplay the unstable nodes counter"}
+
+   {PrintInfo "x\tdisplay the counter of nodes stored inside X registers"}
+   {PrintInfo "y\tdisplay the counter of nodes stored inside Y registers"}
+   {PrintInfo "g\tdisplay the counter of nodes stored inside G registers"}
+   {PrintInfo "k\tdisplay the counter of nodes stored inside K registers"}
+
+   {PrintInfo "stackDepth\tdisplay the depth of YGK registers, for several threads it is a sum of all"}
+
+   {PrintInfo "total\tdisplay the total count of nodes from anywhere and of any type"}
+
+   {PrintInfo "all\tdisplay every counter related to notes"}
+  end
+
+  proc {HandleNodesOption Arguments}
     proc {PrintVariableNodesCount}
       {PrintCount "Variable nodes count"
         {Boot_Introspection.getVariableNodesCount $}}
@@ -101,41 +149,69 @@ in
       {PrintCount "Nodes count"
         {Boot_Introspection.getNodesCount $}}
     end
-
-    Options = [
-      option("variableNodesCount" "display the counter of nodes behaving as variables"
-        PrintVariableNodesCount)
-      option("valueNodesCount" "display the counter of nodes behaving as values"
-        PrintValueNodesCount)
-      option("structuralNodesCount" "display the counter of nodes behaving as structures"
-        PrintStructuralNodesCount)
-      option("tokenNodesCount" "display the counter of nodes behaving as tokens"
-        PrintTokenNodesCount)
-
-      option("stableNodesCount" "display the stable nodes counter"
-        PrintStableNodesCount)
-      option("unstableNodesCount" "display the unstable nodes counter"
-        PrintUnstableNodesCount)
-
-      option("xNodesCount" "display the counter of nodes stored inside X registers"
-        PrintXNodesCount)
-      option("yNodesCount" "display the counter of nodes stored inside Y registers"
-        PrintYNodesCount)
-      option("gNodesCount" "display the counter of nodes stored inside G registers"
-        PrintGNodesCount)
-      option("kNodesCount" "display the counter of nodes stored inside K registers"
-        PrintKNodesCount)
-
-      option("stackDepth" "display the depth of YGK registers, for several threads it is a sum of all"
-        PrintStackDepth)
-
-      option("nodesCount" "display the total count of nodes from anywhere and of any type"
-        PrintNodesCount)
-    ]
   in
-    {ExecuteOptions "nodes" Options SelectedOptionNames}
+    case Arguments of nil then
+      {DisplayNodesOptions}
+    [] Argument|NextArguments then
+      case Argument of "help" then 
+        {DisplayNodesOptions}
+      [] "variable" then
+        {PrintVariableNodesCount}
+      [] "value" then
+        {PrintValueNodesCount}
+      [] "structural" then
+        {PrintStructuralNodesCount}
+      [] "token" then
+        {PrintTokenNodesCount}
+      [] "stable" then
+        {PrintStableNodesCount}
+      [] "unstable" then
+        {PrintUnstableNodesCount}
+      [] "x" then
+        {PrintXNodesCount}
+      [] "y" then
+        {PrintYNodesCount}
+      [] "g" then
+        {PrintGNodesCount}
+      [] "k" then
+        {PrintKNodesCount}
+      [] "stackDepth" then
+        {PrintStackDepth}
+      [] "total" then
+        {PrintNodesCount}
+      [] "all" then
+        {PrintVariableNodesCount}
+        {PrintValueNodesCount}
+        {PrintStructuralNodesCount}
+        {PrintTokenNodesCount}
+        {PrintStableNodesCount}
+        {PrintUnstableNodesCount}
+        {PrintXNodesCount}
+        {PrintYNodesCount}
+        {PrintGNodesCount}
+        {PrintKNodesCount}
+        {PrintStackDepth}
+        {PrintNodesCount}
+      else
+        {PrintError "Unexpected nodes counter '"#Argument#"'"#TRYHELP}
+      end
 
-  [] "variables"|SelectedOptionNames then
+      if NextArguments \= nil then
+        {HandleNodesOption NextArguments}
+      end
+    end
+  end
+
+  % Variables aggregates
+
+  proc {DisplayVariablesOptions}
+    {PrintInfo "bound\tdisplay the number of bound variables (still garbage collected yet)"}
+    {PrintInfo "unbound\tdisplay the number of unbound variables (still garbage collected yet)"}
+    {PrintInfo "total\tdisplay the number of variables (still garbage collected yet)"}
+    {PrintInfo "all\tdisplay every counter related to variables"}
+  end
+
+  proc {HandleVariablesOption Arguments}
     proc {PrintBoundVariablesCount}
       {PrintCount "Bound variables"
         {Boot_Introspection.getBoundVariablesCount $}}
@@ -150,21 +226,45 @@ in
       {PrintCount "Variables"
         {Boot_Introspection.getVariablesCount $}}
     end
-
-    Options = [
-      option("boundVariablesCount" "display the number of bound variables (still garbage collected yet)"
-        PrintBoundVariablesCount)
-      option("unboundVariablesCount" "display the number of unbound variables (still garbage collected yet)"
-        PrintUnboundVariablesCount)
-      option("variablesCount" "display the number of variables (still garbage collected yet)"
-        PrintVariablesCount)
-    ]
   in
-    {ExecuteOptions "variables" Options SelectedOptionNames}
+    case Arguments of nil then
+      {DisplayVariablesOptions}
+    [] Argument|NextArguments then
+      case Argument of "help" then 
+        {DisplayVariablesOptions}
+      [] "bound" then
+        {PrintBoundVariablesCount}
+      [] "unbound" then
+        {PrintUnboundVariablesCount}
+      [] "total" then
+        {PrintVariablesCount}
+      [] "all" then
+        {PrintBoundVariablesCount}
+        {PrintUnboundVariablesCount}
+        {PrintVariablesCount}
+      else
+        {PrintError "Unexpected variables counter '"#Argument#"'"#TRYHELP}
+      end
 
-  [] "help"|_ then
-    {PrintOptions "count" Options false}
-  else
-    {PrintOptions "count" Options true}
+      if NextArguments \= nil then
+        {HandleVariablesOption NextArguments}
+      end
+    end
+  end
+in
+  case Arguments of nil then
+    {DisplayOptions}
+  [] Argument|NextArguments then
+    case Argument of "help" then
+      {DisplayOptions}
+    [] "threads" then
+      {HandleThreadsOption NextArguments}
+    [] "nodes" then
+      {HandleNodesOption NextArguments}
+    [] "variables" then
+      {HandleVariablesOption NextArguments}
+    else
+      {PrintError "Unexpected counter option '"#Argument#"'"#TRYHELP}
+    end
   end
 end

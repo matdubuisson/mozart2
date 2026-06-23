@@ -591,7 +591,7 @@ public:
     }
   }
 
-  static inline
+  static inline // TODO make a simplification of aggregates, is state not enough ?
   UnstableNode buildNodeRecord(VM vm, Node* node, NodesAggregate aggregate) {
     if (node == nullptr)
       return build(vm, "none");

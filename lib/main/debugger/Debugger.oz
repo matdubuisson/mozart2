@@ -33,21 +33,6 @@ define
   Boot_Introspection = {Boot.getInternal 'Introspection'}
   Boot_VirtualMachine = {Boot.getInternal 'VirtualMachine'}
 
-  proc {GetVMStatus ?Status}
-    Status = stats(
-      threads: threads(
-        active: {Boot_Introspection.getActiveThreadsCount $}
-        passive: {Boot_Introspection.getPassiveThreadsCount $}
-        total: {Boot_Introspection.getThreadsCount $}
-      )
-      variables: variables(
-        bound: {Boot_Introspection.getBoundVariablesCount $}
-        unbound: {Boot_Introspection.getUnBoundVariablesCount $}
-        total: {Boot_Introspection.getVariablesCount $}
-      )
-    )
-  end
-
   proc {GetThreadStatus Thread ?Status}
     Status = 'status'(
       id: {Boot_Introspection.getThreadInfo Thread id $}
@@ -61,16 +46,36 @@ define
     )
   end
 
-  MARKER = "[DEBUGGER]"
+  TRYHELP = ", try help to get more details"
 
-  proc {PrintLog String}
-    {Boot_System.printVS MARKER#": "#String false true}
+  % All printers to display runtime data, infos and errors
+  PrintLog
+  PrintInfo
+  PrintWarning
+  PrintError
+  PrintOther
+  \insert Printing
+  
+  proc {ExtractInput Type Argument DefaultValue ?Result}
+    proc {Convert Type F Argument ?Value}
+      try
+        Value = {F Argument $}
+      catch _ then
+        Value = DefaultValue
+      end
+    end
+  in
+    case Type of atom then Result = {String.toAtom Argument $}
+    [] string then Result = Argument
+    [] bool then
+      Result = {String.toAtom Argument $}
+    [] int then
+      Result = {Convert Type String.toInt Argument $}
+    [] float then
+      Result = {Convert Type String.toFloat Argument $}
+    end
   end
-
-  proc {PrintError String}
-    {Boot_System.printVS MARKER#": "#String true true}
-  end
-
+  
   proc {Loop
     NonPreemptible
     NContinues}
@@ -180,7 +185,7 @@ define
         Status = {GetThreadStatus This $}
       in
         % Shows the debugger's thread status
-        {Boot_System.printRepr Status false true}
+        % {Boot_System.printRepr Status false true}
         
         /*
           It ensures the debugger will not be preempted during its analysis
@@ -247,6 +252,10 @@ define
           end
         end
       in
+
+
+
+        
         case Command of "count" then
           \insert CountCommand
         [] "thread" then
@@ -261,10 +270,6 @@ define
           {PrintError "unknown command '"#Command#"', try help to get more infos"}
         end
       end
-
-
-
-
 
       {DefaultLoop}
 
