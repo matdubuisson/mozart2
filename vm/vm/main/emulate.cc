@@ -359,7 +359,6 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
 
     while (!isPreempted() && instructionsNumber < maxInstructionsNumber) {
       instructionsNumber++;
-
       _statistics.operationsCount++;
 
       OpCode op = *PC;

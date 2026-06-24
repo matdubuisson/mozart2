@@ -36,6 +36,16 @@ typedef RunnableList::iterator iterator;
 /* ========== VM state ========== */
 
 inline
+size_t Introspection::getSchedulesCounter(VM vm) {
+  return vm->_schedulesCounter;
+}
+
+inline
+size_t Introspection::getOperationsCounter(VM vm) {
+  return vm->_operationsCounter;
+}
+
+inline
 Runnable* Introspection::getNextScheduledThread(VM vm, bool includeSystemThreads) {
   return vm->getThreadPool().getNext(includeSystemThreads);
 }

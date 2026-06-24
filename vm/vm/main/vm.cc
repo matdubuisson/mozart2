@@ -51,12 +51,10 @@ VirtualMachine::run_return_type VirtualMachine::run() {
       _alarms.remove_front(this);
     }
 
-    bool areOperationsLimited = _nOperationsWithoutSystemThreads != SIZE_MAX;
-
     // Select a thread
     Runnable* currentThread;
     do {
-      currentThread = threadPool.popNext(!areOperationsLimited);
+      currentThread = threadPool.popNext(testIncludeSystemThreads());
     } while (currentThread != nullptr && currentThread->isTerminated());
 
     // When there is no runnable thread left, return to the external world
@@ -74,30 +72,18 @@ VirtualMachine::run_return_type VirtualMachine::run() {
     assert(currentThread->isRunnable());
     _currentThread = currentThread;
 
-    // std::string priority = "";
-    // switch (currentThread->getPriority()) {
-    //   case tpLow: priority = "low"; break;
-    //   case tpMiddle: priority = "middle"; break;
-    //   case tpHi: priority = "high"; break;
-    //   case tpSystem: priority = "system"; break;
-    // }
-    // std::cout << "=> Execute thread " << currentThread->getID() << " " << priority << std::endl;
-
+    // std::cout << "Schedule thread: " << currentThread->getId() << std::endl;
     size_t nOperations = currentThread->run(
-      _nOperationsWithoutSystemThreads);
-
-    // std::cout << "==> " << nOperations << " operations executed for thread " << currentThread->getID() << " " << priority << std::endl;
+      testLimitedOperationsExecutionMode() ? _executionCounter : SIZE_MAX);
 
     _currentThread = nullptr;
-
-    if (areOperationsLimited)
-      _nOperationsWithoutSystemThreads -= nOperations;
-      if (_nOperationsWithoutSystemThreads == 0)
-        _nOperationsWithoutSystemThreads = SIZE_MAX;
 
     // Schedule the thread anew if it is still runnable
     if (currentThread->isRunnable())
       threadPool.schedule(currentThread);
+
+    // Update the execution mode (normally manipulated by system threads for specific purposes)
+    updateExecutionMode(nOperations);
   }
 
   // Before giving control to the external world, restore the top-level space

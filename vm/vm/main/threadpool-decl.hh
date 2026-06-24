@@ -80,14 +80,14 @@ public:
     remainings[tpSystem] = 0;
   }
 
-  bool empty() {
+  bool empty(bool includeSystemThreads = true) {
     // ordered from most probably non-empty too most probably empty
-    return empty(tpMiddle) && empty(tpHi) && empty(tpLow) && empty(tpSystem);
+    return empty(tpMiddle) && empty(tpHi) && empty(tpLow) && (!includeSystemThreads || empty(tpSystem));
   }
 
-  size_t getRunnableCount() {
+  size_t getRunnableCount(bool includeSystemThreads = true) {
     return queues[tpLow].size() + queues[tpMiddle].size() +
-      queues[tpHi].size() + queues[tpSystem].size() + 1; // 1 for the currently running thread
+      queues[tpHi].size() + (includeSystemThreads ? queues[tpSystem].size() : 0) + 1; // 1 for the currently running thread
   }
 
   void schedule(Runnable* thread) {

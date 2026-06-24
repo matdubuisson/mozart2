@@ -158,13 +158,21 @@ private:
 
 class VirtualMachine {
 public:
+  enum ExecutionMode {
+    Normal = 0,
+    LimitedSchedules,
+    LimitedOperations,
+    LimitedSchedulesWithoutSystemThreads,
+    LimitedOperationsWithoutSystemThreads
+  };
+
   /**
    * Exit codes allows the virtual machine to process runnable entities differently when they exit :
    * - recNeverInvokeAgain: ....
    * - recInvokeAgainNow: ....
    * - recInvokeAgainLater: ....
    */
-  enum RunExitCode {
+   enum RunExitCode {
     recNeverInvokeAgain, recInvokeAgainNow, recInvokeAgainLater
   };
 
@@ -526,9 +534,53 @@ public:
   void setReferenceTime(std::int64_t value) {
     _referenceTime.store(value, std::memory_order_release);
   }
+public:
+  void setExecutionMode(ExecutionMode mode, uint64_t counter) {
+    _executionMode = mode;
+    _executionCounter = counter;
+  }
 
-  void setNOperationsWithoutSystemThreads(size_t limit) {
-    _nOperationsWithoutSystemThreads = limit;
+  void resetExecutionMode() {
+    _executionMode = Normal;
+    _executionCounter = SIZE_MAX;
+  }
+
+  void updateExecutionMode(size_t nOperations) {
+    _schedulesCounter++;
+    _operationsCounter += nOperations;
+
+    switch (_executionMode) {
+      case LimitedSchedules: case LimitedSchedulesWithoutSystemThreads: {
+        if (_executionCounter > 0) _executionCounter--;
+        break;
+      }
+      case LimitedOperations: case LimitedOperationsWithoutSystemThreads: {
+        if (_executionCounter > nOperations) _executionCounter -= nOperations;
+        else _executionCounter = 0;
+        break;
+      }
+    }
+
+    if (_executionCounter == 0 || threadPool.empty(false))
+      resetExecutionMode();
+  }
+
+  bool testLimitedOperationsExecutionMode() {
+    switch (_executionMode) {
+      case LimitedOperations:
+      case LimitedOperationsWithoutSystemThreads:
+        return true;
+      default: return false;
+    }
+  }
+
+  bool testIncludeSystemThreads() {
+    switch (_executionMode) {
+      case LimitedSchedulesWithoutSystemThreads:
+      case LimitedOperationsWithoutSystemThreads:
+        return false;
+      default: return true;
+    }
   }
 private:
   /** Checks if preemption is requested and clears the flag */
@@ -673,7 +725,17 @@ private:
   std::atomic_flag _exitRunRequestedNot;
   std::atomic_flag _gcRequestedNot;
   std::atomic<std::int64_t> _referenceTime;
-  size_t _nOperationsWithoutSystemThreads;
+
+  /**
+   * @brief Flow execution control
+   * No atomic variables as only the POSIX thread running the scheduler should be able
+   * (through a builtin module) to manipulate this state and for performance reasons as
+   * these counters will be updated very very often.
+   */
+  ExecutionMode _executionMode;
+  size_t _executionCounter;
+  size_t _schedulesCounter;
+  size_t _operationsCounter;
 
   // During GC, we need a SpaceRef version of the top-level space
   SpaceRef _topLevelSpaceRef;

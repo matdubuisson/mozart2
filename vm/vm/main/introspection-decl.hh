@@ -39,6 +39,10 @@ public:
 
 public:
   /* ========== VM state ========== */
+  size_t getSchedulesCounter(VM vm);
+
+  size_t getOperationsCounter(VM vm);
+
   Runnable* getNextScheduledThread(VM vm, bool includeSystemThreads);
 
 public:

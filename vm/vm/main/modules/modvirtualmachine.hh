@@ -33,22 +33,52 @@ namespace mozart {
 
 namespace builtins {
 
+using ExecutionMode = VirtualMachine::ExecutionMode;
+
 class ModVirtualMachine: public Module {
 public:
   ModVirtualMachine(): Module("VirtualMachine") {}
 
-  class SetNOperationsWithoutSystemThreads:
-    public Builtin<SetNOperationsWithoutSystemThreads> {
+  class SetVerbose: public Builtin<SetVerbose> {
   public:
-    SetNOperationsWithoutSystemThreads():
-      Builtin("setNOperationsWithoutSystemThreads") {}
+    SetVerbose(): Builtin("setVerbose") {}
 
-    static void call(VM vm, In limit) {
-      size_t l = getArgument<size_t>(vm, limit);
-      vm->setNOperationsWithoutSystemThreads(l);
+    static void call(VM vm, In verbose) {
+      
     }
   };
 
+  class RunNSchedules: public Builtin<RunNSchedules> {
+  public:
+    RunNSchedules(): Builtin("runNSchedules") {}
+
+    static void call(VM vm, In nSchedulesNode, In skipSystemThreadsNode) {
+      size_t nSchedules = getArgument<size_t>(vm, nSchedulesNode);
+      bool skipSystemThreads = getArgument<bool>(vm, skipSystemThreadsNode);
+
+      vm->setExecutionMode(
+        skipSystemThreads ? ExecutionMode::LimitedSchedulesWithoutSystemThreads
+          : ExecutionMode::LimitedSchedules,
+        nSchedules + 1 // Current schedule does not count
+      );
+    }
+  };
+
+  class RunNOperations: public Builtin<RunNOperations> {
+  public:
+    RunNOperations(): Builtin("runNOperations") {}
+
+    static void call(VM vm, In nOperationsNode, In skipSystemThreadsNode) {
+      size_t nOperations = getArgument<size_t>(vm, nOperationsNode);
+      bool skipSystemThreads = getArgument<bool>(vm, skipSystemThreadsNode);
+
+      vm->setExecutionMode(
+        skipSystemThreads ? ExecutionMode::LimitedOperationsWithoutSystemThreads
+          : ExecutionMode::LimitedOperations,
+        nOperations // From right now so including caller thread
+      );
+    }
+  };
 };
 
 }

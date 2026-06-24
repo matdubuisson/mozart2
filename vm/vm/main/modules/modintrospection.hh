@@ -63,8 +63,29 @@ public:
     }
   };
 
-  /* ========== Virtual Machine stats ========== */
-  
+  /* ========== Virtual Machine stats ========== */  
+
+  class GetSchedulesCounter: public Builtin<GetSchedulesCounter> {
+  public:
+    GetSchedulesCounter(): Builtin("getSchedulesCounter") {}
+
+    static void call(VM vm, Out result) {
+      Introspection& introspection = vm->getIntrospection();
+      result = build(vm, introspection.getSchedulesCounter(vm));
+    }
+  };
+
+  class GetOperationsCounter: public Builtin<GetOperationsCounter> {
+  public:
+    GetOperationsCounter(): Builtin("getOperationsCounter") {}
+
+    static void call(VM vm, Out result) {
+      Introspection& introspection = vm->getIntrospection();
+      result = build(vm, introspection.getOperationsCounter(vm));
+    }
+  };
+
+
   class GetNextScheduledThread: public Builtin<GetNextScheduledThread> {
   public:
     GetNextScheduledThread(): Builtin("getNextScheduledThread") {}
