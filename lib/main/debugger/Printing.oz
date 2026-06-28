@@ -27,6 +27,10 @@ in
     {Boot_System.printVS MARKER#": " false false}
   end
 
+  proc {PrintOtherPrefix Status}
+    {Boot_System.printVS MARKER#"["#Status#"]: " false false}
+  end
+
   proc {PrintLog String}
     {PrintAux none String false}
   end

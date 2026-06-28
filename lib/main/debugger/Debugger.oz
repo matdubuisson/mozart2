@@ -100,7 +100,6 @@ define
     /*
       Terminal commands management and execution of them
     */
-
     {PrintPrefix}
 
     local

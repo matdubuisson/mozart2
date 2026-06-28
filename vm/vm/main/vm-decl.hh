@@ -163,7 +163,8 @@ public:
     LimitedSchedules,
     LimitedOperations,
     LimitedSchedulesWithoutSystemThreads,
-    LimitedOperationsWithoutSystemThreads
+    LimitedOperationsWithoutSystemThreads,
+    OperationByOperation // Without system threads by definition: they are responsible to advance the VM
   };
 
   /**
@@ -535,7 +536,7 @@ public:
     _referenceTime.store(value, std::memory_order_release);
   }
 public:
-  void setExecutionMode(ExecutionMode mode, uint64_t counter) {
+  void setExecutionMode(ExecutionMode mode, uint64_t counter = SIZE_MAX) {
     _executionMode = mode;
     _executionCounter = counter;
   }
@@ -565,6 +566,16 @@ public:
       resetExecutionMode();
   }
 
+  size_t getMaxOperations() {
+    assert(_currentThread != nullptr);
+    switch (_executionMode) {
+      case LimitedOperations:
+      case LimitedOperationsWithoutSystemThreads: return _executionCounter;
+      case OperationByOperation: return _currentThread->getPriority() == tpSystem ? SIZE_MAX : 1;
+      default: return SIZE_MAX;
+    }
+  }
+
   bool testLimitedOperationsExecutionMode() {
     switch (_executionMode) {
       case LimitedOperations:
@@ -574,11 +585,17 @@ public:
     }
   }
 
+  bool testOperationByOperationExecutionMode() {
+    return _executionMode == OperationByOperation;
+  }
+
   bool testIncludeSystemThreads() {
     switch (_executionMode) {
       case LimitedSchedulesWithoutSystemThreads:
       case LimitedOperationsWithoutSystemThreads:
-        return false;
+        // Avoids infinite loop if there is only remaining system threads as
+        // for instance with the debugger
+        return threadPool.empty(false);
       default: return true;
     }
   }

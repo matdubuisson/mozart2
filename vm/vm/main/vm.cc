@@ -72,15 +72,17 @@ VirtualMachine::run_return_type VirtualMachine::run() {
     assert(currentThread->isRunnable());
     _currentThread = currentThread;
 
-    // std::cout << "Schedule thread: " << currentThread->getId() << std::endl;
-    size_t nOperations = currentThread->run(
-      testLimitedOperationsExecutionMode() ? _executionCounter : SIZE_MAX);
+    // std::cout << "Schedule thread " << currentThread->getId() << " for maximally "
+    //   << getMaxOperations() << " operations" << std::endl;
+    size_t nOperations = currentThread->run(getMaxOperations());
 
     _currentThread = nullptr;
 
     // Schedule the thread anew if it is still runnable
     if (currentThread->isRunnable())
-      threadPool.schedule(currentThread);
+      threadPool.schedule(currentThread,
+        currentThread->isPreempted() || // In OBO mode non naturally preempted thread must be rescheduled first
+        !testOperationByOperationExecutionMode());
 
     // Update the execution mode (normally manipulated by system threads for specific purposes)
     updateExecutionMode(nOperations);

@@ -92,20 +92,82 @@ public:
 
     static void call(VM vm, In boolean, Out result) {
       bool includeSystemThreads = getArgument<bool>(vm, boolean);
-      result = ReifiedThread::build(vm,
-        vm->getIntrospection().getNextScheduledThread(vm, includeSystemThreads));
+
+      if (vm->getThreadPool().empty(includeSystemThreads)) {
+        result = build(vm, "none");
+      } else {
+        result = ReifiedThread::build(vm,
+          vm->getIntrospection().getNextScheduledThread(vm, includeSystemThreads));
+      }
     }
   };
 
-  // class Magic: public Builtin<Magic> {
-  // public:
-  //   Magic(): Builtin("magic") {}
+  using Operation = Introspection::Operation;
+  using OperationArgument = Introspection::OperationArgument;
 
-  //   static void call(VM vm, In recordNode) {
-  //     Record* record = getArgument<Record*>(vm, recordNode);
-  //     std::cout << record->getElement(0) << std::endl;
-  //   }
-  // };
+  static inline
+  UnstableNode buildOperationArgumentRecord(VM vm, OperationArgument argument) {
+    using AT = Introspection::ArgumentType;
+
+    std::string type;
+
+    switch (argument.type) {
+      case AT::I: type = "Int"; break;
+      case AT::X: type = "X"; break;
+      case AT::Y: type = "Y"; break;
+      case AT::G: type = "G"; break;
+      case AT::K: type = "K"; break;
+      default: assert(false);
+    }
+
+    return buildRecord(vm,
+      buildArity(
+        vm,
+        "operationArgument",
+        "index",
+        "repr",
+        "type"
+      ),
+      build(vm, argument.index),
+      build(vm, argument.repr.c_str()),
+      build(vm, type.c_str())
+    );
+  }
+
+  static inline
+  UnstableNode buildOperationRecord(VM vm, Operation operation) {
+    OzListBuilder builder(vm);
+
+    for (OperationArgument opArgument : operation.arguments) {
+      builder.push_back(vm, buildOperationArgumentRecord(vm, opArgument));
+    }
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "operation",
+        "arguments",
+        "name",
+        "opCode"
+      ),
+      builder.get(vm),
+      build(vm, operation.name.c_str()),
+      build(vm, operation.opCode)
+    );
+  }
+
+  class GetNextOperation: public Builtin<GetNextOperation> {
+  public:
+    GetNextOperation(): Builtin("getNextOperation") {}
+
+    static void call(VM vm, In includeSystemThreadsNode, Out result) {
+      bool includeSystemThreads = getArgument<bool>(vm, includeSystemThreadsNode);
+
+      Operation operation = vm->getIntrospection()
+        .getNextExecutedOperation(vm, includeSystemThreads);
+
+      result = buildOperationRecord(vm, operation);
+    }
+  };
 
   /* ========== Threads stats ========== */
 

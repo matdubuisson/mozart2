@@ -133,6 +133,15 @@ public:
     }
   };
 
+  class InputEnter: public Builtin<InputEnter> {
+  public:
+    InputEnter(): Builtin("inputEnter") {}
+
+    static void call(VM vm) {
+      std::cin.ignore();
+    }
+  };
+
   class InputVS: public Builtin<InputVS> {
   public:
     InputVS(): Builtin("inputVS") {}

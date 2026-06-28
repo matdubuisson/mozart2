@@ -45,6 +45,40 @@ public:
 
   Runnable* getNextScheduledThread(VM vm, bool includeSystemThreads);
 
+  enum ArgumentType {
+    I = 0,
+    X,
+    Y,
+    G,
+    K,
+  };
+
+  struct OperationArgument {
+    OperationArgument(ArgumentType type, size_t index, ByteCode integer) :
+      type(type), index(index), repr("") {}
+
+    OperationArgument(ArgumentType type, size_t index, StableNode& node) :
+      type(type), index(index), repr("") {}
+
+    OperationArgument(ArgumentType type, size_t index, UnstableNode& node) :
+      type(type), index(index), repr("") {}
+
+    ArgumentType type;
+    size_t index;
+    std::string repr;
+  };
+
+  struct Operation {
+    Operation(OpCode opCode) :
+      opCode(opCode) {}
+
+    OpCode opCode;
+    std::string name;
+    
+    std::vector<OperationArgument> arguments;
+  };
+
+  Operation getNextExecutedOperation(VM vm, bool includeSystemThreads);  
 public:
   /* ========== Threads state ========== */
   RunnableList& getThreads(VM vm);

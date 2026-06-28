@@ -79,6 +79,24 @@ public:
       );
     }
   };
+  
+  class RunOperationByOperation: public Builtin<RunOperationByOperation> {
+  public:
+    RunOperationByOperation(): Builtin("runOperationByOperation") {}
+
+    static void call(VM vm) {
+      vm->setExecutionMode(ExecutionMode::OperationByOperation);
+    }
+  };
+
+  class Reset: public Builtin<Reset> {
+  public:
+    Reset(): Builtin("reset") {}
+
+    static void call(VM vm) {
+      vm->resetExecutionMode();
+    }
+  };
 };
 
 }

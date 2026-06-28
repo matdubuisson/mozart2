@@ -37,12 +37,12 @@ namespace mozart {
 // ThreadQueue //
 /////////////////
 
-class ThreadQueue : public std::queue<Runnable*> {
+class ThreadQueue : public std::deque<Runnable*> {
 public:
   void remove(Runnable* item) {
-    for (auto iterator = c.begin(); iterator != c.end(); iterator++) {
+    for (auto iterator = begin(); iterator != end(); iterator++) {
       if (*iterator == item) {
-        c.erase(iterator);
+        erase(iterator);
         return;
       }
     }
@@ -52,7 +52,7 @@ public:
   void gCollect(GC gc);
 
   bool isScheduled(Runnable* thread) {
-    for (auto iter = c.begin(); iter != c.end(); ++iter) {
+    for (auto iter = begin(); iter != end(); ++iter) {
       if (*iter == thread)
         return true;
     }
@@ -90,10 +90,14 @@ public:
       queues[tpHi].size() + (includeSystemThreads ? queues[tpSystem].size() : 0) + 1; // 1 for the currently running thread
   }
 
-  void schedule(Runnable* thread) {
+  void schedule(Runnable* thread, bool back = true) {
     assert(thread->isRunnable());
     assert(!isScheduled(thread));
-    queues[thread->getPriority()].push(thread);
+    ThreadQueue& queue = queues[thread->getPriority()];
+    if (back)
+      queue.push_back(thread);
+    else
+      queue.push_front(thread);
   }
 
   void unschedule(Runnable* thread) {

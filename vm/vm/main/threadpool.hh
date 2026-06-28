@@ -34,14 +34,14 @@ namespace mozart {
 /////////////////
 
 void ThreadQueue::gCollect(GC gc) {
-  for (auto iterator = c.begin(); iterator != c.end(); iterator++) {
+  for (auto iterator = begin(); iterator != end(); iterator++) {
     Runnable*& thread = *iterator;
     gc->copyThread(thread, thread);
   }
 }
 
 void ThreadQueue::dump() {
-  for (auto iterator = c.begin(); iterator != c.end(); iterator++) {
+  for (auto iterator = begin(); iterator != end(); iterator++) {
     Runnable* runnable = *iterator;
     runnable->dump();
   }
@@ -52,26 +52,41 @@ void ThreadQueue::dump() {
 ////////////////
 
 Runnable* ThreadPool::getNext(bool includeSystemThreads) {
+  // Avoid infinite loops when counters need to be modified
+  int remainingsCopy[tpCount];
+  for (int i = 0; i < tpCount; i++)
+    remainingsCopy[i] = remainings[i];
+
   do {
     if (includeSystemThreads
-      && !queues[tpSystem].empty() && remainings[tpSystem] > 0) {
+      && !queues[tpSystem].empty() && remainingsCopy[tpSystem] > 0) {
       return getNext(tpSystem);
     }
 
+    // Reset remainings[tpSystem] to the maximum value
+    remainingsCopy[tpSystem] = queues[tpSystem].size();
+
     // While remainings[tpHi] > 0, return the first Hi-priority thread
-    if (!queues[tpHi].empty() && remainings[tpHi] > 0) {
+    if (!queues[tpHi].empty() && remainingsCopy[tpHi] > 0) {
       return getNext(tpHi);
     }
 
+    // Reset remainings[tpHi] for subsequent calls
+    remainingsCopy[tpHi] = HiToMiddlePriorityRatio;
+
     // While remainings[tpMiddle] > 0, return the first Middle-priority thread
-    if (!queues[tpMiddle].empty() && remainings[tpMiddle] > 0) {
+    if (!queues[tpMiddle].empty() && remainingsCopy[tpMiddle] > 0) {
       return getNext(tpMiddle);
     }
+
+    // Reset remainings[tpMiddle] for subsequent calls
+    remainingsCopy[tpMiddle] = MiddleToLowPriorityRatio;
+
     // remainings[tpLow] is not used, always return the first Low-priority thread
     if (!queues[tpLow].empty()) {
       return getNext(tpLow);
     }
-  } while (!empty()); // might not be empty if all remainings were 0
+  } while (!empty(includeSystemThreads)); // might not be empty if all remainings were 0
 
   return nullptr;
 }
@@ -114,14 +129,14 @@ Runnable* ThreadPool::popNext(bool includeSystemThreads) {
     if (!queues[tpLow].empty()) {
       return popNext(tpLow);
     }
-  } while (!empty()); // might not be empty if all remainings were 0
+  } while (!empty(includeSystemThreads)); // might not be empty if all remainings were 0
 
   return nullptr;
 }
 
 Runnable* ThreadPool::popNext(ThreadPriority priority) {
   Runnable* result = queues[priority].front();
-  queues[priority].pop();
+  queues[priority].pop_front();
   return result;
 }
 
