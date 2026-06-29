@@ -33,6 +33,14 @@ namespace mozart {
 
 typedef RunnableList::iterator iterator;
 
+inline
+std::string Introspection::OperationArgument::toRepr(VM vm, RichNode value) {
+  auto& config = vm->getPropertyRegistry().config;
+  std::basic_stringstream<char> buffer;
+  buffer << repr(vm, value, config.printDepth, config.printWidth);
+  return buffer.str();
+}
+
 /* ========== VM state ========== */
 
 inline
@@ -241,7 +249,7 @@ size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
 }
 
 inline
-Node* Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
   size_t depth, size_t index) {
   Thread* thread = dynamic_cast<Thread*>(runnable);
   if (!thread)
@@ -255,19 +263,19 @@ Node* Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegis
       assert(depth == 0);
       StaticArray<UnstableNode> xregs = thread->xregs._array;
       assert(index < xregs.size());
-      return &xregs[index];
+      return RichNode(xregs[index]);
     } case yRegister: {
       StaticArray<UnstableNode> yregs = entry.yregs;
       assert(index < yregs.size());
-      return &yregs[index];
+      return RichNode(yregs[index]);
     } case gRegister: {
       StaticArray<StableNode> gregs = entry.gregs;
       assert(index < gregs.size());
-      return &gregs[index];
+      return RichNode(gregs[index]);
     } case kRegister: {
       StaticArray<StableNode> kregs = entry.kregs;
       assert(index < kregs.size());
-      return &kregs[index];
+      return RichNode(kregs[index]);
     } default: assert(false);
   }
 }
@@ -275,7 +283,7 @@ Node* Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegis
 template<class T>
 inline
 void doForEachNodeFromStaticArray(VM vm, StaticArray<T> array,
-  size_t from, size_t to, std::function<void(Node&)> lambda) {
+  size_t from, size_t to, std::function<void(RichNode)> lambda) {
   for (size_t i = from; i < to; i++) {
     lambda(array[i]);
   }
@@ -283,7 +291,7 @@ void doForEachNodeFromStaticArray(VM vm, StaticArray<T> array,
 
 inline
 void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-  size_t depth, size_t from, size_t to, std::function<void(Node&)> lambda) {
+  size_t depth, size_t from, size_t to, std::function<void(RichNode)> lambda) {
   assert(from < to);
 
   Thread* thread = dynamic_cast<Thread*>(runnable);

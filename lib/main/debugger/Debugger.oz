@@ -100,6 +100,10 @@ define
     /*
       Terminal commands management and execution of them
     */
+
+
+
+
     {PrintPrefix}
 
     local
@@ -113,6 +117,8 @@ define
         \insert ThreadCommand
       [] "threads" then
         \insert ThreadsCommand
+      [] "depth" then
+        \insert DepthCommand
       [] "register" then
         \insert RegisterCommand
       [] "registers" then

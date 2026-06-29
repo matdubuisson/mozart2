@@ -595,7 +595,10 @@ public:
       case LimitedOperationsWithoutSystemThreads:
         // Avoids infinite loop if there is only remaining system threads as
         // for instance with the debugger
-        return threadPool.empty(false);
+        if (threadPool.empty(false)) { // Not enough non-system threads to execute
+          resetExecutionMode();
+          return true;
+        } else return false;
       default: return true;
     }
   }

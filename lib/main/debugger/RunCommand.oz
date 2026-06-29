@@ -14,20 +14,21 @@ local
       if Count == none then
         {PrintError "Provided first parameter "#Thing#" count '"#CountString#"' is not an integer"}
       else
-        SkipSystemThreads
+        IncludeSystemThreads
       in
         case NextArguments of nil then
-          SkipSystemThreads = true
-        [] SkipSystemThreadsString|_ then
-          SkipSystemThreads = {ExtractInput bool SkipSystemThreadsString none $}
+          IncludeSystemThreads = true
+        [] IncludeSystemThreadsString|_ then
+          IncludeSystemThreads = {ExtractInput bool IncludeSystemThreadsString none $}
 
-          if SkipSystemThreads == none then
-            {PrintError "Provided second parameter "#Thing#" flag '"#SkipSystemThreadsString#"' is not an integer"}
+          if IncludeSystemThreads == none then
+            {PrintError "Provided second parameter "#Thing#" flag '"#IncludeSystemThreadsString#"' is not an integer"}
           end
         end
 
-        if SkipSystemThreads \= none then
-          {RunN Count SkipSystemThreads}
+        if IncludeSystemThreads \= none then
+          {Boot_System.printRepr IncludeSystemThreads false true}
+          {RunN Count IncludeSystemThreads}
           {Boot_Thread.preempt This}
         end
       end
@@ -50,9 +51,9 @@ local
           case Argument of operationArgument(
             index: Index
             type: Type
-            repr: _
+            image: Image
           ) then
-            {Boot_System.printVS {Atom.toString Type $}#"("#Index#")" false false}
+            {Boot_System.printVS {Atom.toString Type $}#"["#Index#"]("#Image#")" false false}
           end
 
           case NextArguments of _|_ then

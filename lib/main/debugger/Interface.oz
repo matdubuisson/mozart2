@@ -12,7 +12,11 @@ in
   [] string then
     Result = Argument
   [] bool then
-    Result = {String.toAtom Argument $}
+    Result = {Convert Type proc {$ V ?R}
+      case V of "true" then R = true
+      [] "false" then R = false
+      else R = DefaultValue end
+    end Argument $}
   [] int then
     Result = {Convert Type String.toInt Argument $}
   [] float then

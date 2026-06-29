@@ -28,6 +28,7 @@
 namespace mozart {
 
 Introspection::OperationArgument getData(
+  VM vm,
   ProgramCounter PC,
   XRegArray* const xregs,
   StaticArray<UnstableNode>& yregs,
@@ -44,11 +45,11 @@ Introspection::OperationArgument getData(
   using AT = Introspection::ArgumentType;
 
   switch (type) {
-    case AT::I: return {type, index, IntPC(index)};
-    case AT::X: return {type, index, XPC(index)};
-    case AT::Y: return {type, index, YPC(index)};
-    case AT::G: return {type, index, GPC(index)};
-    case AT::K: return {type, index, KPC(index)};
+    case AT::I: return {vm, type, index, IntPC(index)};
+    case AT::X: return {vm, type, index, XPC(index)};
+    case AT::Y: return {vm, type, index, YPC(index)};
+    case AT::G: return {vm, type, index, GPC(index)};
+    case AT::K: return {vm, type, index, KPC(index)};
     default: assert(false);
   }
 
@@ -89,7 +90,7 @@ Introspection::Operation Introspection::getNextExecutedOperation(VM vm, bool inc
 
     operation.opCode = op;
 #define NAME(string) operation.name = string
-#define ARG(type, index) operation.arguments.push_back(getData(PC, xregs, yregs, gregs, kregs, type, index))
+#define ARG(type, index) operation.arguments.push_back(getData(vm, PC, xregs, yregs, gregs, kregs, type, index))
 
     switch (op) {
       // SKIP

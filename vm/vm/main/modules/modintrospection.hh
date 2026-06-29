@@ -63,6 +63,16 @@ public:
     }
   };
 
+private:
+  static inline
+  std::string nodeToString(VM vm, RichNode node) {
+    auto& config = vm->getPropertyRegistry().config;
+    std::basic_stringstream<char> buffer;
+    buffer << repr(vm, node, config.printDepth, config.printWidth);
+    return buffer.str();
+  }
+public:
+
   /* ========== Virtual Machine stats ========== */  
 
   class GetSchedulesCounter: public Builtin<GetSchedulesCounter> {
@@ -124,12 +134,12 @@ public:
       buildArity(
         vm,
         "operationArgument",
+        "image",
         "index",
-        "repr",
         "type"
       ),
+      build(vm, argument.image.c_str()),
       build(vm, argument.index),
-      build(vm, argument.repr.c_str()),
       build(vm, type.c_str())
     );
   }
@@ -675,86 +685,35 @@ public:
   }
 
   static inline // TODO make a simplification of aggregates, is state not enough ?
-  UnstableNode buildNodeRecord(VM vm, Node* node, NodesAggregate aggregate) {
-    if (node == nullptr)
-      return build(vm, "none");
-
+  UnstableNode buildNodeRecord(VM vm, RichNode node, NodesAggregate aggregate) {
     Introspection& introspection = vm->getIntrospection();
-    Type type = introspection.getNodeType(vm, node);
-    MemWord value = introspection.getNodeValue(vm, node);
+    Type type = node.type();
 
-    switch (aggregate) {
-      case AggregateNone: return build(vm, "none");
-      case AggregateIdentity: return
-        buildRecord(vm,
-          buildArity(vm,
-            "node",
-            "name",
-            "uuid"
-          ),
-          build(vm, type->getName().c_str()),
-          build(vm, type->getUUID())
-        );
-      case AggregateStatus: return
-        buildRecord(vm,
-          buildArity(vm,
-            "node",
-            "bindingPriority",
-            "name",
-            "structuralBehavior"
-          ),
-          build(vm, type->getBindingPriority()),
-          build(vm, type->getName().c_str()),
-          build(vm,
-            nodeStructuralBehaviorToString(
-              type->getStructuralBehavior()
-            ).c_str()
-          )
-        );
-      case AggregateValue: return
-        buildRecord(vm,
-          buildArity(vm,
-            "node",
-            "copyable",
-            "feature",
-            "name",
-            "transient",
-            "value"
-          ),
-          build(vm, type->isCopyable()),
-          build(vm, type->isFeature()),
-          build(vm, type->getName().c_str()),
-          build(vm, type->isTransient()),
-          build(vm, getMemWordString(vm, value).c_str())
-        );
-      case AggregateState: return
-        buildRecord(vm,
-          buildArity(vm,
-            "node",
-            "bindingPriority",
-            "copyable",
-            "feature",
-            "name",
-            "structuralBehavior",
-            "transient",
-            "uuid",
-            "value"
-          ),
-          build(vm, type->getBindingPriority()),
-          build(vm, type->isCopyable()),
-          build(vm, type->isFeature()),
-          build(vm, type->getName().c_str()),
-          build(vm,
-            nodeStructuralBehaviorToString(
-              type->getStructuralBehavior()
-            ).c_str()
-          ),
-          build(vm, type->isTransient()),
-          build(vm, type->getUUID()),
-          build(vm, getMemWordString(vm, value).c_str())
-        );
-      default: assert(false);
-    }
+    return buildRecord(vm,
+      buildArity(vm,
+        "node",
+        "bindingPriority",
+        "copyable",
+        "feature",
+        "name",
+        "structuralBehavior",
+        "transient",
+        "uuid",
+        "value"
+      ),
+      build(vm, type->getBindingPriority()),
+      build(vm, type->isCopyable()),
+      build(vm, type->isFeature()),
+      build(vm, type->getName().c_str()),
+      build(vm,
+        nodeStructuralBehaviorToString(
+          type->getStructuralBehavior()
+        ).c_str()
+      ),
+      build(vm, type->isTransient()),
+      build(vm, type->getUUID()),
+      build(vm, nodeToString(vm, node).c_str())
+    );
   }
 
   typedef Introspection::NodesRegister NodesRegister;
@@ -982,7 +941,7 @@ public:
     Introspection& introspection = vm->getIntrospection();
 
     assert(index < introspection.getXNodesRegisterSize(vm, runnable));
-    Node* node = introspection.getXNode(vm, runnable, index);
+    RichNode node = introspection.getXNode(vm, runnable, index);
     return buildNodeRecord(vm, node, aggregate);
   }
 
@@ -996,7 +955,7 @@ public:
     Introspection& introspection = vm->getIntrospection();
 
     assert(depth < introspection.getStackDepth(vm, runnable));
-    Node* node;
+    RichNode node;
     switch (nodesRegister) {
       case NodesRegister::yRegister: {
         assert(index < introspection.getYNodesRegisterSize(vm, runnable, depth));
@@ -1067,8 +1026,8 @@ public:
     assert(to < introspection.getXNodesRegisterSize(vm, runnable));
 
     OzListBuilder builder(vm);
-    introspection.doForEachXNode(vm, runnable, from, to, [vm, &builder, aggregate](Node& node) {
-      builder.push_back(vm, buildNodeRecord(vm, &node, aggregate));
+    introspection.doForEachXNode(vm, runnable, from, to, [vm, &builder, aggregate](RichNode node) {
+      builder.push_back(vm, buildNodeRecord(vm, node, aggregate));
     });
     return builder.get(vm);
   }
@@ -1091,20 +1050,20 @@ public:
     switch (nodesRegister) {
       case NodesRegister::yRegister: {
         assert(to < introspection.getYNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachYNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](Node& node) {
-          builder.push_back(vm, buildNodeRecord(vm, &node, aggregate));
+        introspection.doForEachYNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](RichNode node) {
+          builder.push_back(vm, buildNodeRecord(vm, node, aggregate));
         });
         break;
       } case NodesRegister::gRegister: {
         assert(to < introspection.getGNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachGNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](Node& node) {
-          builder.push_back(vm, buildNodeRecord(vm, &node, aggregate));
+        introspection.doForEachGNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](RichNode node) {
+          builder.push_back(vm, buildNodeRecord(vm, node, aggregate));
         });
         break;
       } case NodesRegister::kRegister: {
         assert(to < introspection.getKNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachKNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](Node& node) {
-          builder.push_back(vm, buildNodeRecord(vm, &node, aggregate));
+        introspection.doForEachKNode(vm, runnable, depth, from, to, [vm, &builder, aggregate](RichNode node) {
+          builder.push_back(vm, buildNodeRecord(vm, node, aggregate));
         });
         break;
       } default: assert(false);

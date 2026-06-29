@@ -54,18 +54,23 @@ public:
   };
 
   struct OperationArgument {
-    OperationArgument(ArgumentType type, size_t index, ByteCode integer) :
-      type(type), index(index), repr("") {}
+  private:
+    inline
+    std::string toRepr(VM vm, RichNode value);
 
-    OperationArgument(ArgumentType type, size_t index, StableNode& node) :
-      type(type), index(index), repr("") {}
+  public:
+    OperationArgument(VM vm, ArgumentType type, size_t index, ByteCode integer) :
+      type(type), index(index), image(std::to_string(integer)) {}
 
-    OperationArgument(ArgumentType type, size_t index, UnstableNode& node) :
-      type(type), index(index), repr("") {}
+    OperationArgument(VM vm, ArgumentType type, size_t index, StableNode& node) :
+      type(type), index(index), image(toRepr(vm, RichNode(node))) {}
+
+    OperationArgument(VM vm, ArgumentType type, size_t index, UnstableNode& node) :
+      type(type), index(index), image(toRepr(vm, RichNode(node))) {}
 
     ArgumentType type;
     size_t index;
-    std::string repr;
+    std::string image;
   };
 
   struct Operation {
@@ -288,54 +293,54 @@ public:
   }
 
 private:
-  Node* getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+  RichNode getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
     size_t depth, size_t index);
 public:
   inline
-  Node* getXNode(VM vm, Runnable* runnable, size_t index) {
+  RichNode getXNode(VM vm, Runnable* runnable, size_t index) {
     return getNode(vm, runnable, xRegister, 0, index);
   }
 
   inline
-  Node* getYNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
+  RichNode getYNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
     return getNode(vm, runnable, yRegister, depth, index);
   }
 
   inline
-  Node* getGNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
+  RichNode getGNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
     return getNode(vm, runnable, gRegister, depth, index);
   }
 
   inline
-  Node* getKNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
+  RichNode getKNode(VM vm, Runnable* runnable, size_t depth, size_t index) {
     return getNode(vm, runnable, kRegister, depth, index);
   }
 
 private:
   void doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-    size_t depth, size_t from, size_t to, std::function<void(Node&)> lambda);
+    size_t depth, size_t from, size_t to, std::function<void(RichNode)> lambda);
 public:
   inline
   void doForEachXNode(VM vm, Runnable* runnable, size_t from, size_t to,
-    std::function<void(Node&)> lambda) {
+    std::function<void(RichNode)> lambda) {
     doForEachNode(vm, runnable, xRegister, 0, from, to, lambda);
   }
 
   inline
   void doForEachYNode(VM vm, Runnable* runnable, size_t depth,
-    size_t from, size_t to, std::function<void(Node&)> lambda) {
+    size_t from, size_t to, std::function<void(RichNode)> lambda) {
     doForEachNode(vm, runnable, yRegister, depth, from, to, lambda);
   }
 
   inline
   void doForEachGNode(VM vm, Runnable* runnable, size_t depth,
-    size_t from, size_t to, std::function<void(Node&)> lambda) {
+    size_t from, size_t to, std::function<void(RichNode)> lambda) {
     doForEachNode(vm, runnable, gRegister, depth, from, to, lambda);
   }
 
   inline
   void doForEachKNode(VM vm, Runnable* runnable, size_t depth,
-    size_t from, size_t to, std::function<void(Node&)> lambda) {
+    size_t from, size_t to, std::function<void(RichNode)> lambda) {
     doForEachNode(vm, runnable, kRegister, depth, from, to, lambda);
   }
 

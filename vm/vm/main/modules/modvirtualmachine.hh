@@ -52,13 +52,13 @@ public:
   public:
     RunNSchedules(): Builtin("runNSchedules") {}
 
-    static void call(VM vm, In nSchedulesNode, In skipSystemThreadsNode) {
+    static void call(VM vm, In nSchedulesNode, In includeSystemThreadsNode) {
       size_t nSchedules = getArgument<size_t>(vm, nSchedulesNode);
-      bool skipSystemThreads = getArgument<bool>(vm, skipSystemThreadsNode);
+      bool includeSystemThreads = getArgument<bool>(vm, includeSystemThreadsNode);
 
       vm->setExecutionMode(
-        skipSystemThreads ? ExecutionMode::LimitedSchedulesWithoutSystemThreads
-          : ExecutionMode::LimitedSchedules,
+        includeSystemThreads ? ExecutionMode::LimitedSchedules
+          : ExecutionMode::LimitedSchedulesWithoutSystemThreads,
         nSchedules + 1 // Current schedule does not count
       );
     }
@@ -68,13 +68,13 @@ public:
   public:
     RunNOperations(): Builtin("runNOperations") {}
 
-    static void call(VM vm, In nOperationsNode, In skipSystemThreadsNode) {
+    static void call(VM vm, In nOperationsNode, In includeSystemThreadsNode) {
       size_t nOperations = getArgument<size_t>(vm, nOperationsNode);
-      bool skipSystemThreads = getArgument<bool>(vm, skipSystemThreadsNode);
+      bool includeSystemThreads = getArgument<bool>(vm, includeSystemThreadsNode);
 
       vm->setExecutionMode(
-        skipSystemThreads ? ExecutionMode::LimitedOperationsWithoutSystemThreads
-          : ExecutionMode::LimitedOperations,
+        includeSystemThreads ? ExecutionMode::LimitedOperations
+          : ExecutionMode::LimitedOperationsWithoutSystemThreads,
         nOperations // From right now so including caller thread
       );
     }
