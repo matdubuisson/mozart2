@@ -100,35 +100,40 @@ define
     /*
       Terminal commands management and execution of them
     */
-
-
-
+    
 
     {PrintPrefix}
 
     local
-      Input = {Boot_System.inputVSLine $}
-      Inputs = {String.tokens Input 32 $}
-      Command|Arguments = Inputs
+      Input = {Boot_System.inputVSLine $}    
     in
-      case Command of "count" then
-        \insert CountCommand
-      [] "thread" then
-        \insert ThreadCommand
-      [] "threads" then
-        \insert ThreadsCommand
-      [] "depth" then
-        \insert DepthCommand
-      [] "register" then
-        \insert RegisterCommand
-      [] "registers" then
-        \insert RegistersCommand
-      [] "status" then
-        \insert StatusCommand
-      [] "run" then
-        \insert RunCommand
-      else
-        {PrintError "Unknown command '"#Command#"'"#TRYHELP}
+      if Input \= "" then
+        Inputs = {String.tokens Input 32 $}
+        Command|Arguments = Inputs
+      in
+        case Command of "count" then
+          \insert CountCommand
+        [] "thread" then
+          \insert ThreadCommand
+        [] "threads" then
+          \insert ThreadsCommand
+        [] "depth" then
+          \insert DepthCommand
+        [] "register" then
+          \insert RegisterCommand
+        [] "registers" then
+          \insert RegistersCommand
+        [] "variable" then
+          \insert VariableCommand
+        [] "variables" then
+          \insert VariablesCommand
+        [] "status" then
+          \insert StatusCommand
+        [] "run" then
+          \insert RunCommand
+        else
+          {PrintError "Unknown command '"#Command#"'"#TRYHELP}
+        end
       end
     end
 

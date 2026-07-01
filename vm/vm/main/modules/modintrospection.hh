@@ -63,7 +63,6 @@ public:
     }
   };
 
-private:
   static inline
   std::string nodeToString(VM vm, RichNode node) {
     auto& config = vm->getPropertyRegistry().config;
@@ -71,7 +70,6 @@ private:
     buffer << repr(vm, node, config.printDepth, config.printWidth);
     return buffer.str();
   }
-public:
 
   /* ========== Virtual Machine stats ========== */  
 
@@ -1302,6 +1300,132 @@ public:
 
     static void call(VM vm, Out result) {
       result = build(vm, vm->getIntrospection().getVariablesCount(vm));
+    }
+  };
+
+  static inline
+  UnstableNode buildVariableRecord(VM vm, Runnable* runnable, std::string name,
+    size_t id, bool isNeeded) {
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "variable",
+        "id",
+        "isNeeded",
+        "threadId",
+        "type"
+      ),
+      build(vm, id),
+      build(vm, isNeeded),
+      build(vm, runnable->getId()),
+      name.c_str()
+    );
+  }
+
+  static inline
+  UnstableNode buildVariableRecord(VM vm, Runnable* runnable, std::string name,
+    size_t id, bool isNeeded, VMAllocatedList<StableNode*>& pendings) {
+
+    OzListBuilder builder(vm);
+
+    for (int i = 0; i < pendings.size(); i++) {
+      RichNode node = RichNode(*pendings[i]);
+      if (node.is<ReifiedThread>()) {
+        Runnable* runnable = getArgument<Runnable*>(vm, node);
+        builder.push_back(vm, build(vm, runnable->getId()));
+      }
+    }
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "variable",
+        "id",
+        "isBound",
+        "isNeeded",
+        "pendings",
+        "threadId",
+        "type"
+      ),
+      build(vm, id),
+      build(vm, pendings.empty()),
+      build(vm, isNeeded),
+      builder.get(vm),
+      build(vm, runnable->getId()),
+      name.c_str()
+    );
+  }
+
+  static inline
+  UnstableNode buildVariableRecord(VM vm, Runnable* runnable, RichNode node) {
+    std::string name = node.type()->getName();
+    std::string representation = nodeToString(vm, node);
+
+    /**
+     * @brief VBase
+     * id, isNeeded
+     * Suspension list
+     * Bound? <=> Is pendings list empty ?
+     */
+
+    if (node.is<OptVar>()) {
+      OptVar variable = Accessor<OptVar>::get(node.value());
+      return buildVariableRecord(vm, runnable,
+        "optVariable", SIZE_MAX, variable.isNeeded(vm));
+    } else if (node.is<Variable>()) {
+      Variable variable = Accessor<Variable>::get(node.value());
+      return buildVariableRecord(vm, runnable,
+        "variable", variable.getID(), variable.isNeeded(vm),
+        variable.getPendings(vm));
+    } else if (node.is<ReadOnly>()) {
+      ReadOnly variable = Accessor<ReadOnly>::get(node.value());
+      return buildVariableRecord(vm, runnable,
+        "readOnly", SIZE_MAX, variable.isNeeded(vm));
+    } else if (node.is<ReadOnlyVariable>()) {
+      ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
+      return buildVariableRecord(vm, runnable,
+        "readOnlyVariable", variable.getID(), variable.isNeeded(vm),
+        variable.getPendings(vm));
+    } else if (node.is<FailedValue>()) {
+      FailedValue variable = Accessor<FailedValue>::get(node.value());
+      return buildVariableRecord(vm, runnable,
+        "failedValue", SIZE_MAX, variable.isNeeded(vm));
+    } /*else if (node.is<ReflectiveVariable>()) {
+      ReflectiveVariable variable = Accessor<ReflectiveVariable>::get(node.value());
+      return buildVariableRecord(vm,
+        "reflectiveVariable", variable->getID(), variable->isNeeded(vm),
+        variable->getPendings(vm));
+    } */else {
+      //Interface<DataflowVariable>().isNeeded(node, vm);
+      return build(vm, "none");
+    }
+  }
+
+  class GetThreadVariables: public Builtin<GetThreadVariables> {
+  public:
+    GetThreadVariables(): Builtin("getThreadVariables") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+
+      OzListBuilder builder(vm);
+      vm->getIntrospection().doForEachVariable(vm, runnable, [vm, &builder](Runnable* runnable, RichNode node) {
+        builder.push_back(vm, buildVariableRecord(vm, runnable, node));
+      });
+      result = builder.get(vm);
+    }
+  };
+
+
+  class GetVariables: public Builtin<GetVariables> {
+  public:
+    GetVariables(): Builtin("getVariables") {}
+
+    static void call(VM vm, Out result) {
+      OzListBuilder builder(vm);
+      vm->getIntrospection().doForEachVariable(vm, [vm, &builder](Runnable* runnable, RichNode node) {
+        builder.push_back(vm, buildVariableRecord(vm, runnable, node));
+      });
+      result = builder.get(vm);
     }
   };
 };

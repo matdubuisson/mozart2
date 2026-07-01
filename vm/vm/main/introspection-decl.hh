@@ -360,6 +360,40 @@ public:
   size_t getUnBoundVariablesCount(VM vm);
 
   size_t getVariablesCount(VM vm);
+
+using Lambda = std::function<void(Runnable*, RichNode)>;
+
+private:
+  void doForEachVariable(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+    size_t depth, size_t from, size_t to, Lambda lambda);
+
+public:
+  inline
+  void doForEachVariable(VM vm, Runnable* runnable, Lambda lambda) {
+    size_t depth = getStackDepth(vm, runnable);
+    doForEachVariable(vm, runnable, xRegister, 0, 0,
+      getXNodesRegisterSize(vm, runnable), lambda);
+
+    for (size_t i = 0; i < depth; i++) {
+      doForEachVariable(vm, runnable, yRegister, i, 0,
+        getYNodesRegisterSize(vm, runnable, i), lambda);
+      doForEachVariable(vm, runnable, gRegister, i, 0,
+        getGNodesRegisterSize(vm, runnable, i), lambda);
+      doForEachVariable(vm, runnable, kRegister, i, 0,
+        getKNodesRegisterSize(vm, runnable, i), lambda);
+    }
+  }
+
+  inline
+  void doForEachVariable(VM vm, Lambda lambda) {
+    RunnableList& runnables = getThreads(vm);
+
+    for (RunnableList::iterator iter = runnables.begin(); iter != runnables.end(); iter++) {
+      Runnable* runnable = *iter;
+      doForEachVariable(vm, runnable, lambda);
+    }
+  }
+
 };
 
 }

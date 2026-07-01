@@ -31,6 +31,14 @@ in
     {Boot_System.printVS MARKER#"["#Status#"]: " false false}
   end
 
+  proc {Print String}
+    {Boot_System.printVS String false false}
+  end
+
+  proc {PrintLn String}
+    {Print String#"\n"}
+  end
+
   proc {PrintLog String}
     {PrintAux none String false}
   end

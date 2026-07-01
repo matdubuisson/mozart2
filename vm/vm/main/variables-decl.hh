@@ -49,7 +49,7 @@ public:
    * @note By default the variable is not needed
    */
   explicit VariableBase(VM vm): WithHome(vm), _needed(false),
-  _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
+    _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
 
   /**
    * Declares a new variable base
@@ -58,7 +58,7 @@ public:
    * @note By default the variable is not needed
    */
   VariableBase(VM vm, Space* home): WithHome(home), _needed(false),
-  _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
+    _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
 
   /**
    * Declares a new variable base with copies of the provided variable's pendings
@@ -117,6 +117,11 @@ public:
   inline
   void bind(VM vm, RichNode src);
   */
+  
+  inline
+  VMAllocatedList<StableNode*>& getPendings(VM vm) {
+    return pendings;
+  }
 
 protected:
   /**
@@ -133,6 +138,8 @@ protected:
 protected:
   const size_t _id, _kindId, _generationId;
 private:
+  friend class Introspection;
+
   // TODO Might be a good candidate for noinline
   /**
    * Binds the provided self variable using the source variable

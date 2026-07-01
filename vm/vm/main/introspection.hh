@@ -285,7 +285,7 @@ inline
 void doForEachNodeFromStaticArray(VM vm, StaticArray<T> array,
   size_t from, size_t to, std::function<void(RichNode)> lambda) {
   for (size_t i = from; i < to; i++) {
-    lambda(array[i]);
+    lambda(RichNode(array[i]));
   }
 }
 
@@ -342,6 +342,55 @@ size_t Introspection::getUnBoundVariablesCount(VM vm) {
 inline
 size_t Introspection::getVariablesCount(VM vm) {
   return 0;
+}
+
+template<class T>
+inline
+void doForEachVariableFromStaticArray(VM vm, Runnable* runnable, StaticArray<T> array,
+  size_t from, size_t to, Introspection::Lambda lambda) {
+  for (size_t i = from; i < to; i++) {
+    RichNode node = RichNode(array[i]);
+    if (node.type().getStructuralBehavior() == sbVariable)
+      lambda(runnable, node);
+  }
+}
+
+inline
+void Introspection::doForEachVariable(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+  size_t depth, size_t from, size_t to, Lambda lambda) {
+  assert(from < to);
+
+  Thread* thread = dynamic_cast<Thread*>(runnable);
+  if (!thread)
+    return;
+  
+  assert(depth < thread->stack.size());
+  StackEntry& entry = thread->stack[depth];
+  
+  switch (nodesRegister) {
+    case xRegister: {
+      assert(depth == 0);
+      StaticArray<UnstableNode> xregs = thread->xregs._array;
+      assert(to < xregs.size());
+      doForEachVariableFromStaticArray(vm, runnable, xregs, from, to, lambda);
+      return;
+    } case yRegister: {
+      StaticArray<UnstableNode> yregs = entry.yregs;
+      assert(to < yregs.size());
+      doForEachVariableFromStaticArray(vm, runnable, yregs, from, to, lambda);
+      return;
+    } case gRegister: {
+      StaticArray<StableNode> gregs = entry.gregs;
+      assert(to < gregs.size());
+      doForEachVariableFromStaticArray(vm, runnable, gregs, from, to, lambda);
+      return;
+    } case kRegister: {
+      StaticArray<StableNode> kregs = entry.kregs;
+      assert(to < kregs.size());
+      doForEachVariableFromStaticArray(vm, runnable, kregs, from, to, lambda);
+      return;
+    } default: assert(false);
+  }  
 }
 
 }

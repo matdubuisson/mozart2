@@ -80,7 +80,13 @@ public:
     return data.type;
   }
 
+  MemWord value() {
+    return data.value;
+  }
+
 private:
+  friend class Introspection;
+
   /**
    * Gets access to the value of the node
    * @returns The value of the node TO-COMPLETE : what is the type ?
@@ -273,6 +279,11 @@ public:
   __attribute__((always_inline))
   Type type() {
     return node()->type();
+  }
+
+  __attribute__((always_inline))
+  MemWord value() {
+    return node()->value();
   }
 
   /** @returns If type of the referenced node is transient */
