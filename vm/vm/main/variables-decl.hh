@@ -48,7 +48,7 @@ public:
    * @param vm The virtual machine in which the variable base is being created
    * @note By default the variable is not needed
    */
-  explicit VariableBase(VM vm): WithHome(vm), _needed(false),
+  explicit VariableBase(VM vm): WithHome(vm), _needed(false), _bound(false),
     _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
 
   /**
@@ -57,7 +57,7 @@ public:
    * @param home The home space of the variable base
    * @note By default the variable is not needed
    */
-  VariableBase(VM vm, Space* home): WithHome(home), _needed(false),
+  VariableBase(VM vm, Space* home): WithHome(home), _needed(false), _bound(false),
     _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
 
   /**
@@ -95,6 +95,10 @@ public:
    */
   inline
   void addToSuspendList(VM vm, RichNode variable);
+
+  bool isBound(VM vm) {
+    return _bound;
+  }
 
   /**
    * Tells if the variable is needed
@@ -173,7 +177,7 @@ private:
 
   /* TODO maybe we can squeeze this bit of information into pendings
    * Idea: a leading `nullptr` element in pendings? */
-  bool _needed;
+  bool _needed, _bound;
 };
 
 //////////////

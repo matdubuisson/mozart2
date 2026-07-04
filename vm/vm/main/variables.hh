@@ -52,6 +52,7 @@ VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
   }
 
   _needed = from._needed;
+  _bound = from._bound;
 }
 
 template <class This>
@@ -78,6 +79,8 @@ void VariableBase<This>::markNeeded(VM vm) {
 
 template <class This>
 void VariableBase<This>::doBind(RichNode self, VM vm, RichNode src) {
+  _bound = true;
+
   if (vm->isOnTopLevel()) {
     // The simple, fast binding when on top-level
     if (_needed) {
