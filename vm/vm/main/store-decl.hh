@@ -356,6 +356,10 @@ public:
     return node() == right.node();
   }
 
+  bool isNullNode() {
+    return node() == nullptr;
+  }
+
   /**
    * The rich node becomes as the provided node reference
    * @param vm The virtual machine
