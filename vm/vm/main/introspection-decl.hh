@@ -316,60 +316,92 @@ public:
     return getNode(vm, runnable, kRegister, depth, index);
   }
 
+public:
+  using RunnableAndNodeLambda = std::function<void(Runnable*, RichNode)>;
 private:
   void doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-    size_t depth, size_t from, size_t to, std::function<void(RichNode)> lambda);
+    size_t depth, size_t from, size_t to, RunnableAndNodeLambda lambda);
 public:
   inline
   void doForEachXNode(VM vm, Runnable* runnable, size_t from, size_t to,
-    std::function<void(RichNode)> lambda) {
+    RunnableAndNodeLambda lambda) {
     doForEachNode(vm, runnable, xRegister, 0, from, to, lambda);
   }
 
   inline
   void doForEachYNode(VM vm, Runnable* runnable, size_t depth,
-    size_t from, size_t to, std::function<void(RichNode)> lambda) {
+    size_t from, size_t to, RunnableAndNodeLambda lambda) {
     doForEachNode(vm, runnable, yRegister, depth, from, to, lambda);
   }
 
   inline
   void doForEachGNode(VM vm, Runnable* runnable, size_t depth,
-    size_t from, size_t to, std::function<void(RichNode)> lambda) {
+    size_t from, size_t to, RunnableAndNodeLambda lambda) {
     doForEachNode(vm, runnable, gRegister, depth, from, to, lambda);
   }
 
   inline
   void doForEachKNode(VM vm, Runnable* runnable, size_t depth,
-    size_t from, size_t to, std::function<void(RichNode)> lambda) {
+    size_t from, size_t to, RunnableAndNodeLambda lambda) {
     doForEachNode(vm, runnable, kRegister, depth, from, to, lambda);
   }
 
-// public:
-//   NodeDescription getNodeDescription(VM vm, Runnable* runnable, size_t index);
+private:
+  bool isVariable(VM vm, RichNode node);
 
-//   StaticArray<NodeDescription> getNodeDescriptions(VM vm, Runnable* runnable,
-//     size_t from = 0, size_t to = SIZE_MAX);
+  bool isBoundVariable(VM vm, RichNode node);
 
-//   StaticArray<NodeDescription> getNodeDescriptions(VM vm,
-//     size_t from = 0, size_t to = SIZE_MAX);
+  bool isNeededVariable(VM vm, RichNode node);
 
+  bool isWaitedVariable(VM vm, RichNode node);
+
+private:
+  using VariableCondition = std::function<bool(RichNode)>;
+
+  size_t getVariablesAggregate(VM vm, VariableCondition condition);
 public:
   /* ========== Variables stats ========== */
-  size_t getBoundVariablesCount(VM vm);
+  inline
+  size_t getVariablesCount(VM vm) {
+    return getVariablesAggregate(vm, [vm, this](RichNode node) {
+      return true;
+    });
+  }
 
-  size_t getUnBoundVariablesCount(VM vm);
+  inline
+  size_t getBoundVariablesCount(VM vm) {
+    return getVariablesAggregate(vm, [vm, this](RichNode node) {
+      return this->isBoundVariable(vm, node);
+    });
+  }
 
-  size_t getVariablesCount(VM vm);
+  inline
+  size_t getUnBoundVariablesCount(VM vm) {
+    return getVariablesAggregate(vm, [vm, this](RichNode node) {
+      return !this->isBoundVariable(vm, node);
+    });
+  }
 
-using Lambda = std::function<void(Runnable*, RichNode)>;
+  inline
+  size_t getNeededVariablesCount(VM vm) {
+    return getVariablesAggregate(vm, [vm, this](RichNode node) {
+      return this->isNeededVariable(vm, node);
+    });
+  }
+
+  inline
+  size_t getWaitedVariablesCount(VM vm) {
+    return getVariablesAggregate(vm, [vm, this](RichNode node) {
+      return this->isWaitedVariable(vm, node);
+    });
+  }
 
 private:
   void doForEachVariable(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-    size_t depth, size_t from, size_t to, Lambda lambda);
-
+    size_t depth, size_t from, size_t to, RunnableAndNodeLambda lambda);
 public:
   inline
-  void doForEachVariable(VM vm, Runnable* runnable, Lambda lambda) {
+  void doForEachVariable(VM vm, Runnable* runnable, RunnableAndNodeLambda lambda) {
     size_t depth = getStackDepth(vm, runnable);
     doForEachVariable(vm, runnable, xRegister, 0, 0,
       getXNodesRegisterSize(vm, runnable), lambda);
@@ -385,7 +417,7 @@ public:
   }
 
   inline
-  void doForEachVariable(VM vm, Lambda lambda) {
+  void doForEachVariable(VM vm, RunnableAndNodeLambda lambda) {
     RunnableList& runnables = getThreads(vm);
 
     for (RunnableList::iterator iter = runnables.begin(); iter != runnables.end(); iter++) {
@@ -394,8 +426,39 @@ public:
     }
   }
 
+public:
+  using CandidatesList = std::vector<size_t>;
+
+  struct VariableCandidates {
+    VariableCandidates(RichNode node) : node(node) {}
+
+    RichNode node;
+    CandidatesList candidates;
+
+    bool isNull() {
+      return node.isNullNode();
+    }
+
+    void setNode(RichNode n) {
+      node = n;
+    }
+
+    bool has(size_t candidateThreadId);
+
+    void add(size_t candidateThreadId);
+  };
+
+  using VariableCandidatesMap = std::unordered_map<size_t, VariableCandidates>;
+
+public:
+  VariableCandidates getVariable(VM vm, size_t variableId);
+
+  VariableCandidatesMap getVariableCandidatesMap(VM vm, Runnable* runnable);
+
+  VariableCandidatesMap getVariableCandidatesMap(VM vm);
 };
 
 }
 
 #endif // MOZART_INTROSPECTION_DECL_H
+
