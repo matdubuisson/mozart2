@@ -586,7 +586,7 @@ public:
       build(vm, properties.yNodesCount)
     );
   }
-
+  
   class GetNodesCounts: public Builtin<GetNodesCounts> {
   public:
     GetNodesCounts(): Builtin("getNodesCounts") {}
@@ -598,82 +598,123 @@ public:
     }
   };
 
-  static inline
-  UnstableNode getThreadNodesCount(VM vm, In threadNode, NodesRegister nodesRegister) {
-    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-    Introspection& introspection = vm->getIntrospection();
-
-    size_t count;
-    switch (nodesRegister) {
-      case NodesRegister::xRegister:
-        count = introspection.getXNodesCount(vm, runnable); break;
-      case NodesRegister::yRegister:
-        count = introspection.getYNodesCount(vm, runnable); break;
-      case NodesRegister::gRegister:
-        count = introspection.getGNodesCount(vm, runnable); break;
-      case NodesRegister::kRegister:
-        count = introspection.getKNodesCount(vm, runnable); break;
-      case NodesRegister::anyRegister:
-        count = introspection.getNodesCount(vm, runnable);
-      default: assert(false);
-    }
-
-    return build(vm, count);
-  }
-
-  class GetThreadXNodesCount: public Builtin<GetThreadXNodesCount> {
+  class GetVariableNodesCount: public Builtin<GetVariableNodesCount> {
   public:
-    GetThreadXNodesCount(): Builtin("getThreadXNodesCount") {}
+    GetVariableNodesCount(): Builtin("getVariableNodesCount") {}
 
-    static void call(VM vm, In threadNode, Out result) {
-      result = getThreadNodesCount(vm, threadNode, NodesRegister::xRegister);
-    }
-  };
-
-  class GetThreadYNodesCount: public Builtin<GetThreadYNodesCount> {
-  public:
-    GetThreadYNodesCount(): Builtin("getThreadYNodesCount") {}
-
-    static void call(VM vm, In threadNode, Out result) {
-      result = getThreadNodesCount(vm, threadNode, NodesRegister::yRegister);
-    }
-  };
-
-  class GetThreadGNodesCount: public Builtin<GetThreadGNodesCount> {
-  public:
-    GetThreadGNodesCount(): Builtin("getThreadGNodesCount") {}
-
-    static void call(VM vm, In threadNode, Out result) {
-      result = getThreadNodesCount(vm, threadNode, NodesRegister::gRegister);
-    }
-  };
-
-  class GetThreadKNodesCount: public Builtin<GetThreadKNodesCount> {
-  public:
-    GetThreadKNodesCount(): Builtin("getThreadKNodesCount") {}
-
-    static void call(VM vm, In threadNode, Out result) {
-      result = getThreadNodesCount(vm, threadNode, NodesRegister::kRegister);
-    }
-  };
-
-  class GetThreadNodesCount: public Builtin<GetThreadNodesCount> {
-  public:
-    GetThreadNodesCount(): Builtin("getThreadNodesCount") {}
-
-    static void call(VM vm, In threadNode, Out result) {
-      result = getThreadNodesCount(vm, threadNode, NodesRegister::anyRegister);
-    }
-  };
-
-  class GetThreadStackDepth: public Builtin<GetThreadStackDepth> {
-  public:
-    GetThreadStackDepth(): Builtin("getThreadStackDepth") {}
-
-    static void call(VM vm, In threadNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+    static void call(VM vm, Out result) {
       result = build(vm,
-        vm->getIntrospection().getStackDepth(vm, runnable));
+        vm->getIntrospection().getVariableNodesCount(vm));
+    }
+  };
+
+  class GetValueNodesCount: public Builtin<GetValueNodesCount> {
+  public:
+    GetValueNodesCount(): Builtin("getValueNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getValueNodesCount(vm));
+    }
+  };
+
+  class GetStructuralNodesCount: public Builtin<GetStructuralNodesCount> {
+  public:
+    GetStructuralNodesCount(): Builtin("getStructuralNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getStructuralNodesCount(vm));
+    }
+  };
+
+  class GetTokenNodesCount: public Builtin<GetTokenNodesCount> {
+  public:
+    GetTokenNodesCount(): Builtin("getTokenNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getTokenNodesCount(vm));
+    }
+  };
+
+  class GetStableNodesCount: public Builtin<GetStableNodesCount> {
+  public:
+    GetStableNodesCount(): Builtin("getStableNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getStableNodesCount(vm));
+    }
+  };
+
+  class GetUnstableNodesCount: public Builtin<GetUnstableNodesCount> {
+  public:
+    GetUnstableNodesCount(): Builtin("getUnstableNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getUnstableNodesCount(vm));
+    }
+  };
+
+  class GetXNodesCount: public Builtin<GetXNodesCount> {
+  public:
+    GetXNodesCount(): Builtin("getXNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getXNodesCount(vm));
+    }
+  };
+
+  class GetYNodesCount: public Builtin<GetYNodesCount> {
+  public:
+    GetYNodesCount(): Builtin("getYNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getYNodesCount(vm));
+    }
+  };
+
+  class GetGNodesCount: public Builtin<GetGNodesCount> {
+  public:
+    GetGNodesCount(): Builtin("getGNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getGNodesCount(vm));
+    }
+  };
+
+  class GetKNodesCount: public Builtin<GetKNodesCount> {
+  public:
+    GetKNodesCount(): Builtin("getKNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getKNodesCount(vm));
+    }
+  };
+
+  class GetStackDepth: public Builtin<GetStackDepth> {
+  public:
+    GetStackDepth(): Builtin("getStackDepth") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getStackDepth(vm));
+    }
+  };
+
+  class GetNodesCount: public Builtin<GetNodesCount> {
+  public:
+    GetNodesCount(): Builtin("getNodesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getNodesCount(vm));
     }
   };
 
