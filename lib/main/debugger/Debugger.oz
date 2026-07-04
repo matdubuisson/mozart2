@@ -33,30 +33,25 @@ define
   Boot_Introspection = {Boot.getInternal 'Introspection'}
   Boot_VirtualMachine = {Boot.getInternal 'VirtualMachine'}
 
-  proc {GetThreadStatus Thread ?Status}
-    Status = 'status'(
-      id: {Boot_Introspection.getThreadInfo Thread id $}
-      type: {Boot_Introspection.getThreadInfo Thread type $}
-      runnable: {Boot_Introspection.getThreadInfo Thread runnable $}
-      terminated: {Boot_Introspection.getThreadInfo Thread terminated $}
-      dead: {Boot_Introspection.getThreadInfo Thread dead $}
-      preempted: {Boot_Introspection.getThreadInfo Thread preempted $}
-      preemptible: {Boot_Introspection.getThreadInfo Thread preemptible $}
-      priority: {Boot_Introspection.getThreadInfo Thread priority $}
-    )
-  end
-
   TRYHELP = ", try help to get more details"
 
   % All printers to display runtime data, infos and errors
-  PrintLog
-  PrintInfo
-  PrintWarning
-  PrintError
-  PrintOther
   \insert Printing
+
+  \insert Error
+
+  \insert Displaying
   
   \insert Interface
+
+
+
+
+
+
+
+  
+
 
   proc {Loop
     NonPreemptible
@@ -71,21 +66,14 @@ define
         NContinues}
     end
   in
-    local
-      Status = {GetThreadStatus This $}
-    in
-      % Shows the debugger's thread status
-      % {Boot_System.printRepr Status false true}
-      
-      /*
-        It ensures the debugger will not be preempted during its analysis
-        and so risking to produce an inconsistent result. However it is
-        responsible to release the VM often to let other threads
-        enough running time
-      */
-      if Status.preemptible andthen NonPreemptible then
-        {Boot_Thread.setPreemptible This false}
-      end
+    /*
+      It ensures the debugger will not be preempted during its analysis
+      and so risking to produce an inconsistent result. However it is
+      responsible to release the VM often to let other threads
+      enough running time
+    */
+    if {Boot_Thread.isPreemptible This $} andthen NonPreemptible then
+      {Boot_Thread.setPreemptible This false}
     end
     
     % Shows the next running thread along with the next byte code instruction
@@ -100,10 +88,16 @@ define
     /*
       Terminal commands management and execution of them
     */
+
+
+    
+
+    
+
     
 
     {PrintPrefix}
-
+    
     local
       Input = {Boot_System.inputVSLine $}    
     in

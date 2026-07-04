@@ -1,6 +1,4 @@
 local
-  % JS style
-
   MARKER = "[DEBUGGER]"
 
   proc {PrintAux Status String IsError}
@@ -37,6 +35,30 @@ in
 
   proc {PrintLn String}
     {Print String#"\n"}
+  end
+
+  proc {PrintTab Character Size}
+    proc {Loop I}
+      if I == 0 then skip
+      else
+        {Print Character}
+        {Loop I - 1}
+      end
+    end
+  in
+    {Loop Size}
+  end
+
+  proc {PrintExactly String Size}
+    Length = {List.length String $}
+  in
+    if Length == Size then {Print String}
+    elseif Length > Size then
+      {Print {List.take String Size $}}
+    else
+      {Print String}
+      {PrintTab " " Size - Length}
+    end
   end
 
   proc {PrintLog String}

@@ -1,127 +1,157 @@
 local
   proc {DisplayOptions}
-    {PrintInfo "status (optional: <id0> .... <idN>)\tdisplays variables' statuses"}
+    {PrintInfo "state (optional: <id0> .... <idN>)\tdisplays variables' states"}
     {PrintInfo "pendings (optional: <id0> .... <idN>)\tdisplays pending threads on the variable"}
+    {PrintInfo "candidates (optional: <id0> .... <idN>)\tdisplays candidate threads to bind the variable"}
+    {PrintInfo "value (optional: <id0> .... <idN>)\tdisplays variables' values"}
   end
 
-  proc {HandleStatusCase Variable}
+  proc {FormatStateCase Variable ?Result}
     case Variable of variable(
       id: Id
-      isNeeded: IsNeeded
-      threadId: ThreadId
       type: Type
-    ) then
-      {PrintInfo
-        {Int.toString Id $}#"\t"#
-        {Int.toString ThreadId $}#"\t"#
-        {Atom.toString Type $}#"\t"#
-        if Type == optVariable then "false" else "true" end#"\t"#
-        {Bool.toString IsNeeded $}#"\t"#
-        "none"
-      }
-    [] variable(
-      id: Id
       isBound: IsBound
       isNeeded: IsNeeded
       pendings: Pendings
-      type: Type
-      threadId: ThreadId
+      candidates: Candidates
+      value: _
     ) then
-      {PrintInfo
-        {Int.toString Id $}#"\t"#
-        {Int.toString ThreadId $}#"\t"#
-        {Atom.toString Type $}#"\t"#
-        {Bool.toString IsBound $}#"\t"#
-        {Bool.toString IsNeeded $}#"\t"#
+      Result = [
+        {Int.toString Id $}
+        {Atom.toString Type $}
+        {Bool.toString IsBound $}
+        {Bool.toString IsNeeded $}
         {Int.toString
           {List.length Pendings $} $}
-      }
+        {Int.toString
+          {List.length Candidates $} $}
+      ]
     end
   end
 
-  proc {HandlePendingsCase Variable}
+  proc {FormatPendingsCase Variable ?Result}
     case Variable of variable(
       id: Id
-      isNeeded: _
-      type: Type
-      threadId: ThreadId
-    ) then
-      {PrintInfo
-        {Int.toString Id $}#"\t"#
-        {Int.toString ThreadId $}#"\t"#
-        {Atom.toString Type $}#"\t"#
-        "none"}
-    [] variable(
-      id: Id
-      isBound: _
-      isNeeded: _
+      type: _
+      isBound: IsBound
+      isNeeded: IsNeeded
       pendings: Pendings
-      type: Type
-      threadId: ThreadId
+      candidates: _
+      value: _
     ) then
-      proc {DisplayPendings I Max Pendings}
-        case Pendings of nil then {PrintLn ""}
-        [] Pending|NextPendings then
-          if I > 0 then {Print ", "} end
-          {Print {Int.toString Pending $}}
-          if I < Max then            
-            {DisplayPendings I+1 Max NextPendings}
-          else
-            {PrintLn ""}
-          end
-        end
-      end
-    in
-      {PrintOtherPrefix "INFO"}
-      {Print
-        {Int.toString Id $}#"\t"#
-        {Int.toString ThreadId $}#"\t"#
-        {Atom.toString Type $}#"\t"}
-      if Pendings == nil then
-        {PrintLn "none"}
-      else
-        {DisplayPendings 0 100 Pendings}
-      end
+      Result = [
+        {Int.toString Id $}
+        {Bool.toString IsBound $}
+        {Bool.toString IsNeeded $}
+        {IdsToString Pendings $}
+      ]
     end
   end
 
-  proc {DisplayVariables Variables Aggregate}
-    case Variables of nil then skip
-    [] Variable|NextVariables then
-      case Aggregate of status then
-        {HandleStatusCase Variable}
-      [] pendings then
-        {HandlePendingsCase Variable}
-      end
-      {DisplayVariables NextVariables Aggregate}
+  proc {FormatCandidatesCase Variable ?Result}
+    case Variable of variable(
+      id: Id
+      type: _
+      isBound: IsBound
+      isNeeded: IsNeeded
+      pendings: _
+      candidates: Candidates
+      value: _
+    ) then
+      Result = [
+        {Int.toString Id $}
+        {Bool.toString IsBound $}
+        {Bool.toString IsNeeded $}
+        {IdsToString Candidates $}
+      ]
+    end
+  end
+
+  proc {FormatValueCase Variable ?Result}
+    case Variable of variable(
+      id: Id
+      type: Type
+      isBound: IsBound
+      isNeeded: IsNeeded
+      pendings: _
+      candidates: _
+      value: Value
+    ) then
+      Result = [
+        {Int.toString Id $}
+        {Atom.toString Type $}
+        {Bool.toString IsBound $}
+        {Bool.toString IsNeeded $}
+        Value
+      ]
+    end
+  end
+
+  proc {HandleCase Aggregate Variables}
+    case Aggregate of state then
+      {DisplayCSV
+        ["Id" "Type" "IsBound" "IsNeeded" "NPendings" "NCandidates"]
+        Variables
+        10
+        FormatStateCase
+      }
+    [] pendings then
+      {MaskedDisplayCSV
+        ["Id" "IsBound" "IsNeeded" "Pendings"]
+        Variables
+        10
+        FormatPendingsCase
+        [true true true false]
+      }
+    [] candidates then
+      {MaskedDisplayCSV
+        ["Id" "IsBound" "IsNeeded" "Candidates"]
+        Variables
+        10
+        FormatCandidatesCase
+        [true true true false]
+      }
+    [] value then
+      {MaskedDisplayCSV
+        ["Id" "Type" "IsBound" "IsNeeded" "Value"]
+        Variables
+        10
+        FormatValueCase
+        [true true true true false]
+      }
     end
   end
 
   proc {HandleOption Arguments Aggregate}
-    proc {ForEachThreadId Arguments Aggregate}
-      case Arguments of nil then skip
-      [] Argument|NextArguments then
-        ThreadId = {ExtractInput int Argument none $}
-      in
-        if ThreadId == none then
-          {PrintError "Unexpected provided thread id '"#Argument#
-            "' that is not an integer"}
+    proc {ForEach I Arguments Ids}
+      case Arguments#Ids of nil#nil then skip
+      [] (Argument|NextArguments)#(Id|NextIds) then
+        if Id == none then
+          {PrintIndexedWrongArgumentError I "id" "integer" Argument}
         else
-          Thread = {Boot_Introspection.getThread ThreadId $}
-          Variables = {Boot_Introspection.getThreadVariables Thread $}
+          Thread = {Boot_Introspection.getThread Id $}
         in
-          {DisplayVariables Variables Aggregate}
-          {ForEachThreadId NextArguments Aggregate}
+          if Thread == none then
+            {PrintThreadNotFoundError Id}
+          else
+            Variables = {Boot_Introspection.getThreadVariables Thread $}
+          in
+            {HandleCase Aggregate Variables}
+          end
         end
+
+        {ForEach I + 1 NextArguments NextIds}
       end
     end
-
   in
     if Arguments == nil then
-      {DisplayVariables
-        {Boot_Introspection.getVariables $} Aggregate}
+      Variables = {Boot_Introspection.getVariables $}
+    in
+      {HandleCase Aggregate Variables}
     else
-      {ForEachThreadId Arguments Aggregate}
+      Ids = {ExtractInputs int Arguments none $}
+    in
+      {ForEach 0 Arguments Ids}
     end
   end
 in
@@ -130,12 +160,14 @@ in
   [] Argument|NextArguments then
     case Argument of "help" then
       {DisplayOptions}
-    [] "status" then
-      {PrintInfo "Id\tThreadId\tType\tBound\tNeeded\tNPendings"}
-      {HandleOption NextArguments status}
+    [] "state" then
+      {HandleOption NextArguments state}
     [] "pendings" then
-      {PrintInfo "Id\tThreadId\tType\tPendings"}
       {HandleOption NextArguments pendings}
+    [] "candidates" then
+      {HandleOption NextArguments candidates}
+    [] "value" then
+      {HandleOption NextArguments value}
     else
       {PrintError "Unexpected variables aggregate '"#Argument#"'"#TRYHELP}
     end

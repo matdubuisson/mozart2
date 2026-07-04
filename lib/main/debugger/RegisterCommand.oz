@@ -6,7 +6,7 @@ local
     {PrintInfo "k <id> <depth=0>\tdisplay content of the k register of the specified thread at the specified depth"}
   end
 
-  proc {DisplayNode Node}
+  proc {FormatNode Node ?Result}
     proc {GetPrintableByteString BString ?Result}
       Length = {ByteString.length BString $}
       proc {ForI I Acc ?Result}
@@ -30,23 +30,17 @@ local
       feature: Feature
       uuid: Uuid
       value: Value
-    ) then
-      {PrintLog Name#
-        "\t"#BindingPriority#
-        "\t"#StructuralBehavior#
-        "\t"#{Bool.toString Copyable $}#
-        "\t"#{Bool.toString Transient $}#
-        "\t"#{Bool.toString Feature $}#
-        "\t"#{Int.toString {GetPrintableByteString Uuid $} $}#
-        "\t"#Value}
-    end
-  end
-
-  proc {DisplayNodes Nodes}
-    case Nodes of nil then skip
-    [] Node|NextNodes then
-      {DisplayNode Node}
-      {DisplayNodes NextNodes}
+      ) then
+      Result = [
+        {Atom.toString Name $}
+        {Int.toString BindingPriority $}
+        {Atom.toString StructuralBehavior $}
+        {Bool.toString Copyable $}
+        {Bool.toString Transient $}
+        {Bool.toString Feature $}
+        {Int.toString {GetPrintableByteString Uuid $} $}
+        Value
+      ]
     end
   end
 
@@ -56,20 +50,20 @@ local
   in
     case Type of x then
       Size = {Boot_Introspection.getThreadXNodesRegisterSize Thread $}
-      Nodes = {Boot_Introspection.getThreadXNodeAggregates
-        Thread 0 Size state}
+      Nodes = {Boot_Introspection.getThreadXNodes
+        Thread 0 Size}
     [] y then
       Size = {Boot_Introspection.getThreadYNodesRegisterSize Thread Depth $}
-      Nodes = {Boot_Introspection.getThreadYNodeAggregates
-        Thread Depth 0 Size state}
+      Nodes = {Boot_Introspection.getThreadYNodes
+        Thread Depth 0 Size}
     [] g then
       Size = {Boot_Introspection.getThreadGNodesRegisterSize Thread Depth $}
-      Nodes = {Boot_Introspection.getThreadGNodeAggregates
-        Thread Depth 0 Size state}    
+      Nodes = {Boot_Introspection.getThreadGNodes
+        Thread Depth 0 Size}    
     [] k then
       Size = {Boot_Introspection.getThreadKNodesRegisterSize Thread Depth $}
-      Nodes = {Boot_Introspection.getThreadKNodeAggregates
-        Thread Depth 0 Size state}
+      Nodes = {Boot_Introspection.getThreadKNodes
+        Thread Depth 0 Size}
     end
 
     local
@@ -81,16 +75,10 @@ local
       {PrintLog "Size: "#Size#"/"#NodesCount#" nodes ("#Percent#"."#DotPercent#"%)"}
     end
 
-    {PrintLog "Name"#
-      "\tBP"#
-      "\tSB"#
-      "\tCopy"#
-      "\tTrans"#
-      "\tFeat"#
-      "\tUuid"#
-      "\tValue"}
-
-    {DisplayNodes Nodes}
+    {MaskedDisplayCSV
+      ["Name" "BindingPriority" "StructuralBehavior" "Copyable" "Transient" "Feature" "UUID" "Value"]
+      Nodes 20 FormatNode
+      [true true true true true true true false]}
   end
 
   proc {HandleOption Type Arguments}
@@ -121,7 +109,7 @@ local
           MaxDepth = {Boot_Introspection.getThreadStackDepth Thread $}
         in
           if Depth >= MaxDepth then
-            {PrintError "Invalid depth "#Depth#", maximal depth is "#MaxDepth - 1}
+            {PrintError "Invalid depth "#Depth#", maximal depth is "#MaxDepth}
           else
             {DisplayRegister Type Thread Depth}
           end

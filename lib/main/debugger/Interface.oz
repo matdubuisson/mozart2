@@ -23,3 +23,14 @@ in
     Result = {Convert Type String.toFloat Argument $}
   end
 end
+
+proc {ExtractInputs Type Arguments DefaultValue ?Result}
+  case Arguments of nil then Result = nil
+  [] Argument|NextArguments then
+    Value = {ExtractInput Type Argument DefaultValue $}
+    NextResult
+  in
+    Result = Value|NextResult
+    {ExtractInputs Type NextArguments DefaultValue NextResult}
+  end
+end

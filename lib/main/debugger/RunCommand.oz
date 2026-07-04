@@ -1,7 +1,7 @@
 local
   proc {DisplayOptions}
-    {PrintInfo "schedules <x> <skipSystemThreads=true>\tschedules x threads"}
-    {PrintInfo "operations <x> <skipSystemThreads=true>\texecutes x threads"}
+    {PrintInfo "schedules <x> <includeSystemThreads=false>\tschedules x threads"}
+    {PrintInfo "operations <x> <includeSystemThreads=false>\texecutes x threads"}
     {PrintInfo "operationByOperation (alias obo)\tEnters the operation by operation execution mode"}
   end
 
@@ -17,7 +17,7 @@ local
         IncludeSystemThreads
       in
         case NextArguments of nil then
-          IncludeSystemThreads = true
+          IncludeSystemThreads = false
         [] IncludeSystemThreadsString|_ then
           IncludeSystemThreads = {ExtractInput bool IncludeSystemThreadsString none $}
 
@@ -27,7 +27,6 @@ local
         end
 
         if IncludeSystemThreads \= none then
-          {Boot_System.printRepr IncludeSystemThreads false true}
           {RunN Count IncludeSystemThreads}
           {Boot_Thread.preempt This}
         end
