@@ -219,13 +219,68 @@ public:
     }
   };
 
+  static inline
+  UnstableNode buildStateRecordNode(VM vm, Runnable* runnable) {
+    UnstableNode id = build(vm, runnable->getId());
+    UnstableNode kindId = build(vm, runnable->getKindId());
+    UnstableNode generationId = build(vm, runnable->getGenerationId());
+    UnstableNode isRunnable = build(vm, runnable->isRunnable());
+    UnstableNode isTerminated = build(vm, runnable->isTerminated());
+    UnstableNode isDead = build(vm, runnable->isDead());
+    UnstableNode isPreempted = build(vm, runnable->isPreempted());
+    UnstableNode isPreemptible = build(vm, runnable->isPreemptible());
+
+    UnstableNode type;
+    UnstableNode priority;
+
+    if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+      type = build(vm, "thread");
+      switch (thread->getPriority()) {
+        case tpLow: priority = build(vm, "low"); break;
+        case tpMiddle: priority = build(vm, "medium"); break;
+        case tpHi: priority = build(vm, "high"); break;
+        case tpSystem: priority = build(vm, "system"); break;
+        default: assert(false);
+      }
+    } else {
+      type = build(vm, "runnable");
+      priority = build(vm, "none");
+    }
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "state",
+        "dead",
+        "generationId",
+        "id",
+        "kindId",
+        "preempted",
+        "preemptible",
+        "priority",
+        "runnable",
+        "terminated",
+        "type"
+      ),
+      isDead,
+      generationId,
+      id,
+      kindId,
+      isPreempted,
+      isPreemptible,
+      priority,
+      isRunnable,
+      isTerminated,
+      type
+    );
+  }
+
   class GetState: public Builtin<GetState> {
   public:
     GetState(): Builtin("getState") {}
 
     static void call(VM vm, In thread, Out result) {
       Runnable* runnable = getArgument<Runnable*>(vm, thread);
-      result = ModIntrospection::buildThreadStatusRecord(vm, runnable);
+      result = buildStateRecordNode(vm, runnable);
     }
   };
 
