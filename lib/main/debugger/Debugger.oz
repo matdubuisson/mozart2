@@ -31,7 +31,7 @@ define
   Boot_Thread = {Boot.getInternal 'Thread'}
   Boot_System = {Boot.getInternal 'System'}
   Boot_Introspection = {Boot.getInternal 'Introspection'}
-  Boot_VirtualMachine = {Boot.getInternal 'VirtualMachine'}
+  Boot_Scheduler = {Boot.getInternal 'Scheduler'}
 
   TRYHELP = ", try help to get more details"
 
@@ -46,55 +46,23 @@ define
 
 
 
+  This = {Boot_Thread.this $}
+  ThisId = {Boot_Thread.getId This $}
 
+  proc {UpdateState State AlarmsCell Alarms ?NewState}
+    NewState = State
+  end
 
-
-
-  
-
-
-  proc {Loop
-    NonPreemptible
-    NContinues}
-
-    This = {Boot_Thread.this $}
-    ThisId = {Boot_Thread.getId This $}
-
-    proc {DefaultLoop}
-      {Loop
-        NonPreemptible
-        NContinues}
-    end
-  in
+  proc {ProcessCommand AlarmsCell Alarms}
     /*
       It ensures the debugger will not be preempted during its analysis
       and so risking to produce an inconsistent result. However it is
       responsible to release the VM often to let other threads
       enough running time
     */
-    if {Boot_Thread.isPreemptible This $} andthen NonPreemptible then
+    if {Boot_Thread.isPreemptible This $} then
       {Boot_Thread.setPreemptible This false}
     end
-    
-    % Shows the next running thread along with the next byte code instruction
-    % local
-    %   NextThread = {Boot_Introspection.getNextScheduledThread false $}
-    % in
-    %   {PrintLog
-    %     "Next scheduled thread is: "#
-    %     {Int.toString {Boot_Thread.getId NextThread $} $}}
-    % end
-
-    /*
-      Terminal commands management and execution of them
-    */
-
-
-    
-
-    
-
-    
 
     {PrintPrefix}
     
@@ -125,14 +93,27 @@ define
           \insert StatusCommand
         [] "run" then
           \insert RunCommand
+        [] "alarm" then
+          \insert AlarmCommand
         else
           {PrintError "Unknown command '"#Command#"'"#TRYHELP}
         end
       end
     end
+  end
 
-    {DefaultLoop}
+  proc {Loop State AlarmsCell}
+    Alarms = {Cell.access AlarmsCell $}
+    NewState = {UpdateState State AlarmsCell Alarms $}
+  in
+    case {Boot_Scheduler.getExecutionMode $} of normal then
+      {ProcessCommand AlarmsCell Alarms}
+    else
+      {Boot_Thread.preempt This}
+    end
+
+    {Loop NewState AlarmsCell}
   end
 in
-  {Loop true 0}
+  {Loop state() {Cell.new nil $}}
 end

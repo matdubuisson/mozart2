@@ -14,22 +14,8 @@ local
       if Count == none then
         {PrintError "Provided first parameter "#Thing#" count '"#CountString#"' is not an integer"}
       else
-        IncludeSystemThreads
-      in
-        case NextArguments of nil then
-          IncludeSystemThreads = false
-        [] IncludeSystemThreadsString|_ then
-          IncludeSystemThreads = {ExtractInput bool IncludeSystemThreadsString none $}
-
-          if IncludeSystemThreads == none then
-            {PrintError "Provided second parameter "#Thing#" flag '"#IncludeSystemThreadsString#"' is not an integer"}
-          end
-        end
-
-        if IncludeSystemThreads \= none then
-          {RunN Count IncludeSystemThreads}
-          {Boot_Thread.preempt This}
-        end
+        {RunN Count}
+        {Boot_Thread.preempt This}
       end
     end
   end
@@ -145,9 +131,9 @@ local
       end
     end
   in
-    {Boot_VirtualMachine.runOperationByOperation}
+    {Boot_Scheduler.runOperationByOperation}
     {Loop}
-    {Boot_VirtualMachine.reset}
+    {Boot_Scheduler.reset}
   end
 in
   case Arguments of nil then
@@ -156,9 +142,9 @@ in
     case Argument of "help" then
       {DisplayOptions}
     [] "schedules" then
-      {HandleOption "schedules" Boot_VirtualMachine.runNSchedules NextArguments}      
+      {HandleOption "schedules" Boot_Scheduler.runNSchedules NextArguments}      
     [] "operations" then
-      {HandleOption "operations" Boot_VirtualMachine.runNOperations NextArguments}
+      {HandleOption "operations" Boot_Scheduler.runNOperations NextArguments}
     [] "operationByOperation" then
       {HandleOperationByOperation NextArguments}
     [] "obo" then
