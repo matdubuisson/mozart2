@@ -162,8 +162,6 @@ public:
     Normal = 0,
     LimitedSchedules,
     LimitedOperations,
-    LimitedSchedulesWithoutSystemThreads,
-    LimitedOperationsWithoutSystemThreads,
     OperationByOperation // Without system threads by definition: they are responsible to advance the VM
   };
 
@@ -267,6 +265,10 @@ public:
     node->next = _cleanupList;
     _cleanupList = node;
   }
+
+  int scheduleThread();
+
+  int scheduleSystemThreads();
 
   /**
    * Runs the virtual machine
@@ -528,6 +530,10 @@ public:
     _preemptRequestedNot.clear(std::memory_order_release);
   }
 
+  bool isPerformingGC() {
+    return _isPerformingGC;
+  }
+
   /**
    * Sets the reference time
    * @param value The new time in milliseconds TO-COMPLETE : check unit
@@ -550,12 +556,15 @@ public:
     _schedulesCounter++;
     _operationsCounter += nOperations;
 
+    if (_currentThread->getPriority() == tpSystem)
+      return;
+
     switch (_executionMode) {
-      case LimitedSchedules: case LimitedSchedulesWithoutSystemThreads: {
+      case LimitedSchedules: {
         if (_executionCounter > 0) _executionCounter--;
         break;
       }
-      case LimitedOperations: case LimitedOperationsWithoutSystemThreads: {
+      case LimitedOperations: {
         if (_executionCounter > nOperations) _executionCounter -= nOperations;
         else _executionCounter = 0;
         break;
@@ -566,20 +575,29 @@ public:
       resetExecutionMode();
   }
 
-  size_t getMaxOperations() {
+  size_t getMaxOperationsExecutionMode() {
     assert(_currentThread != nullptr);
+    if (_currentThread->getPriority() == tpSystem)
+      return SIZE_MAX;
+
     switch (_executionMode) {
-      case LimitedOperations:
-      case LimitedOperationsWithoutSystemThreads: return _executionCounter;
-      case OperationByOperation: return _currentThread->getPriority() == tpSystem ? SIZE_MAX : 1;
+      case LimitedOperations: return _executionCounter;
+      case OperationByOperation: return 1;
       default: return SIZE_MAX;
     }
+  }
+
+  ExecutionMode getExecutionMode() {
+    return _executionMode;
+  }
+
+  size_t getExecutionCounter() {
+    return _executionCounter;
   }
 
   bool testLimitedOperationsExecutionMode() {
     switch (_executionMode) {
       case LimitedOperations:
-      case LimitedOperationsWithoutSystemThreads:
         return true;
       default: return false;
     }
@@ -587,20 +605,6 @@ public:
 
   bool testOperationByOperationExecutionMode() {
     return _executionMode == OperationByOperation;
-  }
-
-  bool testIncludeSystemThreads() {
-    switch (_executionMode) {
-      case LimitedSchedulesWithoutSystemThreads:
-      case LimitedOperationsWithoutSystemThreads:
-        // Avoids infinite loop if there is only remaining system threads as
-        // for instance with the debugger
-        if (threadPool.empty(false)) { // Not enough non-system threads to execute
-          resetExecutionMode();
-          return true;
-        } else return false;
-      default: return true;
-    }
   }
 private:
   /** Checks if preemption is requested and clears the flag */
@@ -722,6 +726,7 @@ private:
   Space* _currentSpace;
   Runnable* _currentThread;
   bool _isOnTopLevel;
+  bool _isPerformingGC;
 
   NodeDictionary* _builtinModules;
   PropertyRegistry _propertyRegistry;

@@ -56,7 +56,7 @@
 #include "modules/modserializer.hh"
 #include "modules/modspace.hh"
 #include "modules/modsystem.hh"
-#include "modules/modvirtualmachine.hh"
+#include "modules/modscheduler.hh"
 #include "modules/modintrospection.hh"
 #include "modules/modthread.hh"
 #include "modules/modtime.hh"

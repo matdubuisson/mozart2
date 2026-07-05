@@ -32,14 +32,93 @@ namespace mozart {
 // VirtualMachine //
 ////////////////////
 
+int VirtualMachine::scheduleThread() {
+  //std::cout << "A+" << std::endl;
+
+  // Select a thread
+  Runnable* currentThread;
+  do {
+    //std::cout << "B+" << std::endl;
+    currentThread = threadPool.popNext();
+    //std::cout << "C+" << std::endl;
+  } while (currentThread != nullptr && currentThread->isTerminated());
+
+  //std::cout << "D+" << std::endl;
+  // When there is no runnable thread left, return to the external world
+  if (currentThread == nullptr)
+    return 1; // break
+
+  //std::cout << "E+" << std::endl;
+  // Install the thread's space
+  if (!currentThread->getSpace()->install()) {
+    // The space is failed, kill the thread now
+    currentThread->kill();
+    return 0;
+  }
+
+  // Run the thread
+  assert(currentThread->isRunnable());
+  _currentThread = currentThread;
+
+  // //std::cout << "Schedule thread " << currentThread->getId() << " for maximally "
+  //   << getMaxOperations() << " operations" << std::endl;
+  //std::cout << "F+" << std::endl;
+  size_t nOperations = currentThread->run(getMaxOperationsExecutionMode());
+
+  //std::cout << "G+" << std::endl;
+  // Update the execution mode (normally manipulated by system threads for specific purposes)
+  updateExecutionMode(nOperations);
+
+  //std::cout << "H+" << std::endl;
+  _currentThread = nullptr;
+
+  // Schedule the thread anew if it is still runnable
+  if (currentThread->isRunnable())
+    threadPool.schedule(currentThread,
+      currentThread->isPreempted() || // In OBO mode non naturally preempted thread must be rescheduled first
+      !testOperationByOperationExecutionMode());
+
+  return 0;
+}
+
+int VirtualMachine::scheduleSystemThreads() {
+  threadPool.resetSchedule(tpSystem);
+  unsigned int n = threadPool.getSchedule(tpSystem);
+  while (n > 0) {
+    //std::cout << "ALED: " << n << std::endl;
+    if (scheduleThread())
+      break;
+    n--;
+  }
+  return 0;
+}
+
 VirtualMachine::run_return_type VirtualMachine::run() {
   while (!(testAndClearExitRunRequested() ||
       (_envUseDynamicPreemption && environment.testDynamicExitRun()))) {
 
+    //std::cout << "A" << std::endl;
+
+    // Runs Garbage Collector if needed
+    // System threads are run in between
     while (testAndClearGCRequested() || gc.isGCRequired()) {
+      _isPerformingGC = true;
+      scheduleSystemThreads();
+
+      //std::cout << "B" << std::endl;
+
       getTopLevelSpace()->install();
       doGC();
     }
+
+    //std::cout << "C" << std::endl;
+
+    if (_isPerformingGC) {
+      _isPerformingGC = false;
+      scheduleSystemThreads();
+    }
+
+    //std::cout << "D" << std::endl;
 
     // Trigger alarms
     std::int64_t now = getReferenceTime();
@@ -51,41 +130,13 @@ VirtualMachine::run_return_type VirtualMachine::run() {
       _alarms.remove_front(this);
     }
 
-    // Select a thread
-    Runnable* currentThread;
-    do {
-      currentThread = threadPool.popNext(testIncludeSystemThreads());
-    } while (currentThread != nullptr && currentThread->isTerminated());
+    //std::cout << "E" << std::endl;
 
-    // When there is no runnable thread left, return to the external world
-    if (currentThread == nullptr)
+    // Schedules thread
+    if (scheduleThread())
       break;
 
-    // Install the thread's space
-    if (!currentThread->getSpace()->install()) {
-      // The space is failed, kill the thread now
-      currentThread->kill();
-      continue;
-    }
-
-    // Run the thread
-    assert(currentThread->isRunnable());
-    _currentThread = currentThread;
-
-    // std::cout << "Schedule thread " << currentThread->getId() << " for maximally "
-    //   << getMaxOperations() << " operations" << std::endl;
-    size_t nOperations = currentThread->run(getMaxOperations());
-
-    _currentThread = nullptr;
-
-    // Schedule the thread anew if it is still runnable
-    if (currentThread->isRunnable())
-      threadPool.schedule(currentThread,
-        currentThread->isPreempted() || // In OBO mode non naturally preempted thread must be rescheduled first
-        !testOperationByOperationExecutionMode());
-
-    // Update the execution mode (normally manipulated by system threads for specific purposes)
-    updateExecutionMode(nOperations);
+    //std::cout << "F" << std::endl;
   }
 
   // Before giving control to the external world, restore the top-level space

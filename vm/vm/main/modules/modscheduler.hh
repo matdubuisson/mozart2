@@ -35,9 +35,9 @@ namespace builtins {
 
 using ExecutionMode = VirtualMachine::ExecutionMode;
 
-class ModVirtualMachine: public Module {
+class ModScheduler: public Module {
 public:
-  ModVirtualMachine(): Module("VirtualMachine") {}
+  ModScheduler(): Module("Scheduler") {}
 
   class SetVerbose: public Builtin<SetVerbose> {
   public:
@@ -52,13 +52,11 @@ public:
   public:
     RunNSchedules(): Builtin("runNSchedules") {}
 
-    static void call(VM vm, In nSchedulesNode, In includeSystemThreadsNode) {
+    static void call(VM vm, In nSchedulesNode) {
       size_t nSchedules = getArgument<size_t>(vm, nSchedulesNode);
-      bool includeSystemThreads = getArgument<bool>(vm, includeSystemThreadsNode);
 
       vm->setExecutionMode(
-        includeSystemThreads ? ExecutionMode::LimitedSchedules
-          : ExecutionMode::LimitedSchedulesWithoutSystemThreads,
+        ExecutionMode::LimitedSchedules,
         nSchedules + 1 // Current schedule does not count
       );
     }
@@ -68,13 +66,11 @@ public:
   public:
     RunNOperations(): Builtin("runNOperations") {}
 
-    static void call(VM vm, In nOperationsNode, In includeSystemThreadsNode) {
+    static void call(VM vm, In nOperationsNode) {
       size_t nOperations = getArgument<size_t>(vm, nOperationsNode);
-      bool includeSystemThreads = getArgument<bool>(vm, includeSystemThreadsNode);
 
       vm->setExecutionMode(
-        includeSystemThreads ? ExecutionMode::LimitedOperations
-          : ExecutionMode::LimitedOperationsWithoutSystemThreads,
+        ExecutionMode::LimitedOperations,
         nOperations // From right now so including caller thread
       );
     }
@@ -86,6 +82,31 @@ public:
 
     static void call(VM vm) {
       vm->setExecutionMode(ExecutionMode::OperationByOperation);
+    }
+  };
+
+  class GetExecutionMode: public Builtin<GetExecutionMode> {
+  public:
+    GetExecutionMode(): Builtin("getExecutionMode") {}
+
+    static void call(VM vm, Out result) {
+      std::string executionMode;
+      switch (vm->getExecutionMode()) {
+        case ExecutionMode::LimitedSchedules: executionMode = "limitedSchedules"; break;
+        case ExecutionMode::LimitedOperations: executionMode = "limitedOperations"; break;
+        case ExecutionMode::OperationByOperation: executionMode = "operationByOperation"; break;
+        default: executionMode = "normal";
+      }
+      result = build(vm, executionMode.c_str());
+    }
+  };
+
+  class GetExecutionCounter: public Builtin<GetExecutionCounter> {
+  public:
+    GetExecutionCounter(): Builtin("getExecutionCounter") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm, vm->getExecutionCounter());
     }
   };
 

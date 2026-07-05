@@ -73,7 +73,7 @@ void registerCoreModules(VM vm) {
   registerBuiltinModVirtualString(vm);
   registerBuiltinModWeakReference(vm);
   registerBuiltinModIntrospection(vm);
-  registerBuiltinModVirtualMachine(vm);
+  registerBuiltinModScheduler(vm);
 }
 
 // Workaround a problem which LString.slice() is a undefined symbol in this file.

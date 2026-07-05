@@ -112,6 +112,18 @@ public:
     schedule(thread);
   }
 
+  void resetSchedule(ThreadPriority priority) {
+    switch (priority) {
+      case tpSystem: remainings[tpSystem] = queues[tpSystem].size(); break;
+      case tpHi: remainings[tpHi] = HiToMiddlePriorityRatio; break;
+      case tpMiddle: remainings[tpMiddle] = MiddleToLowPriorityRatio; break;
+    }
+  }
+
+  unsigned int getSchedule(ThreadPriority priority) {
+    return remainings[priority];
+  }
+
   void gCollect(GC gc) {
     queues[tpLow].gCollect(gc);
     queues[tpMiddle].gCollect(gc);
@@ -152,7 +164,7 @@ private:
   }
   
   ThreadQueue queues[tpCount];
-  int remainings[tpCount];
+  unsigned int remainings[tpCount];
 };
 
 }

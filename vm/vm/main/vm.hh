@@ -93,6 +93,7 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
   _currentSpace = _topLevelSpace;
   _currentThread = nullptr;
   _isOnTopLevel = true;
+  _isPerformingGC = false;
 
   // Built-in modules size is non-predictable so make it independent
   _builtinModules = new (this) NodeDictionary;
