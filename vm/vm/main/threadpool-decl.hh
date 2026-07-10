@@ -92,6 +92,7 @@ public:
   }
 
   size_t getRunnableCount(bool isSystem) {
+    // +1 for the current running thread that has been popped from the pool
     if (isSystem)
       return queues[tpSystem].size() + 1;
     else
