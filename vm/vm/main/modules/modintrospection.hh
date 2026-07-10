@@ -608,6 +608,17 @@ public:
     }
   };
 
+  class GetThreadVariableNodesCount: public Builtin<GetThreadVariableNodesCount> {
+  public:
+    GetThreadVariableNodesCount(): Builtin("getThreadVariableNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getVariableNodesCount(vm, runnable));
+    }
+  };
+
   class GetValueNodesCount: public Builtin<GetValueNodesCount> {
   public:
     GetValueNodesCount(): Builtin("getValueNodesCount") {}
@@ -615,6 +626,17 @@ public:
     static void call(VM vm, Out result) {
       result = build(vm,
         vm->getIntrospection().getValueNodesCount(vm));
+    }
+  };
+
+  class GetThreadValueNodesCount: public Builtin<GetThreadValueNodesCount> {
+  public:
+    GetThreadValueNodesCount(): Builtin("getThreadValueNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getValueNodesCount(vm, runnable));
     }
   };
 
@@ -628,6 +650,17 @@ public:
     }
   };
 
+  class GetThreadStructuralNodesCount: public Builtin<GetThreadStructuralNodesCount> {
+  public:
+    GetThreadStructuralNodesCount(): Builtin("getThreadStructuralNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getStructuralNodesCount(vm, runnable));
+    }
+  };
+
   class GetTokenNodesCount: public Builtin<GetTokenNodesCount> {
   public:
     GetTokenNodesCount(): Builtin("getTokenNodesCount") {}
@@ -635,6 +668,17 @@ public:
     static void call(VM vm, Out result) {
       result = build(vm,
         vm->getIntrospection().getTokenNodesCount(vm));
+    }
+  };
+
+  class GetThreadTokenNodesCount: public Builtin<GetThreadTokenNodesCount> {
+  public:
+    GetThreadTokenNodesCount(): Builtin("getThreadTokenNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getTokenNodesCount(vm, runnable));
     }
   };
 
@@ -648,6 +692,17 @@ public:
     }
   };
 
+  class GetThreadStableNodesCount: public Builtin<GetThreadStableNodesCount> {
+  public:
+    GetThreadStableNodesCount(): Builtin("getThreadStableNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getStableNodesCount(vm, runnable));
+    }
+  };
+
   class GetUnstableNodesCount: public Builtin<GetUnstableNodesCount> {
   public:
     GetUnstableNodesCount(): Builtin("getUnstableNodesCount") {}
@@ -655,6 +710,17 @@ public:
     static void call(VM vm, Out result) {
       result = build(vm,
         vm->getIntrospection().getUnstableNodesCount(vm));
+    }
+  };
+
+  class GetThreadUnstableNodesCount: public Builtin<GetThreadUnstableNodesCount> {
+  public:
+    GetThreadUnstableNodesCount(): Builtin("getThreadUnstableNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getUnstableNodesCount(vm, runnable));
     }
   };
 
@@ -668,6 +734,17 @@ public:
     }
   };
 
+  class GetThreadXNodesCount: public Builtin<GetThreadXNodesCount> {
+  public:
+    GetThreadXNodesCount(): Builtin("getThreadXNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getXNodesCount(vm, runnable));
+    }
+  };
+
   class GetYNodesCount: public Builtin<GetYNodesCount> {
   public:
     GetYNodesCount(): Builtin("getYNodesCount") {}
@@ -675,6 +752,17 @@ public:
     static void call(VM vm, Out result) {
       result = build(vm,
         vm->getIntrospection().getYNodesCount(vm));
+    }
+  };
+
+  class GetThreadYNodesCount: public Builtin<GetThreadYNodesCount> {
+  public:
+    GetThreadYNodesCount(): Builtin("getThreadYNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getYNodesCount(vm, runnable));
     }
   };
 
@@ -688,6 +776,17 @@ public:
     }
   };
 
+  class GetThreadGNodesCount: public Builtin<GetThreadGNodesCount> {
+  public:
+    GetThreadGNodesCount(): Builtin("getThreadGNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getGNodesCount(vm, runnable));
+    }
+  };
+
   class GetKNodesCount: public Builtin<GetKNodesCount> {
   public:
     GetKNodesCount(): Builtin("getKNodesCount") {}
@@ -695,6 +794,17 @@ public:
     static void call(VM vm, Out result) {
       result = build(vm,
         vm->getIntrospection().getKNodesCount(vm));
+    }
+  };
+
+  class GetThreadKNodesCount: public Builtin<GetThreadKNodesCount> {
+  public:
+    GetThreadKNodesCount(): Builtin("getThreadKNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getKNodesCount(vm, runnable));
     }
   };
 
@@ -708,6 +818,17 @@ public:
     }
   };
 
+  class GetThreadStackDepth: public Builtin<GetThreadStackDepth> {
+  public:
+    GetThreadStackDepth(): Builtin("getThreadStackDepth") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getStackDepth(vm, runnable));
+    }
+  };
+
   class GetNodesCount: public Builtin<GetNodesCount> {
   public:
     GetNodesCount(): Builtin("getNodesCount") {}
@@ -715,6 +836,17 @@ public:
     static void call(VM vm, Out result) {
       result = build(vm,
         vm->getIntrospection().getNodesCount(vm));
+    }
+  };
+
+  class GetThreadNodesCount: public Builtin<GetThreadNodesCount> {
+  public:
+    GetThreadNodesCount(): Builtin("getThreadNodesCount") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      result = build(vm,
+        vm->getIntrospection().getNodesCount(vm, runnable));
     }
   };
 
