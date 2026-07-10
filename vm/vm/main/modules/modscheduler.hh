@@ -118,6 +118,25 @@ public:
       vm->resetExecutionMode();
     }
   };
+
+  class IsGCReady: public Builtin<IsGCReady> {
+  public:
+    IsGCReady(): Builtin("isGCReady") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm, vm->isGCReady());
+    }
+  };
+
+  class IsGCDone: public Builtin<IsGCDone> {
+  public:
+    IsGCDone(): Builtin("isGCDone") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm, vm->isGCDone());
+    }
+  };
+
 };
 
 }
