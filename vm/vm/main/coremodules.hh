@@ -57,6 +57,7 @@
 #include "modules/modspace.hh"
 #include "modules/modsystem.hh"
 #include "modules/modscheduler.hh"
+#include "modules/modjournal.hh"
 #include "modules/modintrospection.hh"
 #include "modules/modthread.hh"
 #include "modules/modtime.hh"

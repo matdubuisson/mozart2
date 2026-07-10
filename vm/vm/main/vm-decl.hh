@@ -156,6 +156,56 @@ private:
   bool _useDynamicPreemption;
 };
 
+class VirtualMachineJournal {
+public:
+  VirtualMachineJournal() {
+
+  }
+
+  using RunnablesVector = std::vector<Runnable*>;
+
+  enum RunnableAnnounce {
+    Inserted,
+    Removed,
+    Updated,
+    Collected
+  };
+
+public:
+  void announceRunnable(Runnable* runnable, RunnableAnnounce announce) {
+    switch (announce) {
+      case Inserted: insertedRunnables.push_back(runnable); break;
+      case Removed: removedRunnables.push_back(runnable); break;
+      case Updated: updatedRunnables.push_back(runnable); break;
+      case Collected: collectedRunnables.push_back(runnable); break;
+      default: assert(false);
+    }
+  }
+
+  RunnablesVector& getRunnables(RunnableAnnounce announce) {
+    switch (announce) {
+      case Inserted: return insertedRunnables;
+      case Removed: return removedRunnables;
+      case Updated: return updatedRunnables;
+      case Collected: return collectedRunnables;
+      default: assert(false);
+    }
+  }
+
+  void clear() {
+    insertedRunnables.clear();
+    removedRunnables.clear();
+    updatedRunnables.clear();
+    collectedRunnables.clear();
+  }
+
+private:
+  RunnablesVector insertedRunnables;
+  RunnablesVector removedRunnables;
+  RunnablesVector updatedRunnables;
+  RunnablesVector collectedRunnables;
+};
+
 class VirtualMachine {
 public:
   enum ExecutionMode {
@@ -266,9 +316,9 @@ public:
     _cleanupList = node;
   }
 
-  int scheduleThread();
+  void scheduleThread(bool isSystem = false);
 
-  int scheduleSystemThreads();
+  void scheduleSystemThreads();
 
   /**
    * Runs the virtual machine
@@ -498,6 +548,10 @@ public:
   Introspection& getIntrospection() {
     return introspection;
   }
+
+  VirtualMachineJournal& getJournal() {
+    return journal;
+  }
 public:
   /**
    * Protects a node from the garbage collector
@@ -530,8 +584,12 @@ public:
     _preemptRequestedNot.clear(std::memory_order_release);
   }
 
-  bool isPerformingGC() {
-    return _isPerformingGC;
+  bool isGCReady() {
+    return _gcReady;
+  }
+
+  bool isGCDone() {
+    return _gcDone;
   }
 
   /**
@@ -571,7 +629,7 @@ public:
       }
     }
 
-    if (_executionCounter == 0 || threadPool.empty(false))
+    if (_executionCounter == 0)
       resetExecutionMode();
   }
 
@@ -717,6 +775,7 @@ private:
   GlobalNode* rootGlobalNode;
 
   VirtualMachineEnvironment& environment;
+  VirtualMachineJournal journal;
 
   MemoryManager memoryManager;
 
@@ -726,7 +785,7 @@ private:
   Space* _currentSpace;
   Runnable* _currentThread;
   bool _isOnTopLevel;
-  bool _isPerformingGC;
+  bool _gcReady, _gcDone;
 
   NodeDictionary* _builtinModules;
   PropertyRegistry _propertyRegistry;
