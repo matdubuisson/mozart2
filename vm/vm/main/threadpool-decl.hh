@@ -80,21 +80,33 @@ public:
     remainings[tpSystem] = 0;
   }
 
-  bool empty(bool includeSystemThreads = true) {
-    // ordered from most probably non-empty too most probably empty
-    return empty(tpMiddle) && empty(tpHi) && empty(tpLow) && (!includeSystemThreads || empty(tpSystem));
+  bool empty(bool isSystem) {
+    if (isSystem)
+      return empty(tpSystem);
+    else
+      return empty(tpMiddle) && empty(tpHi) && empty(tpLow);
   }
 
-  size_t getRunnableCount(bool includeSystemThreads = true) {
-    return queues[tpLow].size() + queues[tpMiddle].size() +
-      queues[tpHi].size() + (includeSystemThreads ? queues[tpSystem].size() : 0) + 1; // 1 for the currently running thread
+  bool empty() {
+    return empty(true) && empty(false);
   }
 
-  void schedule(Runnable* thread, bool back = true) {
+  size_t getRunnableCount(bool isSystem) {
+    if (isSystem)
+      return queues[tpSystem].size() + 1;
+    else
+      return queues[tpLow].size() + queues[tpMiddle].size() + queues[tpHi].size() + 1;
+  }
+
+  size_t getRunnableCount() {
+    return getRunnableCount(true) + getRunnableCount(false);
+  }
+
+  void schedule(Runnable* thread, bool pushBack = true) {
     assert(thread->isRunnable());
     assert(!isScheduled(thread));
     ThreadQueue& queue = queues[thread->getPriority()];
-    if (back)
+    if (pushBack)
       queue.push_back(thread);
     else
       queue.push_front(thread);
@@ -120,10 +132,6 @@ public:
     }
   }
 
-  unsigned int getSchedule(ThreadPriority priority) {
-    return remainings[priority];
-  }
-
   void gCollect(GC gc) {
     queues[tpLow].gCollect(gc);
     queues[tpMiddle].gCollect(gc);
@@ -132,10 +140,10 @@ public:
   }
 
   inline
-  Runnable* getNext(bool includeSystemThreads = true);
+  Runnable* getNext(bool isSystem = true);
 
   inline
-  Runnable* popNext(bool includeSystemThreads = true);
+  Runnable* popNext(bool isSystem = true);
 
   void dump() {
     queues[tpLow].dump();
