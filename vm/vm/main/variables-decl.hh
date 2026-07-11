@@ -31,6 +31,8 @@
 
 namespace mozart {
 
+using VariableAnnounce = VirtualMachineJournal::VariableAnnounce;
+
 //////////////////
 // VariableBase //
 //////////////////
@@ -73,17 +75,17 @@ public:
   /** @returns The variable id representing that the variable is the 'id' th
    * variable ever created
    */
-  size_t getID() { return _id; }
+  size_t getId() { return _id; }
 
   /** @returns The variable kind id representing from which code this variable
    * has been generated
    */
-  size_t getKindID() { return _kindId; }
+  size_t getKindId() { return _kindId; }
 
   /** @returns The variable generation id representing the nth variable generated
    * from the same code
    */
-  size_t getGenerationID() { return _generationId; }
+  size_t getGenerationId() { return _generationId; }
 
 public:
   // DataflowVariable interface
@@ -107,6 +109,10 @@ public:
    */
   bool isNeeded(VM vm) {
     return _needed;
+  }
+
+  bool isWaited(VM vm) {
+    return !pendings.empty();
   }
 
   /**
@@ -196,7 +202,9 @@ public:
    * @param vm The virtual machine in which the variable is being created
    * @note The variable is not needed by default
    */
-  explicit Variable(VM vm): VariableBase(vm) {}
+  explicit Variable(VM vm): VariableBase(vm) {
+    vm->getJournal().announceVariable(this, VariableAnnounce::Created);
+  }
 
   /**
    * Instantiates a new variable
@@ -204,7 +212,9 @@ public:
    * @param home The home space of the variable
    * @note The variable is not needed by default
    */
-  Variable(VM vm, Space* home): VariableBase(vm, home) {}
+  Variable(VM vm, Space* home): VariableBase(vm, home) {
+    vm->getJournal().announceVariable(this, VariableAnnounce::Created);
+  }
 
   /**
    * Instantiates a new variable with copies of the provided variable's pendings
@@ -285,7 +295,9 @@ public:
    * @param vm The virtual machine in which the variable is being created
    * @note The variable is not needed by default
    */
-  explicit ReadOnlyVariable(VM vm): VariableBase(vm) {}
+  explicit ReadOnlyVariable(VM vm): VariableBase(vm) {
+    vm->getJournal().announceReadOnlyVariable(this, VariableAnnounce::Created);
+  }
 
   /**
    * Instantiates a new variable exactly like a variable base
@@ -293,7 +305,9 @@ public:
    * @param home The home space of the variable
    * @note The variable is not needed by default
    */
-  ReadOnlyVariable(VM vm, Space* home): VariableBase(vm, home) {}
+  ReadOnlyVariable(VM vm, Space* home): VariableBase(vm, home) {
+    vm->getJournal().announceReadOnlyVariable(this, VariableAnnounce::Created);
+  }
 
   /**
    * Instantiates a new variable with copies of the provided variable's pendings
@@ -359,14 +373,18 @@ public:
 #include "OptVar-implem-decl.hh"
 #endif
 
-class OptVar: public DataType<OptVar>, public WithHome,
+class OptVar: public VariableBaseCommon, public DataType<OptVar>, public WithHome,
   Transient, StoredAs<SpaceRef>, WithVariableBehavior<100> {
 public:
   /**
    * Instantiates a new OPT variable from a space reference
    * @param home The home space reference of the variable
    */
-  explicit OptVar(SpaceRef home): WithHome(home) {}
+  explicit OptVar(SpaceRef home): WithHome(home), _id(_everCreatedVariablesCount++) {}
+
+  size_t getId() {
+    return _id;
+  }
 
   /**
    * Attributes to the provided referenced space reference VM's current space
@@ -469,6 +487,9 @@ public:
   void printReprToStream(VM vm, std::ostream& out, int depth, int width) {
     out << "_<optimized>";
   }
+
+private:
+  size_t _id;
 };
 
 #ifndef MOZART_GENERATOR

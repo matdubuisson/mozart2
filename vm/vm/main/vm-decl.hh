@@ -162,9 +162,10 @@ public:
 
   }
 
+public:
   using RunnablesVector = std::vector<Runnable*>;
 
-  enum RunnableAnnounce {
+  enum class RunnableAnnounce {
     Inserted,
     Removed,
     Updated,
@@ -174,29 +175,177 @@ public:
 public:
   void announceRunnable(Runnable* runnable, RunnableAnnounce announce) {
     switch (announce) {
-      case Inserted: insertedRunnables.push_back(runnable); break;
-      case Removed: removedRunnables.push_back(runnable); break;
-      case Updated: updatedRunnables.push_back(runnable); break;
-      case Collected: collectedRunnables.push_back(runnable); break;
+      case RunnableAnnounce::Inserted: insertedRunnables.push_back(runnable); break;
+      case RunnableAnnounce::Removed: removedRunnables.push_back(runnable); break;
+      case RunnableAnnounce::Updated: updatedRunnables.push_back(runnable); break;
+      case RunnableAnnounce::Collected: collectedRunnables.push_back(runnable); break;
       default: assert(false);
     }
   }
 
   RunnablesVector& getRunnables(RunnableAnnounce announce) {
     switch (announce) {
-      case Inserted: return insertedRunnables;
-      case Removed: return removedRunnables;
-      case Updated: return updatedRunnables;
-      case Collected: return collectedRunnables;
+      case RunnableAnnounce::Inserted: return insertedRunnables;
+      case RunnableAnnounce::Removed: return removedRunnables;
+      case RunnableAnnounce::Updated: return updatedRunnables;
+      case RunnableAnnounce::Collected: return collectedRunnables;
+      default: assert(false);
+    }
+  }
+public:
+  template<typename V>
+  using VariablesVector = std::vector<V*>;
+
+  enum class VariableAnnounce {
+    Created,
+    Collected,
+    Needed,
+    Bound,
+    Waited
+  };
+
+  template<typename V>
+  struct WaitedVariable {
+    explicit WaitedVariable(V* v, RichNode w) : variable(v), waiter(w) {}
+
+    V* variable;
+    RichNode waiter;
+  };
+
+  template<typename V>
+  using WaitedVariablesVector = std::vector<WaitedVariable<V>>;
+
+  template<typename V>
+  struct VariablesVectors {
+    VariablesVector<V> createds;
+    VariablesVector<V> collecteds;
+    VariablesVector<V> neededs;
+    VariablesVector<V> bounds;
+    WaitedVariablesVector<V> waiteds;
+
+    void clear() {
+      createds.clear();
+      collecteds.clear();
+      neededs.clear();
+      bounds.clear();
+      waiteds.clear();
+    }
+  };
+
+private:
+  template<typename V>
+  void announceVariable(VariablesVectors<V>& vector, V* variable, VariableAnnounce announce) {
+    switch (announce) {
+      case VariableAnnounce::Created: vector.createds.push_back(variable); break;
+      case VariableAnnounce::Collected: vector.collecteds.push_back(variable); break;
+      case VariableAnnounce::Needed: vector.neededs.push_back(variable); break;
+      case VariableAnnounce::Bound: vector.bounds.push_back(variable); break;
       default: assert(false);
     }
   }
 
+  template<typename V>
+  void announceWaitedVariable(VariablesVectors<V>& vector, V* variable, RichNode waiter) {
+    vector.waiteds.push_back(WaitedVariable(variable, waiter));
+  }
+
+public:
+  template<class V>
+  void announceVariableBase(VariableBase<V>* variable, VariableAnnounce announce) {
+    if constexpr (std::is_same_v<V, Variable>) {
+      announceVariable(aggregatedVariables,
+        static_cast<Variable*>(variable), announce);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      announceVariable(aggregatedReadOnlyVariables,
+        static_cast<ReadOnlyVariable*>(variable), announce);
+    } else assert(false);
+  }
+
+  template<class V>
+  void announceWaitedVariableBase(VariableBase<V>* variable, RichNode waiter) {
+    if constexpr (std::is_same_v<V, Variable>) {
+      announceWaitedVariable(aggregatedVariables,
+        static_cast<Variable*>(variable), waiter);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      announceWaitedVariable(aggregatedReadOnlyVariables,
+        static_cast<ReadOnlyVariable*>(variable), waiter);
+    } else assert(false);
+  }
+
+  void announceOptVariable(OptVar* variable, VariableAnnounce announce) {
+    announceVariable(aggregatedOptVariables, variable, announce);
+  }
+
+  void announceWaitedOptVariable(OptVar* variable, RichNode waiter) {
+    announceWaitedVariable(aggregatedOptVariables, variable, waiter);
+  }
+
+  void announceVariable(Variable* variable, VariableAnnounce announce) {
+    announceVariable(aggregatedVariables, variable, announce);
+  }
+
+  void announceWaitedVariable(Variable* variable, RichNode waiter) {
+    announceWaitedVariable(aggregatedVariables, variable, waiter);
+  }
+
+  void announceReadOnlyVariable(ReadOnlyVariable* variable, VariableAnnounce announce) {
+    announceVariable(aggregatedReadOnlyVariables, variable, announce);
+  }
+
+  void announceWaitedReadOnlyVariable(ReadOnlyVariable* variable, RichNode waiter) {
+    announceWaitedVariable(aggregatedReadOnlyVariables, variable, waiter);
+  }
+
+private:
+  template<typename V>
+  VariablesVector<V>& getVariables(VariablesVectors<V>& vector, VariableAnnounce announce) {
+    switch (announce) {
+      case VariableAnnounce::Created: return vector.createds;
+      case VariableAnnounce::Collected: return vector.collecteds;
+      case VariableAnnounce::Needed: return vector.neededs;
+      case VariableAnnounce::Bound: return vector.bounds;
+      default: assert(false);
+    }
+  }
+
+  template<typename V>
+  WaitedVariablesVector<V>& getWaitedVariables(VariablesVectors<V>& vector) {
+    return vector.waiteds;
+  }
+
+public:
+  template<typename V>
+  VariablesVector<V>& getVariables(VariableAnnounce announce) {
+    if constexpr (std::is_same_v<V, OptVar>) {
+      return getVariables(aggregatedOptVariables, announce);
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      return getVariables(aggregatedVariables, announce);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      return getVariables(aggregatedReadOnlyVariables, announce);
+    } else assert(false);
+  }
+
+  template<typename V>
+  WaitedVariablesVector<V>& getWaitedVariables() {
+    if constexpr (std::is_same_v<V, OptVar>) {
+      return getWaitedVariables(aggregatedOptVariables);
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      return getWaitedVariables(aggregatedVariables);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      return getWaitedVariables(aggregatedReadOnlyVariables);
+    } else assert(false);
+  }
+
+public:
   void clear() {
     insertedRunnables.clear();
     removedRunnables.clear();
     updatedRunnables.clear();
     collectedRunnables.clear();
+
+    aggregatedOptVariables.clear();
+    aggregatedVariables.clear();
+    aggregatedReadOnlyVariables.clear();
   }
 
 private:
@@ -204,6 +353,10 @@ private:
   RunnablesVector removedRunnables;
   RunnablesVector updatedRunnables;
   RunnablesVector collectedRunnables;
+
+  VariablesVectors<OptVar> aggregatedOptVariables;
+  VariablesVectors<Variable> aggregatedVariables;
+  VariablesVectors<ReadOnlyVariable> aggregatedReadOnlyVariables;
 };
 
 class VirtualMachine {

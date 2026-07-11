@@ -134,6 +134,12 @@ class Node;
 class StableNode;
 class UnstableNode;
 
+template<class V>
+class VariableBase;
+class OptVar;
+class Variable;
+class ReadOnlyVariable;
+
 class VirtualMachine;
 typedef VirtualMachine* VM;
 

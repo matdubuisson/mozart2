@@ -58,6 +58,7 @@ VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
 template <class This>
 void VariableBase<This>::addToSuspendList(VM vm, RichNode variable) {
   pendings.push_back(vm, variable.getStableRef(vm));
+  vm->getJournal().announceWaitedVariableBase(this, variable);
 }
 
 template <class This>
@@ -74,6 +75,7 @@ void VariableBase<This>::markNeeded(VM vm) {
   if (!_needed) {
     _needed = true;
     wakeUpPendings(vm);
+    vm->getJournal().announceVariableBase(this, VariableAnnounce::Needed);
   }
 }
 
@@ -163,6 +165,7 @@ bool Variable::shouldWakeUpUnderSpace(VM vm, Space* space) {
 
 void Variable::bind(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
+  vm->getJournal().announceVariable(this, VariableAnnounce::Bound);
 }
 
 //////////////////////
@@ -177,10 +180,12 @@ ReadOnlyVariable::ReadOnlyVariable(VM vm, GR gr, ReadOnlyVariable& from):
 
 void ReadOnlyVariable::bind(RichNode self, VM vm, RichNode src) {
   waitFor(vm, self);
+  vm->getJournal().announceReadOnlyVariable(this, VariableAnnounce::Bound);
 }
 
 void ReadOnlyVariable::bindReadOnly(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
+  vm->getJournal().announceReadOnlyVariable(this, VariableAnnounce::Bound);
 }
 
 ////////////
@@ -196,21 +201,25 @@ void OptVar::create(SpaceRef& self, VM vm, GR gr, OptVar from) {
 void OptVar::addToSuspendList(RichNode self, VM vm, RichNode variable) {
   self.become(vm, Variable::build(vm));
   DataflowVariable(self).addToSuspendList(vm, variable);
+  vm->getJournal().announceWaitedOptVariable(this, variable);
 }
 
 void OptVar::markNeeded(RichNode self, VM vm) {
   self.become(vm, Variable::build(vm));
   DataflowVariable(self).markNeeded(vm);
+  vm->getJournal().announceOptVariable(this, VariableAnnounce::Needed);
 }
 
 void OptVar::bind(RichNode self, VM vm, UnstableNode&& src) {
   makeBackupForSpeculativeBindingIfNeeded(self, vm);
   self.become(vm, std::move(src));
+  vm->getJournal().announceOptVariable(this, VariableAnnounce::Bound);
 }
 
 void OptVar::bind(RichNode self, VM vm, RichNode src) {
   makeBackupForSpeculativeBindingIfNeeded(self, vm);
   self.become(vm, src);
+  vm->getJournal().announceOptVariable(this, VariableAnnounce::Bound);
 }
 
 void OptVar::makeBackupForSpeculativeBindingIfNeeded(RichNode self, VM vm) {

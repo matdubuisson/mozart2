@@ -41,10 +41,18 @@ class ModJournal: public Module {
 public:
   ModJournal(): Module("Journal") {}
 
+  static inline
+  std::string nodeToString(VM vm, RichNode node) {
+    auto& config = vm->getPropertyRegistry().config;
+    std::basic_stringstream<char> buffer;
+    buffer << repr(vm, node, config.printDepth, config.printWidth);
+    return buffer.str();
+  }
+
 private:
   using RunnablesVector = VirtualMachineJournal::RunnablesVector;
   using RunnableAnnounce = VirtualMachineJournal::RunnableAnnounce;
-  using RunnableToRecordLambda = std::function<UnstableNode(VM, Runnable*)>;
+  // using RunnableToRecordLambda = std::function<UnstableNode(VM, Runnable*)>;
 
   static inline
   UnstableNode buildThreadStateRecord(VM vm, Runnable* runnable) {
@@ -103,13 +111,12 @@ private:
 
   static inline
   UnstableNode buildRunnablesList(VM vm,
-    RunnablesVector& runnables,
-    RunnableToRecordLambda lambda) {
+    RunnablesVector& runnables) {
     OzListBuilder builder(vm);
 
     for (auto iter = runnables.begin(); iter != runnables.end(); ++iter) {
       Runnable* runnable = static_cast<Runnable*>(*iter);
-      builder.push_back(vm, lambda(vm, runnable));
+      builder.push_back(vm, buildThreadStateRecord(vm, runnable));
     }
 
     return builder.get(vm);
@@ -125,14 +132,169 @@ private:
         "removed",
         "updated"
       ),
-      buildRunnablesList(vm, journal.getRunnables(RunnableAnnounce::Collected),
-        buildThreadStateRecord),
-      buildRunnablesList(vm, journal.getRunnables(RunnableAnnounce::Inserted),
-        buildThreadStateRecord),
-      buildRunnablesList(vm, journal.getRunnables(RunnableAnnounce::Removed),
-        buildThreadStateRecord),
-      buildRunnablesList(vm, journal.getRunnables(RunnableAnnounce::Updated),
-        buildThreadStateRecord)
+      buildRunnablesList(vm, journal.getRunnables(RunnableAnnounce::Collected)),
+      buildRunnablesList(vm, journal.getRunnables(RunnableAnnounce::Inserted)),
+      buildRunnablesList(vm, journal.getRunnables(RunnableAnnounce::Removed)),
+      buildRunnablesList(vm, journal.getRunnables(RunnableAnnounce::Updated))
+    );
+  }
+
+private:
+  template<typename V>
+  using VariablesVector = VirtualMachineJournal::VariablesVector<V>;
+  template<typename V>
+  using WaitedVariable = VirtualMachineJournal::WaitedVariable<V>;
+  template<typename V>
+  using WaitedVariablesVector = VirtualMachineJournal::WaitedVariablesVector<V>;
+  template<typename V>
+  using VariablesVectors = VirtualMachineJournal::VariablesVectors<V>;
+  using VariableAnnounce = VirtualMachineJournal::VariableAnnounce;
+
+  // template<typename V>
+  // using VariableToRecordLambda = std::function<UnstableNode(VM, V*)>;
+  // template<typename V>
+  // using WaitedVariableToRecordLambda = std::function<UnstableNode(VM, WaitedVariable<V>*)>;
+
+  static inline
+  UnstableNode buildWaiterStateRecord(VM vm, RichNode waiter) {
+    if (waiter.isNullNode()) {
+      return build(vm, "none");
+    } else if (waiter.is<ReifiedThread>()) {
+      Runnable* runnable = getArgument<Runnable*>(vm, waiter);
+      return buildThreadStateRecord(vm, runnable);
+    } else if (waiter.is<OptVar>()) {
+      OptVar v = Accessor<OptVar>::get(waiter.value());
+      return buildVariableStateRecord<OptVar>(vm, &v);
+    } else if (waiter.is<Variable>()) {
+      Variable v = Accessor<Variable>::get(waiter.value());
+      return buildVariableStateRecord<Variable>(vm, &v);
+    } else if (waiter.is<ReadOnlyVariable>()) {
+      ReadOnlyVariable v = Accessor<ReadOnlyVariable>::get(waiter.value());
+      return buildVariableStateRecord<ReadOnlyVariable>(vm, &v);
+    } else {
+      return build(vm, nodeToString(vm, waiter).c_str());
+    }
+  }
+
+  template<typename V>
+  static inline
+  UnstableNode buildVariableStateRecord(VM vm, V* variable, RichNode waiter = RichNode(nullptr)) {
+    assert(variable != nullptr);
+
+    size_t id;
+    std::string type;
+    bool isNeeded, isBound, isWaited;
+
+    if constexpr (std::is_same_v<V, OptVar>) {
+      OptVar* v = static_cast<OptVar*>(variable);
+      id = v->getId();
+      type = "optVariable";
+      isNeeded = isBound = isWaited = false;
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      Variable* v = static_cast<Variable*>(variable);
+      id = v->getId();
+      type = "variable";
+      isNeeded = v->isNeeded(vm);
+      isBound = v->isBound(vm);
+      isWaited = v->isWaited(vm);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      ReadOnlyVariable* v = static_cast<ReadOnlyVariable*>(variable);
+      id = v->getId();
+      type = "readOnlyVariable";
+      isNeeded = v->isNeeded(vm);
+      isBound = v->isBound(vm);
+      isWaited = v->isWaited(vm);
+    } else assert(false);
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "variable",
+        "id",
+        "isBound",
+        "isNeeded",
+        "isWaited",
+        "type",
+        "waiter"
+      ),
+      build(vm, id),
+      build(vm, isBound),
+      build(vm, isNeeded),
+      build(vm, isWaited),
+      build(vm, type.c_str()),
+      buildWaiterStateRecord(vm, waiter)
+    );
+  }
+
+  template<typename V>
+  static inline
+  UnstableNode buildVariablesList(VM vm,
+    VariablesVector<V>& variables) {
+    OzListBuilder builder(vm);
+
+    for (auto iter = variables.begin(); iter != variables.end(); ++iter) {
+      V* variable = static_cast<V*>(*iter);
+      builder.push_back(vm, buildVariableStateRecord(vm, variable));
+    }
+
+    return builder.get(vm);
+  }
+
+  template<typename V>
+  static inline
+  UnstableNode buildWaitedVariablesList(VM vm,
+    WaitedVariablesVector<V>& variables) {
+    OzListBuilder builder(vm);
+
+    for (auto iter = variables.begin(); iter != variables.end(); ++iter) {
+      WaitedVariable<V> waitedVariable = static_cast<WaitedVariable<V>>(*iter);
+      builder.push_back(vm, buildVariableStateRecord(vm,
+        waitedVariable.variable, waitedVariable.waiter));
+    }
+
+    return builder.get(vm);
+  }
+
+  template<typename V>
+  static inline
+  UnstableNode buildVariablesSubJournalRecord(VM vm, VirtualMachineJournal& journal) {
+    std::string recordName;
+    if constexpr (std::is_same_v<V, OptVar>) {
+      recordName = "optVariablesJournal";
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      recordName = "variablesJournal";
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      recordName = "readOnlyVariables";
+    } else assert(false);
+
+    return buildRecord(vm,
+      buildArity(vm,
+        recordName.c_str(),
+        "bound",
+        "collected",
+        "created",
+        "needed",
+        "waited"
+      ),
+      buildVariablesList(vm, journal.getVariables<V>(VariableAnnounce::Bound)),
+      buildVariablesList(vm, journal.getVariables<V>(VariableAnnounce::Collected)),
+      buildVariablesList(vm, journal.getVariables<V>(VariableAnnounce::Created)),
+      buildVariablesList(vm, journal.getVariables<V>(VariableAnnounce::Needed)),
+      buildWaitedVariablesList(vm, journal.getWaitedVariables<V>())
+    );
+  }
+
+  static inline
+  UnstableNode buildVariablesJournalRecord(VM vm, VirtualMachineJournal& journal) {
+    return buildRecord(vm,
+      buildArity(vm,
+        "variablesJournal",
+        "optVariables",
+        "readOnlyVariables",
+        "variables"
+      ),
+      buildVariablesSubJournalRecord<OptVar>(vm, journal),
+      buildVariablesSubJournalRecord<ReadOnlyVariable>(vm, journal),
+      buildVariablesSubJournalRecord<Variable>(vm, journal)
     );
   }
 
@@ -147,9 +309,11 @@ public:
       result = buildRecord(vm,
         buildArity(vm,
           "journal",
-          "runnables"
+          "runnables",
+          "variables"
         ),
-        buildRunnablesJournalRecord(vm, journal)
+        buildRunnablesJournalRecord(vm, journal),
+        buildVariablesJournalRecord(vm, journal)
       );
     }
   };
