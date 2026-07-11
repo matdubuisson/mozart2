@@ -31,6 +31,7 @@ define
   Boot_Thread = {Boot.getInternal 'Thread'}
   Boot_System = {Boot.getInternal 'System'}
   Boot_Introspection = {Boot.getInternal 'Introspection'}
+  Boot_Journal = {Boot.getInternal 'Journal'}
   Boot_Scheduler = {Boot.getInternal 'Scheduler'}
 
   TRYHELP = ", try help to get more details"
@@ -44,12 +45,62 @@ define
   
   \insert Interface
 
-
-
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
 
-  proc {UpdateState State AlarmsCell Alarms ?NewState}
+  ModeCell = {Cell.new true $}
+ 
+  proc {UpdateState State AlarmsCell Alarms ?AlarmRaised ?NewState}
+    Journal = {Boot_Journal.getJournal $}
+  in
+    case Journal of journal(
+      runnables: runnablesJournal(
+        inserted: InsertedRunnables
+        removed: RemovedRunnables
+        updated: UpdatedRunnables
+        collected: CollectedRunnables
+      )
+
+      % variables: variablesJournal(
+      %   optVariables: optVariablesJournal(
+      %     created: CreatedOptVariables
+      %     collected: CollectedOptVariables
+      %     needed: NeededOptVariables
+      %     bound: BoundOptVariables
+      %     waited: WaitedOptVariables
+      %   )
+      %   variables: variablesJournal(
+      %     created: CreatedVariables
+      %     collected: CollectedVariables
+      %     needed: NeededVariables
+      %     bound: BoundVariables
+      %     waited: WaitedVariables
+      %   )
+      %   readOnlyVariables: readOnlyVariables(
+      %     created: CreatedReadOnlyVariables
+      %     collected: CollectedReadOnlyVariables
+      %     needed: NeededReadOnlyVariables
+      %     bound: BoundReadOnlyVariables
+      %     waited: WaitedReadOnlyVariables
+      %   )
+      % )
+
+      variables: variablesJournal(
+        optVariables: OptVariablesJournal
+        variables: VariablesJournal
+        readOnlyVariables: ReadOnlyVariablesJournal
+      )
+
+    ) then
+      \insert Alarm
+    in
+      AlarmRaised = {ParseAlarms Alarms $}
+    end
+
+    % if AlarmRaised then
+    %   {PrintWarning "Alarm raised"}
+    % end
+
     NewState = State
   end
 
@@ -63,7 +114,7 @@ define
     if {Boot_Thread.isPreemptible This $} then
       {Boot_Thread.setPreemptible This false}
     end
-
+    
     {PrintPrefix}
     
     local
@@ -93,6 +144,11 @@ define
           \insert StatusCommand
         [] "run" then
           \insert RunCommand
+        [] "continue" then
+          {Cell.assign ModeCell false}
+          {Boot_Thread.preempt This}
+        [] "reset" then
+          {Boot_Scheduler.reset}
         [] "alarm" then
           \insert AlarmCommand
         else
@@ -104,9 +160,24 @@ define
 
   proc {Loop State AlarmsCell}
     Alarms = {Cell.access AlarmsCell $}
-    NewState = {UpdateState State AlarmsCell Alarms $}
+    IsNormalExecutionMode = ({Boot_Scheduler.getExecutionMode $} == normal)
+    IsActiveMode = {Cell.access ModeCell $}
+
+    AlarmRaised
+    NewState
   in
-    case {Boot_Scheduler.getExecutionMode $} of normal then
+    if {Boot_Scheduler.isGCReady $} then
+      {PrintWarning "Garbage collector is about to run"}
+    end
+
+    if {Boot_Scheduler.isGCDone $} then
+      {PrintWarning "Garbage collector just ran"}
+    end
+
+    {UpdateState State AlarmsCell Alarms AlarmRaised NewState}
+
+    if AlarmRaised orelse (IsNormalExecutionMode andthen IsActiveMode) then
+      {Cell.assign ModeCell true}
       {ProcessCommand AlarmsCell Alarms}
     else
       {Boot_Thread.preempt This}

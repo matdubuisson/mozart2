@@ -61,6 +61,29 @@ in
     end
   end
 
+  proc {PrintList List}
+    proc {Loop List}
+      case List of nil then skip
+      [] Head|Tail then
+        String
+      in
+        if {Bool.is Head $} then String = {Bool.toString Head $}
+        elseif {Int.is Head $} then String = {Int.toString Head $}
+        elseif {Float.is Head $} then String = {Float.toString Head $}
+        elseif {Atom.is Head $} then String = {Atom.toString Head $}
+        else String = Head end
+
+        {Print String}
+        if Tail \= nil then {Print " "} end
+        {Loop Tail}
+      end
+    end
+  in
+    {Print "["}
+    {Loop List}
+    {Print "]"}
+  end
+
   proc {PrintLog String}
     {PrintAux none String false}
   end
@@ -75,6 +98,23 @@ in
 
   proc {PrintError String}
     {PrintAux "ERROR" String true}
+  end
+
+  proc {PrintAlarm Alarm AlarmId Announce String}
+    case Alarm of alarm(
+      type: _
+      aggregate: Aggregate
+      conditions: Conditions
+    ) then
+      {PrintOtherPrefix "ALARM["#
+        {Int.toString AlarmId $}#
+        ", "#
+        {Atom.toString Announce $}#
+        "]"}
+      {Print {Atom.toString Aggregate $}#", "}
+      {PrintList Conditions}
+      {PrintLn " => "#String}
+    end
   end
 
   proc {PrintOther Status String}

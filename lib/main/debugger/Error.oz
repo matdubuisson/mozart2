@@ -1,3 +1,7 @@
+proc {PrintMissingArgumentError What Type}
+  {PrintError "Provided "#What#" requires a parameter of type "#Type#TRYHELP}
+end
+
 proc {PrintWrongArgumentError What Type Argument}
   {PrintError "Provided "#What#" '"#Argument#"' is not an "#Type#TRYHELP}
 end

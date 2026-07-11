@@ -10,8 +10,14 @@ local
   end
 
   proc {DisplayThreadsAggregateOptions}
+    {PrintInfo "inserted"}
+    {PrintInfo "removed"}
+    {PrintInfo "updated"}
+    {PrintInfo "collected"}
+
     {PrintInfo "runnable"}
-    {PrintInfo "suspended"}
+    {PrintInfo "preempted"}
+    {PrintInfo "preemptible"}
     {PrintInfo "terminated"}
     {PrintInfo "dead"}
   end
@@ -31,42 +37,134 @@ local
     end
   end
 
-  proc {GetThreadsCondition Argument ?Result}
-    case Argument of "runnable" then Result = runnable
-    [] "suspended" then Result = suspended
+  proc {Get NextArguments ArgumentType ArgumentRecord ArgumentName ArgumentTypeName ?Result}
+    case NextArguments of nil then
+      Result = none
+      {PrintMissingArgumentError ArgumentName ArgumentTypeName}
+    [] Parameter|_ then
+      Value = {ExtractInput ArgumentType Parameter none $}
+    in
+      if Value == none then
+        Result = none
+        {PrintWrongArgumentError ArgumentName ArgumentTypeName Parameter}
+      else
+        Result = ArgumentRecord(Value)
+      end
+    end
+  end
+
+  proc {GetId NextArguments ?Result}
+    Result = {Get NextArguments int id "id" "integer" $}
+  end
+
+  proc {GetKindId NextArguments ?Result}
+    Result = {Get NextArguments int kindId "kind id" "integer" $}
+  end
+
+  proc {GetGenerationId NextArguments ?Result}
+    Result = {Get NextArguments int generationId "generation id" "integer" $}
+  end
+
+  proc {GetPriority NextArguments ?Result}
+    Result = {Get NextArguments atom priority "priority" "lowercase string" $}
+  end
+
+  proc {GetType NextArguments ?Result}
+    Result = {Get NextArguments atom type "type" "lowercase string" $}
+  end
+
+  proc {GetThreadsCondition Argument NextArguments ?Result}
+    case Argument of "inserted" then Result = inserted
+    [] "removed" then Result = removed
+    [] "updated" then Result = updated
+    [] "collected" then Result = collected
+
+    [] "id" then
+      Result = {GetId NextArguments $}
+
+    [] "kindId" then
+      Result = {GetKindId NextArguments $}
+
+    [] "generationId" then
+      Result = {GetGenerationId NextArguments $}
+
+    [] "priority" then
+      Result = {GetPriority NextArguments $}
+
+    [] "type" then
+      Result = {GetType NextArguments $}
+
+    [] "runnable" then Result = runnable
+    [] "preempted" then Result = preempted
+    [] "preemptible" then Result = preemptible
     [] "terminated" then Result = terminated
     [] "dead" then Result = dead
+
     else
+      Result = none
       {PrintUnexpectedOptionError Argument}
     end
   end
 
-  proc {GetVariablesCondition Argument ?Result}
-    case Argument of "referenced" then Result = referenced
-    [] "waited" then Result = waited
-    [] "bound" then Result = bound
+  proc {GetVariablesCondition Argument NextArguments ?Result}
+    case Argument of "created" then Result = created
     [] "needed" then Result = needed
+    [] "bound" then Result = bound
+    [] "collected" then Result = collected
+    [] "waited" then Result = waited
+
+    [] "id" then
+      Result = {GetId NextArguments $}
+
+    [] "type" then
+      Result = {GetType NextArguments $}
+
     else
+      Result = none
       {PrintUnexpectedOptionError Argument}
     end
   end
 
-  proc {GetSpecificCondition Aggregate Argument ?Result}
+  proc {GetSpecificCondition Aggregate Argument NextArguments ?Result}
     case Aggregate of threads then
-      Result = {GetThreadsCondition Argument $}
+      Result = {GetThreadsCondition Argument NextArguments $}
     [] variables then
-      Result = {GetVariablesCondition Argument $}
+      Result = {GetVariablesCondition Argument NextArguments $}
     end
   end
 
-  proc {GetConditions Aggregate Arguments ?Result}
-    case Arguments of nil then Result = nil
+  proc {GetConditions Aggregate Arguments ?Error ?Result}
+    case Arguments of nil then
+      Error = false
+      Result = nil
     [] Argument|NextArguments then
-      Condition = {GetSpecificCondition Aggregate Argument $}
-      NextResult
+      Condition = {GetSpecificCondition Aggregate Argument NextArguments $}
     in
-      Result = Condition|NextResult
-      {GetConditions Aggregate NextArguments NextResult}
+      if Condition == none then
+        Error = true
+        Result = nil
+      else
+        NextResult
+        RealNextArguments
+      in
+        Result = Condition|NextResult
+
+        case Condition of id(_) then
+          RealNextArguments = NextArguments.2
+        [] kindId(_) then
+          RealNextArguments = NextArguments.2
+        [] generationId(_) then
+          RealNextArguments = NextArguments.2
+        [] priority(_) then
+          RealNextArguments = NextArguments.2
+        [] type(_) then
+          RealNextArguments = NextArguments.2
+        else
+          RealNextArguments = NextArguments
+        end
+
+        {GetConditions Aggregate RealNextArguments Error NextResult}
+      end
     end
   end
 
@@ -89,15 +187,18 @@ local
       case Argument of "help" then
         {DisplaySpecificAggregateOptions Aggregate}
       else
-        Conditions = {GetConditions Aggregate Arguments $}
+        Error
+        Conditions = {GetConditions Aggregate Arguments Error $}
       in
-        {Handle Type Aggregate Conditions}
+        if {Bool.'not' Error $} then
+          {Handle Type Aggregate Conditions}
+        end
       end
     end
   end
 
   % alarm passive/active variables waited/referenced/bound/needed <id0> .... <idN>
-  % alarm passive/active threads runnable/suspended/terminated/dead <id0> .... <idN>
+  % alarm passive/active threads runnable/preempted/terminated/dead <id0> .... <idN>
 
   proc {HandleType Type Arguments}
     case Arguments of nil then
@@ -115,27 +216,27 @@ local
     end
   end
 
-  proc {ListAlarms Alarms}
+  proc {ListAlarms Alarms AlarmId}
     proc {ConditionsToString Conditions Accumulated ?Result}
       case Conditions of nil then Result = Accumulated
       [] Condition|NextConditions then
         {ConditionsToString NextConditions Accumulated#" "#
-          {Atom.toString Condition $} Result}
+          {Boot_System.getRepr Condition ~1 ~1 $} Result}
       end
     end
   in
     case Alarms of nil then skip
     [] Alarm|NextAlarms then
+      {ListAlarms NextAlarms (AlarmId - 1)} % Not tail-recursive on purpose: displaying rules in reverse-order
+
       case Alarm of alarm(
         type: Type
         aggregate: Aggregate
         conditions: Conditions
       ) then
-        {PrintInfo "\t- "#Type#" "#Aggregate#
+        {PrintInfo "\t"#AlarmId#") "#Type#" "#Aggregate#
           {ConditionsToString Conditions "" $}}
       end
-
-      {ListAlarms NextAlarms}
     end
   end
 in
@@ -150,7 +251,7 @@ in
       {HandleType passive NextArguments}
     [] "list" then
       {PrintInfo "Alarms:"}
-      {ListAlarms Alarms}
+      {ListAlarms Alarms ({List.length Alarms $} - 1)}
     else
       {PrintUnexpectedOptionError Argument}
     end
