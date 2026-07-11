@@ -243,11 +243,11 @@ public:
   }
 
   /** Tells if the thread is preemptible */
+  inline
   bool isPreemptible() { return _preemptible; }
 
-  void setPreemptible(bool preemptible) {
-    _preemptible = preemptible;
-  }
+  inline
+  void setPreemptible(bool preemptible);
 
   /**
    * Resumes the thread
@@ -276,9 +276,7 @@ public:
   void suspendOnVar(VM vm, RichNode variable, bool skipUnschedule = true);
 
   inline
-  void preempt() {
-    _preempted = true;
-  }
+  void preempt();
 
   /**
    * Kills/Disposes the thread
@@ -442,6 +440,10 @@ public:
   /** Gets the end of the list */
   iterator end() {
     return iterator(nullptr);
+  }
+
+  size_t size() {
+    return length;
   }
 private:
   friend class Runnable;

@@ -108,7 +108,8 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
   _space->notifyThreadCreated();
 
   vm->aliveThreads.insert(this);
-  //vm->getIntrospection().signalThreadCreation(this);
+  vm->journal.announceRunnable(this,
+    VirtualMachineJournal::RunnableAnnounce::Inserted);
 }
 
 Runnable::Runnable(GR gr, Runnable& from) :
@@ -130,13 +131,10 @@ Runnable::Runnable(GR gr, Runnable& from) :
 
   if (!_dead) {
     vm->aliveThreads.insert(this);
-    //vm->getIntrospection().signalThreadCreation(this);
   }
 }
 
-Runnable::~Runnable() {
-  //vm->getIntrospection().signalThreadDeletion(this);
-}
+Runnable::~Runnable() {}
 
 void Runnable::setPriority(ThreadPriority priority) {
   if (priority != _priority) {
@@ -144,7 +142,17 @@ void Runnable::setPriority(ThreadPriority priority) {
 
     if (_runnable && vm->getCurrentThread() != this)
       vm->threadPool.reschedule(this);
+
+    vm->journal.announceRunnable(this,
+      VirtualMachineJournal::RunnableAnnounce::Updated);
   }
+}
+
+void Runnable::setPreemptible(bool preemptible) {
+  _preemptible = preemptible;
+
+  vm->journal.announceRunnable(this,
+    VirtualMachineJournal::RunnableAnnounce::Updated);
 }
 
 void Runnable::resume(bool skipSchedule) {
@@ -173,6 +181,9 @@ void Runnable::suspend(bool skipUnschedule) {
 
   if (!skipUnschedule)
     vm->getThreadPool().unschedule(this);
+
+  vm->journal.announceRunnable(this,
+    VirtualMachineJournal::RunnableAnnounce::Updated);
 }
 
 void Runnable::suspendOnVar(VM vm, RichNode variable, bool skipUnschedule) {
@@ -183,6 +194,13 @@ void Runnable::suspendOnVar(VM vm, RichNode variable, bool skipUnschedule) {
   suspend(skipUnschedule);
 
   DataflowVariable(variable).addToSuspendList(vm, _reification);
+}
+
+void Runnable::preempt() {
+  _preempted = true;
+
+  vm->journal.announceRunnable(this,
+    VirtualMachineJournal::RunnableAnnounce::Updated);
 }
 
 void Runnable::kill() {
@@ -234,6 +252,8 @@ void Runnable::dispose() {
   _dead = true;
 
   vm->aliveThreads.remove(this);
+  vm->journal.announceRunnable(this,
+    VirtualMachineJournal::RunnableAnnounce::Removed);
 }
 
 }
