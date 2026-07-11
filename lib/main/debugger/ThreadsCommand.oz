@@ -101,21 +101,24 @@ in
     case Argument of "help" then
       {DisplayOptions}
     [] "state" then
+      States = {Boot_Introspection.getAllThreadStates 0 100000 $}
+    in
+      {PrintInfo "===> "#{Int.toString {List.length States $} $}}
       {DisplayCSV
         ["Id" "KindId" "GenerationId" "Priority" "Type" "Runnable" "Terminated" "Dead" "Preempted" "Preemptible"]
-        {Boot_Introspection.getAllThreadStates 0 1000 $}
+        States
         12
         FormatThreadState}
     [] "statistics" then
       {DisplayCSV
         ["Id" "RunsCount" "ResumesCount" "SuspendsCount" "SuspendsOnVarCount" "OperationsCount" "BindsCount"]
-        {Boot_Introspection.getAllThreadStatistics 0 1000 $}
+        {Boot_Introspection.getAllThreadStatistics 0 100000 $}
         12
         FormatThreadStatistics}
     [] "nodes" then
       {DisplayCSV
         ["Id" "Variables" "Values" "Structures" "Tokens" "Stable" "Unstable" "X" "Y" "G" "K" "StackDepth" "Total"]
-        {Boot_Introspection.getAllThreadNodesCounts 0 1000 $}
+        {Boot_Introspection.getAllThreadNodesCounts 0 100000 $}
         12
         FormatThreadNodesCounts}
     else

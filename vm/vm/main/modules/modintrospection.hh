@@ -1189,7 +1189,7 @@ public:
       isNeeded = variable.isNeeded(vm);
     } else if (node.is<Variable>()) {
       Variable variable = Accessor<Variable>::get(node.value());
-      id = variable.getID();
+      id = variable.getId();
       isBound = variable.isBound(vm);
       isNeeded = variable.isNeeded(vm);
       buildVariablePendingsList(vm, pendingsList, variable.getPendings(vm));
@@ -1200,7 +1200,7 @@ public:
       isNeeded = variable.isNeeded(vm);
     } else if (node.is<ReadOnlyVariable>()) {
       ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-      id = variable.getID();
+      id = variable.getId();
       isBound = variable.isBound(vm);
       isNeeded = variable.isNeeded(vm);
       buildVariablePendingsList(vm, pendingsList, variable.getPendings(vm));

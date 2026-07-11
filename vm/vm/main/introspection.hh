@@ -448,10 +448,10 @@ void updateVariableCandidatesMap(Runnable* runnable, RichNode node,
   Introspection::VariableCandidatesMap& map) {
   if (node.is<Variable>()) {
     Variable variable = Accessor<Variable>::get(node.value());
-    updateVariableCandidatesMap(runnable, node, variable.getID(), map);
+    updateVariableCandidatesMap(runnable, node, variable.getId(), map);
   } if (node.is<ReadOnlyVariable>()) {
     ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-    updateVariableCandidatesMap(runnable, node, variable.getID(), map);
+    updateVariableCandidatesMap(runnable, node, variable.getId(), map);
   } else {
     assert(false);
   }
@@ -464,10 +464,10 @@ Introspection::VariableCandidates Introspection::getVariable(VM vm, size_t varia
     bool found = false;
     if (node.is<Variable>()) {
       Variable variable = Accessor<Variable>::get(node.value());
-      found = variable.getID() == variableId;
+      found = variable.getId() == variableId;
     } if (node.is<ReadOnlyVariable>()) {
       ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-      found = variable.getID() == variableId;
+      found = variable.getId() == variableId;
     } else {
       assert(false);
     }
