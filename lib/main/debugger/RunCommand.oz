@@ -149,6 +149,9 @@ in
       {HandleOperationByOperation NextArguments}
     [] "obo" then
       {HandleOperationByOperation NextArguments}
+    [] "untilAlarm" then
+      {Cell.assign ModeCell false}
+      {Boot_Thread.preempt This}
     else
       {PrintError "Unexpected run option '"#Argument#"'"#TRYHELP}
     end
