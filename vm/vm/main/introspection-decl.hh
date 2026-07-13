@@ -321,6 +321,24 @@ public:
 private:
   void doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
     size_t depth, size_t from, size_t to, RunnableAndNodeLambda lambda);
+
+  inline
+  void doForEachNode(VM vm, Runnable* runnable, RunnableAndNodeLambda lambda) {
+    size_t depth = getStackDepth(vm, runnable);
+    doForEachXNode(vm, runnable, 0,
+      getXNodesRegisterSize(vm, runnable), lambda);
+
+    for (size_t i = 0; i < depth; i++) {
+      doForEachYNode(vm, runnable, depth, 0,
+        getYNodesRegisterSize(vm, runnable, depth), lambda);
+      doForEachGNode(vm, runnable, depth, 0,
+        getGNodesRegisterSize(vm, runnable, depth), lambda);
+      doForEachKNode(vm, runnable, depth, 0,
+        getKNodesRegisterSize(vm, runnable, depth), lambda);
+    }
+  }
+
+  void doForEachNode(VM vm, RunnableAndNodeLambda lambda);
 public:
   inline
   void doForEachXNode(VM vm, Runnable* runnable, size_t from, size_t to,
@@ -456,6 +474,61 @@ public:
   VariableCandidatesMap getVariableCandidatesMap(VM vm, Runnable* runnable);
 
   VariableCandidatesMap getVariableCandidatesMap(VM vm);
+
+public:
+  /* ========== Structures ========== */
+
+  struct StructuresCounts {
+    size_t consCount = 0;
+    size_t tuplesCount = 0;
+    size_t aritiesCount = 0;
+    size_t recordsCount = 0;
+  };
+
+public:
+  StructuresCounts getStructuresCounts(VM vm);
+
+  StructuresCounts getStructuresCounts(VM vm, Runnable* runnable);
+
+  inline
+  size_t getConsCount(VM vm) {
+    return getStructuresCounts(vm).consCount;
+  }
+
+  inline
+  size_t getConsCount(VM vm, Runnable* runnable) {
+    return getStructuresCounts(vm, runnable).consCount;
+  }
+
+  inline
+  size_t getTuplesCount(VM vm) {
+    return getStructuresCounts(vm).tuplesCount;
+  }
+
+  inline
+  size_t getTuplesCount(VM vm, Runnable* runnable) {
+    return getStructuresCounts(vm, runnable).tuplesCount;
+  }
+
+  inline
+  size_t getAritiesCount(VM vm) {
+    return getStructuresCounts(vm).aritiesCount;
+  }
+
+  inline
+  size_t getAritiesCount(VM vm, Runnable* runnable) {
+    return getStructuresCounts(vm, runnable).aritiesCount;
+  }
+
+  inline
+  size_t getRecordsCount(VM vm) {
+    return getStructuresCounts(vm).recordsCount;
+  }
+
+  inline
+  size_t getRecordsCount(VM vm, Runnable* runnable) {
+    return getStructuresCounts(vm, runnable).recordsCount;
+  }
 };
 
 }

@@ -1283,6 +1283,8 @@ public:
       result = buildVariableRecordsList(vm, map);
     }
   };
+
+  /* ========== Structures ========== */
 };
 
 }
