@@ -214,14 +214,7 @@ public:
    * Runs the thread
    */
   inline
-  size_t run(size_t maxInstructionsNumber = SIZE_MAX) {
-    _statistics.runsCount++;
-    _statistics.resumesCount++;
-
-    _preempted = false;
-
-    return doRun(maxInstructionsNumber);
-  }
+  size_t run(size_t maxInstructionsNumber = SIZE_MAX);
 
   virtual size_t doRun(size_t maxInstructionsNumber) = 0;
 

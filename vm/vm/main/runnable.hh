@@ -136,6 +136,18 @@ Runnable::Runnable(GR gr, Runnable& from) :
 
 Runnable::~Runnable() {}
 
+size_t Runnable::run(size_t maxInstructionsNumber) {
+  _statistics.runsCount++;
+  _statistics.resumesCount++;
+
+  _preempted = false;
+
+  vm->journal.announceRunnable(this,
+    VirtualMachineJournal::RunnableAnnounce::Updated);
+
+  return doRun(maxInstructionsNumber);
+}
+
 void Runnable::setPriority(ThreadPriority priority) {
   if (priority != _priority) {
     _priority = priority;
@@ -167,6 +179,9 @@ void Runnable::resume(bool skipSchedule) {
 
   if (!skipSchedule)
     vm->getThreadPool().schedule(this);
+
+  vm->journal.announceRunnable(this,
+    VirtualMachineJournal::RunnableAnnounce::Updated);
 }
 
 void Runnable::suspend(bool skipUnschedule) {
