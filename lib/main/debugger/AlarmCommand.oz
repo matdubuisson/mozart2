@@ -1,32 +1,90 @@
 local
-  proc {DisplayOptions}
-    {PrintInfo "active"}
-    {PrintInfo "passive"}
+  proc {DisplayMainOptions}
+    {DisplayOptions
+      ["active" "passive"]
+      [
+        "when raised this alarm triggers a warning message and immediately stops the current program execution giving"
+        "when raised this alarm triggers only a warning message"
+      ]
+    }
   end
 
   proc {DisplayAggregateOptions}
-    {PrintInfo "threads"}
-    {PrintInfo "variables"}
+    {DisplayOptions
+      ["threads" "variables"]
+      [
+        "create an alarm about thread events"
+        "create an alarm about variable events"
+      ]
+    }
   end
 
   proc {DisplayThreadsAggregateOptions}
-    {PrintInfo "inserted"}
-    {PrintInfo "removed"}
-    {PrintInfo "updated"}
-    {PrintInfo "collected"}
+    {DisplayOptions
+      [
+        "inserted"
+        "removed"
+        "updated"
+        "collected"
+        
+        "id <int>"
+        "kindId <int>"
+        "generationId <int>"
 
-    {PrintInfo "runnable"}
-    {PrintInfo "preempted"}
-    {PrintInfo "preemptible"}
-    {PrintInfo "terminated"}
-    {PrintInfo "dead"}
+        "priority <low|medium|high|system>"
+        "type <runnable|thread>"
+
+        "runnable"
+        "preempted"
+        "preemptible"
+        "terminated"
+        "dead"
+      ]
+      [
+        "detects a new inserted thread"
+        "detects a removed thread from the alive threads list"
+        "detects a thread changing its state (runnable, preempted, preemptible, terminated, dead, priority)"
+        "detects a garbage collected thread"
+
+        "filters the signaled thread with the provided id"
+        "filters the signaled thread with the provided kindId"
+        "filters the signaled thread with the provided generationId"
+
+        "filters the signaled thread with the provided priority"
+        "filters the signaled thread with the provided type"
+
+        "selects runnable threads"
+        "selects preempted threads"
+        "selects preemptible threads"
+        "selects terminated threads"
+        "selects dead threads"
+      ]
+    }
   end
 
   proc {DisplayVariablesAggregateOptions}
-    {PrintInfo "referenced"}
-    {PrintInfo "waited"}
-    {PrintInfo "bound"}
-    {PrintInfo "needed"}
+    {DisplayOptions
+      [
+        "created"
+        "needed"
+        "bound"
+        "collected"
+        "waited"
+
+        "id <int>"
+        "type <runnable|thread>"
+      ]
+      [
+        "detects a new created variable"
+        "detects a variable becoming needed"
+        "detects a variable becoming bound"
+        "detects a garbage collected variable"
+        "detects a new wait on the variable and provides the waiter in question"
+
+        "filters the signaled variable with the provided id"
+        "filters the signaled variable with the provided type"
+      ]
+    }
   end
 
   proc {DisplaySpecificAggregateOptions Aggregate}
@@ -241,10 +299,10 @@ local
   end
 in
   case Arguments of nil then
-    {DisplayOptions}
+    {DisplayMainOptions}
   [] Argument|NextArguments then
     case Argument of "help" then
-      {DisplayOptions}
+      {DisplayMainOptions}
     [] "active" then
       {HandleType active NextArguments}
     [] "passive" then

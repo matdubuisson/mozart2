@@ -103,7 +103,6 @@ in
     [] "state" then
       States = {Boot_Introspection.getAllThreadStates 0 100000 $}
     in
-      {PrintInfo "===> "#{Int.toString {List.length States $} $}}
       {DisplayCSV
         ["Id" "KindId" "GenerationId" "Priority" "Type" "Runnable" "Terminated" "Dead" "Preempted" "Preemptible"]
         States

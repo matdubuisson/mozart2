@@ -1,6 +1,16 @@
 local
   TAB = "\t"
 in
+  proc {DisplayOptions Names Descriptions}
+    case Names#Descriptions of nil#nil then skip
+    [] (Name|NextNames)#(Description|NextDescriptions) then
+      {PrintOtherPrefix "OPTION"}
+      {PrintExactly Name 20}
+      {PrintLn " "#Description}
+      {DisplayOptions NextNames NextDescriptions}
+    end
+  end
+
   proc {IdsToString Ids ?String}
     proc {Aux Ids AccumulatedString ?String}
       case Ids of nil then String = AccumulatedString

@@ -166,13 +166,13 @@ define
     AlarmRaised
     NewState
   in
-    if {Boot_Scheduler.isGCReady $} then
-      {PrintWarning "Garbage collector is about to run"}
-    end
+    % if {Boot_Scheduler.isGCReady $} then
+    %   {PrintWarning "Garbage collector is about to run"}
+    % end
 
-    if {Boot_Scheduler.isGCDone $} then
-      {PrintWarning "Garbage collector just ran"}
-    end
+    % if {Boot_Scheduler.isGCDone $} then
+    %   {PrintWarning "Garbage collector just ran"}
+    % end
 
     {UpdateState State AlarmsCell Alarms AlarmRaised NewState}
 

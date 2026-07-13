@@ -71,6 +71,8 @@ in
         elseif {Int.is Head $} then String = {Int.toString Head $}
         elseif {Float.is Head $} then String = {Float.toString Head $}
         elseif {Atom.is Head $} then String = {Atom.toString Head $}
+        elseif {Record.is Head $} then
+          String = {Boot_System.getRepr Head ~1 ~1 $}
         else String = Head end
 
         {Print String}
