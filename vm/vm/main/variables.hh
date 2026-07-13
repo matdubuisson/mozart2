@@ -38,7 +38,10 @@ namespace mozart {
 template <class This>
 VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
   WithHome(vm, gr, from),
-  _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {
+  _id(from._id), _kindId(0), _generationId(0) {
+
+  _needed = from._needed;
+  _bound = from._bound;
 
   /**
    * Basically pendings is a VMAllocatedList<StableNode*>
@@ -50,9 +53,6 @@ VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
     pendings.push_back(vm, *iter);
     gr->copyStableRef(pendings.back(), pendings.back());
   }
-
-  _needed = from._needed;
-  _bound = from._bound;
 }
 
 template <class This>
