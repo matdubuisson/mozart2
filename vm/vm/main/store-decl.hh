@@ -60,8 +60,10 @@ private:
   template <class T>
   friend class TypeInfoOf;
 
+  static size_t _everCreatedNodesCount;
+
   /** Declares a new node */
-  Node() {}
+  Node() : _id(_everCreatedNodesCount++) {}
 
   /**
    * Initiates the node based on some referenced arguments
@@ -82,6 +84,10 @@ public:
 
   MemWord value() {
     return data.value;
+  }
+
+  size_t getId() {
+    return _id;
   }
 
 private:
@@ -136,6 +142,8 @@ private:
       Node* grFrom;
     };
   };
+
+  size_t _id;
 };
 
 struct NodeBackup {
@@ -284,6 +292,13 @@ public:
   __attribute__((always_inline))
   MemWord value() {
     return node()->value();
+  }
+
+  __attribute__((always_inline))
+  size_t getId() {
+    if (node() == nullptr)
+      return SIZE_MAX;
+    else return node()->getId();
   }
 
   /** @returns If type of the referenced node is transient */
@@ -470,6 +485,7 @@ private:
 private:
   friend class StableNode;
   friend class UnstableNode;
+  friend class Introspection;
 
   /** @returns The pointer of the pointed node */
   __attribute__((always_inline))
