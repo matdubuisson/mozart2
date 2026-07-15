@@ -143,6 +143,10 @@ private:
   template<typename V>
   using VariablesVector = VirtualMachineJournal::VariablesVector<V>;
   template<typename V>
+  using BoundVariable = VirtualMachineJournal::BoundVariable<V>;
+  template<typename V>
+  using BoundVariablesVector = VirtualMachineJournal::BoundVariablesVector<V>;
+  template<typename V>
   using WaitedVariable = VirtualMachineJournal::WaitedVariable<V>;
   template<typename V>
   using WaitedVariablesVector = VirtualMachineJournal::WaitedVariablesVector<V>;
@@ -154,6 +158,89 @@ private:
   // using VariableToRecordLambda = std::function<UnstableNode(VM, V*)>;
   // template<typename V>
   // using WaitedVariableToRecordLambda = std::function<UnstableNode(VM, WaitedVariable<V>*)>;
+
+  template<typename V>
+  static inline
+  void fillInfo(VM vm, V* variable, size_t& id, std::string& type, bool& isNeeded, bool& isBound, bool& isWaited) {
+    if constexpr (std::is_same_v<V, OptVar>) {
+      OptVar* v = static_cast<OptVar*>(variable);
+      id = v->getId();
+      type = "optVariable";
+      isNeeded = isBound = isWaited = false;
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      Variable* v = static_cast<Variable*>(variable);
+      id = v->getId();
+      type = "variable";
+      isNeeded = v->isNeeded(vm);
+      isBound = v->isBound(vm);
+      isWaited = v->isWaited(vm);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      ReadOnlyVariable* v = static_cast<ReadOnlyVariable*>(variable);
+      id = v->getId();
+      type = "readOnlyVariable";
+      isNeeded = v->isNeeded(vm);
+      isBound = v->isBound(vm);
+      isWaited = v->isWaited(vm);
+    } else assert(false);
+  }
+
+  template<typename V>
+  static inline
+  UnstableNode buildVariableStateRecord(VM vm, V* variable) {
+    assert(variable != nullptr);
+
+    size_t id;
+    std::string type;
+    bool isNeeded, isBound, isWaited;
+    fillInfo<V>(vm, variable, id, type, isNeeded, isBound, isWaited);
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "variable",
+        "id",
+        "isBound",
+        "isNeeded",
+        "isWaited",
+        "type"
+      ),
+      build(vm, id),
+      build(vm, isBound),
+      build(vm, isNeeded),
+      build(vm, isWaited),
+      build(vm, type.c_str())
+    );
+  }
+
+  template<typename V>
+  static inline
+  UnstableNode buildVariableStateRecord(VM vm, V* variable, RichNode self, RichNode src) {
+    assert(variable != nullptr);
+
+    size_t id;
+    std::string type;
+    bool isNeeded, isBound, isWaited;
+    fillInfo<V>(vm, variable, id, type, isNeeded, isBound, isWaited);
+
+    return buildRecord(vm,
+      buildArity(vm,
+        "variable",
+        "destinationNodeId",
+        "id",
+        "isBound",
+        "isNeeded",
+        "isWaited",
+        "sourceNodeId",
+        "type"
+      ),
+      build(vm, SIZE_MAX),
+      build(vm, id),
+      build(vm, isBound),
+      build(vm, isNeeded),
+      build(vm, isWaited),
+      build(vm, src.getId()),
+      build(vm, type.c_str())
+    );
+  }
 
   static inline
   UnstableNode buildWaiterStateRecord(VM vm, RichNode waiter) {
@@ -176,35 +263,16 @@ private:
     }
   }
 
+
   template<typename V>
   static inline
-  UnstableNode buildVariableStateRecord(VM vm, V* variable, RichNode waiter = RichNode(nullptr)) {
+  UnstableNode buildVariableStateRecord(VM vm, V* variable, RichNode waiter) {
     assert(variable != nullptr);
 
     size_t id;
     std::string type;
     bool isNeeded, isBound, isWaited;
-
-    if constexpr (std::is_same_v<V, OptVar>) {
-      OptVar* v = static_cast<OptVar*>(variable);
-      id = v->getId();
-      type = "optVariable";
-      isNeeded = isBound = isWaited = false;
-    } else if constexpr (std::is_same_v<V, Variable>) {
-      Variable* v = static_cast<Variable*>(variable);
-      id = v->getId();
-      type = "variable";
-      isNeeded = v->isNeeded(vm);
-      isBound = v->isBound(vm);
-      isWaited = v->isWaited(vm);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      ReadOnlyVariable* v = static_cast<ReadOnlyVariable*>(variable);
-      id = v->getId();
-      type = "readOnlyVariable";
-      isNeeded = v->isNeeded(vm);
-      isBound = v->isBound(vm);
-      isWaited = v->isWaited(vm);
-    } else assert(false);
+    fillInfo<V>(vm, variable, id, type, isNeeded, isBound, isWaited);
 
     return buildRecord(vm,
       buildArity(vm,
@@ -234,6 +302,21 @@ private:
     for (auto iter = variables.begin(); iter != variables.end(); ++iter) {
       V* variable = static_cast<V*>(*iter);
       builder.push_back(vm, buildVariableStateRecord(vm, variable));
+    }
+
+    return builder.get(vm);
+  }
+
+  template<typename V>
+  static inline
+  UnstableNode buildBoundVariablesList(VM vm,
+    BoundVariablesVector<V>& variables) {
+    OzListBuilder builder(vm);
+
+    for (auto iter = variables.begin(); iter != variables.end(); ++iter) {
+      BoundVariable<V> boundVariable = static_cast<BoundVariable<V>>(*iter);
+      builder.push_back(vm, buildVariableStateRecord(vm,
+        boundVariable.variable, boundVariable.self, boundVariable.src));
     }
 
     return builder.get(vm);
@@ -275,7 +358,7 @@ private:
         "needed",
         "waited"
       ),
-      buildVariablesList(vm, journal.getVariables<V>(VariableAnnounce::Bound)),
+      buildBoundVariablesList(vm, journal.getBoundVariables<V>()),
       buildVariablesList(vm, journal.getVariables<V>(VariableAnnounce::Collected)),
       buildVariablesList(vm, journal.getVariables<V>(VariableAnnounce::Created)),
       buildVariablesList(vm, journal.getVariables<V>(VariableAnnounce::Needed)),
