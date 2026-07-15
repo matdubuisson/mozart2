@@ -206,16 +206,22 @@ in
       end
     end
 
-    proc {DisplayRows Rows}
+    proc {DisplayRows Index Rows}
       case Rows of nil then skip
       [] Row|NextRows then
+        {PrintExactly {Int.toString Index $} Width}
+        {Print " "}
+
         {DisplayRow {Format Row $} Masks}
-        {DisplayRows NextRows}
+        {DisplayRows (Index + 1) NextRows}
       end
     end
   in
+    {PrintExactly "Index" Width}
+    {Print " "}
+
     {DisplayRow Labels none}
-    {DisplayRows Rows}
+    {DisplayRows 0 Rows}
   end
 
   proc {DisplayCSV Labels Rows Width Format}

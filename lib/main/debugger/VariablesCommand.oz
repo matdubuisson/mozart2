@@ -145,7 +145,7 @@ local
     end
   in
     if Arguments == nil then
-      Variables = {Boot_Introspection.getVariables $}
+      Variables = {Boot_Introspection.getAllVariables 0 ~1 $}
     in
       {HandleCase Aggregate Variables}
     else

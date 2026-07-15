@@ -555,7 +555,7 @@ public:
   // Nodes counters
 
   static inline
-  UnstableNode buildNodesCountsRecord(VM vm, NodesCounts& properties) {
+  UnstableNode buildNodesCountsRecord(VM vm, Introspection::NodesCounts& properties) {
     return buildRecord(vm,
       buildArity(vm,
         "nodes",
@@ -1038,12 +1038,16 @@ public:
     Introspection& introspection = vm->getIntrospection();
 
     assert(from < to);
-    assert(to < introspection.getXNodesRegisterSize(vm, runnable));
+    // assert(to < introspection.getXNodesRegisterSize(vm, runnable));
 
     OzListBuilder builder(vm);
-    introspection.doForEachXNode(vm, runnable, from, to, [vm, &builder](Runnable* runnable, RichNode node) {
-      builder.push_back(vm, buildNodeRecord(vm, node));
-    });
+    introspection.doForEachXNode(vm, runnable, from, to,
+      Introspection::allRunnables,
+      Introspection::allNodes,
+      [vm, &builder](Runnable* runnable, RichNode node) {
+        builder.push_back(vm, buildNodeRecord(vm, node));
+      }
+    );
     return builder.get(vm);
   }
 
@@ -1063,22 +1067,34 @@ public:
 
     switch (nodesRegister) {
       case NodesRegister::yRegister: {
-        assert(to < introspection.getYNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachYNode(vm, runnable, depth, from, to, [vm, &builder](Runnable* runnable, RichNode node) {
-          builder.push_back(vm, buildNodeRecord(vm, node));
-        });
+        // assert(to < introspection.getYNodesRegisterSize(vm, runnable, depth));
+        introspection.doForEachYNode(vm, runnable, depth, from, to,
+          Introspection::allRunnables,
+          Introspection::allNodes,
+          [vm, &builder](Runnable* runnable, RichNode node) {
+            builder.push_back(vm, buildNodeRecord(vm, node));
+          }
+        );
         break;
       } case NodesRegister::gRegister: {
-        assert(to < introspection.getGNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachGNode(vm, runnable, depth, from, to, [vm, &builder](Runnable* runnable, RichNode node) {
-          builder.push_back(vm, buildNodeRecord(vm, node));
-        });
+        // assert(to < introspection.getGNodesRegisterSize(vm, runnable, depth));
+        introspection.doForEachGNode(vm, runnable, depth, from, to,
+          Introspection::allRunnables,
+          Introspection::allNodes,
+          [vm, &builder](Runnable* runnable, RichNode node) {
+            builder.push_back(vm, buildNodeRecord(vm, node));
+          }
+        );
         break;
       } case NodesRegister::kRegister: {
-        assert(to < introspection.getKNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachKNode(vm, runnable, depth, from, to, [vm, &builder](Runnable* runnable, RichNode node) {
-          builder.push_back(vm, buildNodeRecord(vm, node));
-        });
+        // assert(to < introspection.getKNodesRegisterSize(vm, runnable, depth));
+        introspection.doForEachKNode(vm, runnable, depth, from, to,
+          Introspection::allRunnables,
+          Introspection::allNodes,
+          [vm, &builder](Runnable* runnable, RichNode node) {
+            builder.push_back(vm, buildNodeRecord(vm, node));
+          }
+        );
         break;
       } default: assert(false);
     }
@@ -1274,11 +1290,13 @@ public:
     }
   };
 
-  class GetVariables: public Builtin<GetVariables> {
+  class GetAllVariables: public Builtin<GetAllVariables> {
   public:
-    GetVariables(): Builtin("getVariables") {}
+    GetAllVariables(): Builtin("getAllVariables") {}
 
-    static void call(VM vm, Out result) {
+    static void call(VM vm, In fromNode, In toNode, Out result) {
+      size_t from = getArgument<size_t>(vm, fromNode);
+      size_t to = getArgument<size_t>(vm, toNode);
       Introspection::VariableCandidatesMap map = vm->getIntrospection().getVariableCandidatesMap(vm);
       result = buildVariableRecordsList(vm, map);
     }

@@ -34,3 +34,31 @@ proc {ExtractInputs Type Arguments DefaultValue ?Result}
     {ExtractInputs Type NextArguments DefaultValue NextResult}
   end
 end
+
+proc {ExtractFromTo Arguments DefaultFrom DefaultTo ?From ?To}
+  case Arguments of nil then
+    From = DefaultFrom
+    To = DefaultTo
+  [] Argument|NextArguments then
+    F = {ExtractInput int Argument none $}
+  in
+    if F == none then
+      From = DefaultFrom
+      {PrintError "Invalid 'from' index '"#Argument#"', it must be an integer"}
+    else
+      From = F
+    end
+
+    case NextArguments of nil then To = DefaultTo
+    [] NextArgument|_ then
+      T = {ExtractInput int NextArgument none $}
+    in
+      if T == none then
+        To = DefaultTo
+        {PrintError "Invalid 'to' index '"#NextArgument#"', it must be an integer"}
+      else
+        To = T
+      end
+    end
+  end
+end
