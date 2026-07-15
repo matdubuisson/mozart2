@@ -106,7 +106,7 @@ local
           isNeeded: IsNeeded
           isWaited: IsWaited
 
-          waiter: _
+          ...
         ) then
           case Condition of created then {ContinueOrReturn (Announce == created)}
           [] needed then {ContinueOrReturn (Announce == needed)}
@@ -129,17 +129,11 @@ local
       proc {GetWaiterString Waiter ?Result}
         case Waiter of state(
           id: Id
-          kindId: _
-          generationId: _
 
           priority: Priority
           type: Type
 
-          runnable: _
-          terminated: _
-          dead: _
-          preempted: _
-          preemptible: _
+          ...
         ) then
           Result = "thread "#
             {Int.toString Id $}#
@@ -151,12 +145,7 @@ local
         [] variable(
           id: Id
           type: Type
-
-          isBound: _
-          isNeeded: _
-          isWaited: _
-
-          waiter: _
+          ...
         ) then
           Result = VariableType#" "#
             {Int.toString Id $}#" ("#
@@ -173,17 +162,38 @@ local
         isBound: IsBound
         isNeeded: IsNeeded
         isWaited: IsWaited
+      ) then
+        {PrintAlarm Alarm AlarmId Announce VariableType#" "#{Int.toString Id $}}
+      [] variable(
+        id: Id
+        type: Type
+
+        isBound: IsBound
+        isNeeded: IsNeeded
+        isWaited: IsWaited
 
         waiter: Waiter
       ) then
-        if Waiter == none then
-          {PrintAlarm Alarm AlarmId Announce VariableType#" "#{Int.toString Id $}}
-        else
-          String = VariableType#" "#{Int.toString Id $}#
-            " waited by "#{GetWaiterString Waiter $}
-        in
-          {PrintAlarm Alarm AlarmId Announce String}
-        end
+        String = VariableType#" "#{Int.toString Id $}#
+          " waited by "#{GetWaiterString Waiter $}
+      in
+        {PrintAlarm Alarm AlarmId Announce String}
+      [] variable(
+        id: Id
+        type: Type
+
+        isBound: IsBound
+        isNeeded: IsNeeded
+        isWaited: IsWaited
+
+        destinationNodeId: _
+        sourceNodeId: SourceNodeId
+      ) then
+        String = VariableType#" "#{Int.toString Id $}#
+          " bound from node "#{Int.toString SourceNodeId $}%#
+          %" to node "#{Int.toString DestinationNodeId $}
+      in
+        {PrintAlarm Alarm AlarmId Announce String}
       end
     end
 

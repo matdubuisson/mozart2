@@ -25,6 +25,7 @@
 
 functor
 
+
 import
   Boot        at 'x-oz://boot/Boot'
 define
@@ -44,6 +45,8 @@ define
   \insert Displaying
   
   \insert Interface
+
+  \insert Format
 
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
@@ -151,6 +154,8 @@ define
           {Boot_Scheduler.reset}
         [] "alarm" then
           \insert AlarmCommand
+        [] "nodes" then
+          \insert NodesCommand
         else
           {PrintError "Unknown command '"#Command#"'"#TRYHELP}
         end
@@ -158,7 +163,7 @@ define
     end
   end
 
-  proc {Loop State AlarmsCell}
+  proc {Loop State AlarmsCell WatchCell}
     Alarms = {Cell.access AlarmsCell $}
     IsNormalExecutionMode = ({Boot_Scheduler.getExecutionMode $} == normal)
     IsActiveMode = {Cell.access ModeCell $}
@@ -183,8 +188,9 @@ define
       {Boot_Thread.preempt This}
     end
 
-    {Loop NewState AlarmsCell}
+    {Loop NewState AlarmsCell WatchCell}
   end
 in
-  {Loop state() {Cell.new nil $}}
+  
+  {Loop state() {Cell.new nil $} {Cell.new nil $}}
 end
