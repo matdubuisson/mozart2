@@ -1138,6 +1138,54 @@ public:
     }
   };
 
+  class GetNodes: public Builtin<GetNodes> {
+  public:
+    GetNodes(): Builtin("getNodes") {}
+
+    static void call(VM vm, In nodeFamily, In fromNode, In toNode, Out result) {
+      using namespace patternmatching;
+
+      Introspection& introspection = vm->getIntrospection();
+      Introspection::NodeBoolLambda filter;
+      if (matches(vm, nodeFamily, "variable")) {
+        filter = [vm, &introspection](RichNode node) {
+          return introspection.isVariableNode(vm, node);
+        };
+      } else if (matches(vm, nodeFamily, "token")) {
+        filter = [vm, &introspection](RichNode node) {
+          return introspection.isTokenNode(vm, node);
+        };
+      } else if (matches(vm, nodeFamily, "structural")) {
+        filter = [vm, &introspection](RichNode node) {
+          return introspection.isStructuralNode(vm, node);
+        };
+      } else if (matches(vm, nodeFamily, "value")) {
+        filter = [vm, &introspection](RichNode node) {
+          return introspection.isValueNode(vm, node);
+        };
+      } else {
+        filter = Introspection::allNodes;
+      }
+
+      size_t from = getArgument<size_t>(vm, fromNode);
+      size_t to = getArgument<size_t>(vm, toNode);
+      size_t i = 0;
+
+      OzListBuilder builder(vm);
+      vm->getIntrospection().doForEachNode(vm,
+        Introspection::allRunnables,
+        filter,
+        [vm, &builder, from, to, &i](Runnable* _, RichNode node) {
+          if (i >= from && i < to) // TODO Ugly make it better
+            builder.push_back(vm, buildNodeRecord(vm, node));
+          i++;
+        }
+      );
+
+      result = builder.get(vm);
+    }
+  };
+
   /* ========== Variables stats ========== */
 
   // Variables counters
