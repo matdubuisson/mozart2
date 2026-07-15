@@ -33,8 +33,6 @@
 
 namespace mozart {
 
-typedef RunnableList::iterator iterator;
-
 inline
 std::string Introspection::OperationArgument::toRepr(VM vm, RichNode value) {
   auto& config = vm->getPropertyRegistry().config;
@@ -60,169 +58,55 @@ Runnable* Introspection::getNextScheduledThread(VM vm, bool includeSystemThreads
   return vm->getThreadPool().getNext(includeSystemThreads);
 }
 
-/* ========== Threads state ========== */
-
-inline
-RunnableList& Introspection::getThreads(VM vm) {
-  return vm->aliveThreads;
-}
+/* ========== Threads getters ========== */
 
 inline
 Runnable* Introspection::getThread(VM vm, size_t id) {
+  using iterator = RunnableList::iterator;
+
   RunnableList& list = vm->aliveThreads;
-  for (iterator iter = list.begin(); iter != list.end(); iter++) {
-    Runnable *runnable = *iter;
+  for (iterator iter = list.begin(); iter != list.end(); ++iter) {
+    Runnable* runnable = *iter;
     if (runnable->getId() == id)
       return runnable;
   }
   return nullptr;
 }
 
-/* ========== Threads stats ========== */
-
 inline
-size_t getThreadsAggregate(RunnableList& threads, std::function<bool(Runnable*)> condition) {
-  size_t count = 0;
-
-  for (iterator iter = threads.begin(); iter != threads.end(); iter++) {
-    Runnable *thread = *iter;
-    if (condition(thread))
-      count++;
-  }
-
-  return count;
+RunnableList& Introspection::getThreads(VM vm) {
+  return vm->aliveThreads;
 }
 
+/* ========== Threads executers ========== */
+
 inline
-size_t Introspection::getActiveThreadsCount(VM vm) {
-  return getThreadsAggregate(vm->aliveThreads, [](Runnable* thread) {
-    return thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
+void Introspection::doForEachThread(VM vm, Introspection::RunnableLambda parse) {
+  using iterator = RunnableList::iterator;
+
+  RunnableList& list = getThreads(vm);
+  for (iterator iter = list.begin(); iter != list.end(); ++iter) {
+    Runnable* runnable = *iter;
+    parse(runnable);
+  }
+}
+
+/* ========== Threads counters ========== */
+
+inline
+Introspection::ThreadsCounts Introspection::getThreadsCounts(VM vm) {
+  ThreadsCounts counts;
+  doForEachThread(vm, [vm, &counts](Runnable* runnable) {
+    if (runnable->isRunnable() && !runnable->isTerminated() && !runnable->isDead())
+      counts.activeThreadsCount++;
+    else
+      counts.passiveThreadsCount++;
+    counts.threadsCount++;
   });
+  return counts;
 }
 
-inline
-size_t Introspection::getPassiveThreadsCount(VM vm) {
-  return getThreadsAggregate(vm->aliveThreads, [](Runnable* thread) {
-    return !thread->isRunnable() && !thread->isDead() && !thread->isTerminated();
-  });
-}
-
-inline
-size_t Introspection::getThreadsCount(VM vm) {
-  return getThreadsAggregate(vm->aliveThreads, [](Runnable* thread) {
-    return !thread->isDead() && !thread->isTerminated();
-  });
-}
-
-/* ========== Nodes stats ========== */
-
-inline
-Type Introspection::getNodeType(VM vm, Node* node) {
-  assert(node != nullptr);
-  return node->data.type;
-}
-
-inline
-MemWord Introspection::getNodeValue(VM vm, Node* node) {
-  assert(node != nullptr);
-  return node->data.value;
-}
-
-inline
-void forEachThread(RunnableList& threads,
-  std::function<void(Runnable*)> lambda) {
-
-  for (iterator iter = threads.begin(); iter != threads.end(); iter++) {
-    Runnable *thread = *iter;
-    lambda(thread);
-  }
-}
-
-inline
-void parseStaticArray(StaticArray<UnstableNode>& array,
-  std::function<void(UnstableNode& unstableNode)> lambda) {
-  for (size_t i = 0; i < array.size(); i++) {
-    lambda(array[i]);
-  }
-}
-
-typedef Introspection::NodesCounts NodesCounts;
-
-inline
-void updateNodesCountsFromNode(VM vm, NodesCounts& properties,
-  Node* node) {
-  switch (node->type()->getStructuralBehavior()) {
-    case sbVariable: properties.variableNodesCount++; return;
-    case sbValue: properties.valueNodesCount++; return;
-    case sbStructural: properties.structuralNodesCount++; return;
-    case sbTokenEq: properties.tokenNodesCount++; return;
-    default: assert(false);
-  }
-}
-
-template<class T>
-inline
-void updateNodesCountsFromNodes(VM vm, NodesCounts& properties,
-  StaticArray<T> array) {
-  properties.nodesCount += array.size();
-
-  for (typename StaticArray<T>::iterator iter = array.begin();
-    iter != array.end(); iter++) {
-    T* node = static_cast<T*>(*iter);
-    updateNodesCountsFromNode(vm, properties, node);
-  }
-}
-
-inline
-void updateNodesCountsFromStaticArray(VM vm, NodesCounts& properties,
-  StaticArray<StableNode> array) {
-  properties.stableNodesCount += array.size();
-  updateNodesCountsFromNodes<StableNode>(vm, properties, array);
-}
-
-inline
-void updateNodesCountsFromStaticArray(VM vm, NodesCounts& properties,
-  StaticArray<UnstableNode> array) {
-  properties.unstableNodesCount += array.size();
-  updateNodesCountsFromNodes<UnstableNode>(vm, properties, array);
-}
-
-inline
-void Introspection::getNodesCounts(VM vm, Runnable* runnable, NodesCounts& properties) {
-  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-    StaticArray<UnstableNode>& xregs = thread->xregs._array;
-    properties.xNodesCount += xregs.size();
-    updateNodesCountsFromStaticArray(vm, properties, xregs);
-
-    ThreadStack& stack = thread->stack;
-    for (ThreadStack::iterator entry = stack.begin();
-      entry != stack.end(); entry++) {
-      properties.stackDepth++;
-
-      StaticArray<UnstableNode>& yregs = entry->yregs;
-      StaticArray<StableNode>& gregs = entry->gregs;
-      StaticArray<StableNode>& kregs = entry->kregs;
-
-      properties.yNodesCount += yregs.size();
-      properties.gNodesCount += gregs.size();
-      properties.kNodesCount += kregs.size();
-
-      updateNodesCountsFromStaticArray(vm, properties, yregs);
-      updateNodesCountsFromStaticArray(vm, properties, gregs);
-      updateNodesCountsFromStaticArray(vm, properties, kregs);
-    }
-  }
-}
-
-inline
-NodesCounts Introspection::getNodesCounts(VM vm) {
-  NodesCounts properties;
-  forEachThread(vm->aliveThreads, [this, vm, &properties](Runnable* runnable) {
-    if (!runnable->isDead() && !runnable->isTerminated())
-      getNodesCounts(vm, runnable, properties);
-  });
-  return properties;
-}
+/* ========== Registers stats ========== */
 
 inline
 size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
@@ -248,12 +132,130 @@ size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
   }
 }
 
+/* ========== Nodes properties ========== */
+
+inline
+Type Introspection::getNodeType(VM vm, Node* node) {
+  assert(node != nullptr);
+  return node->data.type;
+}
+
+inline
+MemWord Introspection::getNodeValue(VM vm, Node* node) {
+  assert(node != nullptr);
+  return node->data.value;
+}
+
+inline
+bool Introspection::isVariableNode(VM vm, RichNode node) {
+  if (node.type().info() == nullptr) return false;
+  else return node.type()->getStructuralBehavior() == sbVariable;
+}
+
+inline
+bool Introspection::isStructuralNode(VM vm, RichNode node) {
+  if (node.type().info() == nullptr) return false;
+  else return node.type()->getStructuralBehavior() == sbStructural;
+}
+
+inline
+bool Introspection::isValueNode(VM vm, RichNode node) {
+  if (node.type().info() == nullptr) return false;
+  else return node.type()->getStructuralBehavior() == sbValue;
+}
+
+inline
+bool Introspection::isTokenNode(VM vm, RichNode node) {
+  if (node.type().info() == nullptr) return false;
+  else return node.type()->getStructuralBehavior() == sbTokenEq;
+}
+
+/* ========== Nodes counters ========== */
+
+inline
+void parseStaticArray(StaticArray<UnstableNode>& array,
+  std::function<void(UnstableNode& unstableNode)> lambda) {
+  for (size_t i = 0; i < array.size(); i++) {
+    lambda(array[i]);
+  }
+}
+
+inline
+void updateNodesCountsFromNode(VM vm, Introspection::NodesCounts& counts,
+  Node* node) {
+  switch (node->type()->getStructuralBehavior()) {
+    case sbVariable: counts.variableNodesCount++; break;
+    case sbValue: counts.valueNodesCount++; break;
+    case sbStructural: counts.structuralNodesCount++; break;
+    case sbTokenEq: counts.tokenNodesCount++; break;
+    default: assert(false);
+  }
+}
+
+template<class T>
+inline
+void updateNodesCountsFromNodes(VM vm, Introspection::NodesCounts& counts,
+  StaticArray<T> array) {
+  counts.nodesCount += array.size();
+
+  for (typename StaticArray<T>::iterator iter = array.begin();
+    iter != array.end(); iter++) {
+    T* node = static_cast<T*>(*iter);
+    updateNodesCountsFromNode(vm, counts, node);
+  }
+}
+
+inline
+void updateNodesCountsFromStaticArray(VM vm, Introspection::NodesCounts& counts,
+  StaticArray<StableNode> array) {
+  counts.stableNodesCount += array.size();
+  updateNodesCountsFromNodes<StableNode>(vm, counts, array);
+}
+
+inline
+void updateNodesCountsFromStaticArray(VM vm, Introspection::NodesCounts& counts,
+  StaticArray<UnstableNode> array) {
+  counts.unstableNodesCount += array.size();
+  updateNodesCountsFromNodes<UnstableNode>(vm, counts, array);
+}
+
+inline
+void Introspection::getNodesCounts(VM vm, Runnable* runnable,
+  Introspection::NodesCounts& counts) {
+  
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    StaticArray<UnstableNode>& xregs = thread->xregs._array;
+    counts.xNodesCount += xregs.size();
+    updateNodesCountsFromStaticArray(vm, counts, xregs);
+
+    ThreadStack& stack = thread->stack;
+    for (ThreadStack::iterator entry = stack.begin();
+      entry != stack.end(); ++entry) {
+      counts.stackDepth++;
+
+      StaticArray<UnstableNode>& yregs = entry->yregs;
+      StaticArray<StableNode>& gregs = entry->gregs;
+      StaticArray<StableNode>& kregs = entry->kregs;
+
+      counts.yNodesCount += yregs.size();
+      counts.gNodesCount += gregs.size();
+      counts.kNodesCount += kregs.size();
+
+      updateNodesCountsFromStaticArray(vm, counts, yregs);
+      updateNodesCountsFromStaticArray(vm, counts, gregs);
+      updateNodesCountsFromStaticArray(vm, counts, kregs);
+    }
+  }
+}
+
+/* ========== Nodes getters ========== */
+
 inline
 RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
   size_t depth, size_t index) {
   Thread* thread = dynamic_cast<Thread*>(runnable);
   if (!thread)
-    return nullptr;
+    return RichNode(nullptr);
 
   assert(depth < thread->stack.size());
   StackEntry& entry = thread->stack[depth];
@@ -280,150 +282,152 @@ RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRe
   }
 }
 
+/* ========== Nodes executers ========== */
+
 template<class T>
 inline
 void doForEachNodeFromStaticArray(VM vm, Runnable* runnable, StaticArray<T> array,
-  size_t from, size_t to, Introspection::RunnableAndNodeLambda lambda) {
-  for (size_t i = from; i < to; i++) {
+  size_t from, size_t to, Introspection::RunnableBoolLambda validRunnable,
+  Introspection::NodeBoolLambda validNode, Introspection::RunnableAndNodeLambda parse) {
+  for (size_t i = from; i < to && i < array.size(); i++) {
     RichNode node = RichNode(array[i]);
-    lambda(runnable, node);
+
+    if (node.isNullNode())
+      continue;
+
+    if (validRunnable(runnable) && validNode(node))
+      parse(runnable, node);
   }
 }
 
 inline
 void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-  size_t depth, size_t from, size_t to, RunnableAndNodeLambda lambda) {
-  assert(from < to);
+  size_t depth, size_t from, size_t to, RunnableBoolLambda validRunnable,
+  NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
 
-  Thread* thread = dynamic_cast<Thread*>(runnable);
-  if (!thread)
-    return;
-  
-  assert(depth < thread->stack.size());
-  StackEntry& entry = thread->stack[depth];
-  
-  switch (nodesRegister) {
-    case xRegister: {
-      assert(depth == 0);
-      StaticArray<UnstableNode> xregs = thread->xregs._array;
-      assert(to < xregs.size());
-      doForEachNodeFromStaticArray(vm, runnable, xregs, from, to, lambda);
-      return;
-    } case yRegister: {
-      StaticArray<UnstableNode> yregs = entry.yregs;
-      assert(to < yregs.size());
-      doForEachNodeFromStaticArray(vm, runnable, yregs, from, to, lambda);
-      return;
-    } case gRegister: {
-      StaticArray<StableNode> gregs = entry.gregs;
-      assert(to < gregs.size());
-      doForEachNodeFromStaticArray(vm, runnable, gregs, from, to, lambda);
-      return;
-    } case kRegister: {
-      StaticArray<StableNode> kregs = entry.kregs;
-      assert(to < kregs.size());
-      doForEachNodeFromStaticArray(vm, runnable, kregs, from, to, lambda);
-      return;
-    } default: assert(false);
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    assert(depth < thread->stack.size());
+    StackEntry& entry = thread->stack[depth];
+
+    switch (nodesRegister) {
+      case xRegister: {
+        assert(depth == 0);
+        StaticArray<UnstableNode> xregs = thread->xregs._array;
+        // assert(to <= xregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, xregs, from, to,
+          validRunnable, validNode, parse);
+        break;
+      } case yRegister: {
+        StaticArray<UnstableNode> yregs = entry.yregs;
+        // assert(to <= yregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, yregs, from, to,
+          validRunnable, validNode, parse);
+        break;
+      } case gRegister: {
+        StaticArray<StableNode> gregs = entry.gregs;
+        // assert(to <= gregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, gregs, from, to,
+          validRunnable, validNode, parse);
+        break;
+      } case kRegister: {
+        StaticArray<StableNode> kregs = entry.kregs;
+        // assert(to <= kregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, kregs, from, to,
+          validRunnable, validNode, parse);
+        break;
+      } default: assert(false);
+    }
   }  
 }
 
-inline
-void Introspection::doForEachNode(VM vm, RunnableAndNodeLambda lambda) {
-  RunnableList& list = vm->aliveThreads;
-  for (iterator iter = list.begin(); iter != list.end(); iter++) {
-    Runnable *runnable = *iter;
-    doForEachNode(vm, runnable, lambda);
-  }
-}
+/* ========== Variables properties ========== */
 
-/* ========== Variables stats ========== */
-
-inline
-bool Introspection::isVariable(VM vm, RichNode node) {
-  return node.is<OptVar>() || node.is<Variable>() || node.is<ReadOnly>()
-    || node.is<ReadOnlyVariable>() || node.is<FailedValue>();
+template<typename T>
+static inline
+bool _isBoundVariable(VM vm, RichNode& node) {
+  return Accessor<T>::get(node.value()).isNeeded(vm);
 }
 
 inline
 bool Introspection::isBoundVariable(VM vm, RichNode node) {
-  if (node.is<OptVar>()) {
-    return false;
-  } else if (node.is<Variable>()) {
-    Variable variable = Accessor<Variable>::get(node.value());
-    return variable.isBound(vm);
-  } else if (node.is<ReadOnly>()) {
-    return false;
-  } else if (node.is<ReadOnlyVariable>()) {
-    ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-    return variable.isBound(vm);
-  } else if (node.is<FailedValue>()) {
-    return false;
-  } else {
-    assert(false);
-  }
+  if (!isVariableNode(vm, node)) return false;
+  else if (node.is<OptVar>()) return false;
+  else if (node.is<Variable>()) 
+    return _isBoundVariable<Variable>(vm, node);
+  else if (node.is<ReadOnly>()) return false;
+  else if (node.is<ReadOnlyVariable>())
+    return _isBoundVariable<ReadOnlyVariable>(vm, node);
+  else if (node.is<FailedValue>()) return false;
+  else assert(false);
+}
+
+template<typename T>
+static inline
+bool _isNeededVariable(VM vm, RichNode& node) {
+  return Accessor<T>::get(node.value()).isNeeded(vm);
 }
 
 inline
 bool Introspection::isNeededVariable(VM vm, RichNode node) {
-  if (node.is<OptVar>()) {
-    OptVar variable = Accessor<OptVar>::get(node.value());
-    return variable.isNeeded(vm);
-  } else if (node.is<Variable>()) {
-    Variable variable = Accessor<Variable>::get(node.value());
-    return variable.isNeeded(vm);
-  } else if (node.is<ReadOnly>()) {
-    ReadOnly variable = Accessor<ReadOnly>::get(node.value());
-    return variable.isNeeded(vm);
-  } else if (node.is<ReadOnlyVariable>()) {
-    ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-    return variable.isNeeded(vm);
-  } else if (node.is<FailedValue>()) {
-    FailedValue variable = Accessor<FailedValue>::get(node.value());
-    return variable.isNeeded(vm);
-  } else {
-    assert(false);
-  }
+  if (!isVariableNode(vm, node)) return false;
+  else if (node.is<OptVar>())
+    return _isNeededVariable<OptVar>(vm, node);
+  else if (node.is<Variable>())
+    return _isNeededVariable<Variable>(vm, node);
+  else if (node.is<ReadOnly>())
+    return _isNeededVariable<ReadOnly>(vm, node);
+  else if (node.is<ReadOnlyVariable>())
+    return _isNeededVariable<ReadOnlyVariable>(vm, node);
+  else if (node.is<FailedValue>())
+    return _isNeededVariable<FailedValue>(vm, node);
+  else assert(false);
+}
+
+template<typename T>
+static inline
+bool _isWaitedVariable(VM vm, RichNode& node) {
+  return Accessor<T>::get(node.value()).isWaited(vm);
 }
 
 inline
 bool Introspection::isWaitedVariable(VM vm, RichNode node) {
-  if (node.is<OptVar>()) {
-    return false;
-  } else if (node.is<Variable>()) {
-    Variable variable = Accessor<Variable>::get(node.value());
-    return !variable.pendings.empty();
-  } else if (node.is<ReadOnly>()) {
-    return false;
-  } else if (node.is<ReadOnlyVariable>()) {
-    ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-    return !variable.pendings.empty();
-  } else if (node.is<FailedValue>()) {
-    return false;
-  } else {
-    assert(false);
-  }
+  if (!isVariableNode(vm, node)) return false;
+  else if (node.is<OptVar>()) return false;
+  else if (node.is<Variable>()) 
+    return _isWaitedVariable<Variable>(vm, node);
+  else if (node.is<ReadOnly>()) return false;
+  else if (node.is<ReadOnlyVariable>())
+    return _isWaitedVariable<ReadOnlyVariable>(vm, node);
+  else if (node.is<FailedValue>()) return false;
+  else assert(false);
 }
 
+/* ========== Variables counters ========== */
 inline
-size_t Introspection::getVariablesAggregate(VM vm, VariableCondition condition) {
-  size_t count = 0;
-  doForEachVariable(vm, [vm, this, &count, condition](Runnable* runnable, RichNode node) {
-    if (this->isVariable(vm, node) && condition(node))
-      count++;
-  });
-  return count;
+void Introspection::getVariablesCounts(VM vm, Runnable* runnable, VariablesCounts& counts) {
+  doForEachNode(vm, runnable,
+    [](Runnable* _) { return true; },
+    [vm, this](RichNode node) { return this->isVariableNode(vm, node); },
+    [vm, this, &counts](Runnable* runnable, RichNode node) {
+      if (this->isBoundVariable(vm, node)) counts.boundVariablesCount++;
+      else counts.unBoundVariablesCount++;
+      if (this->isNeededVariable(vm, node)) counts.neededVariablesCount++;
+      if (this->isWaitedVariable(vm, node)) counts.waitedVariablesCount++;
+      counts.variablesCount++;
+    }
+  );
 }
 
+/* ========== Variables executers ========== */
 inline
 void Introspection::doForEachVariable(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-  size_t depth, size_t from, size_t to, RunnableAndNodeLambda lambda) {
+  size_t depth, size_t from, size_t to, RunnableAndNodeLambda parse) {
   
   doForEachNode(vm, runnable, nodesRegister, depth, from, to,
-    [vm, this, lambda](Runnable* runnable, RichNode node) {
-    if (node.type().getStructuralBehavior() == sbVariable)
-      lambda(runnable, node);
-  });
+    [](Runnable* runnable) { return true; },
+    [vm, this](RichNode node) { return this->isVariableNode(vm, node); },
+    parse
+  );
 }
 
 inline
@@ -457,7 +461,7 @@ void updateVariableCandidatesMap(Runnable* runnable, RichNode node,
   if (node.is<Variable>()) {
     Variable variable = Accessor<Variable>::get(node.value());
     updateVariableCandidatesMap(runnable, node, variable.getId(), map);
-  } if (node.is<ReadOnlyVariable>()) {
+  } else if (node.is<ReadOnlyVariable>()) {
     ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
     updateVariableCandidatesMap(runnable, node, variable.getId(), map);
   } else {
@@ -473,7 +477,7 @@ Introspection::VariableCandidates Introspection::getVariable(VM vm, size_t varia
     if (node.is<Variable>()) {
       Variable variable = Accessor<Variable>::get(node.value());
       found = variable.getId() == variableId;
-    } if (node.is<ReadOnlyVariable>()) {
+    } else if (node.is<ReadOnlyVariable>()) {
       ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
       found = variable.getId() == variableId;
     } else {
@@ -491,12 +495,11 @@ Introspection::VariableCandidates Introspection::getVariable(VM vm, size_t varia
 inline
 Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM vm, Runnable* runnable) {
   size_t candidateThreadId = runnable->getId();
-  VariableCandidatesMap map = getVariableCandidatesMap(vm);
-  for (auto iter = map.begin(); iter != map.end();) {
-    CandidatesList& list = iter->second.candidates;
-    if (iter->second.has(candidateThreadId)) ++iter;
-    else iter = map.erase(iter);
-  }
+  VariableCandidatesMap map;
+  doForEachVariable(vm, [vm, candidateThreadId, &map](Runnable* runnable, RichNode node) {
+    if (runnable->getId() == candidateThreadId)
+      updateVariableCandidatesMap(runnable, node, map);
+  });
   return map;
 }
 
@@ -509,39 +512,39 @@ Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM 
   return map;
 }
 
-inline
-Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm) {
-  StructuresCounts counts;
+// inline
+// Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm) {
+//   StructuresCounts counts;
 
-  RunnableList& list = vm->aliveThreads;
-  for (iterator iter = list.begin(); iter != list.end(); iter++) {
-    Runnable *runnable = *iter;
-    StructuresCounts threadCounts = getStructuresCounts(vm, runnable);
+//   RunnableList& list = vm->aliveThreads;
+//   for (iterator iter = list.begin(); iter != list.end(); iter++) {
+//     Runnable *runnable = *iter;
+//     StructuresCounts threadCounts = getStructuresCounts(vm, runnable);
 
-    counts.consCount += threadCounts.consCount;
-    counts.tuplesCount += threadCounts.tuplesCount;
-    counts.aritiesCount += threadCounts.aritiesCount;
-    counts.recordsCount += threadCounts.recordsCount;
-  }
+//     counts.consCount += threadCounts.consCount;
+//     counts.tuplesCount += threadCounts.tuplesCount;
+//     counts.aritiesCount += threadCounts.aritiesCount;
+//     counts.recordsCount += threadCounts.recordsCount;
+//   }
 
-  return counts;
-}
+//   return counts;
+// }
 
-inline
-Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm, Runnable* runnable) {
-  StructuresCounts counts;
+// inline
+// Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm, Runnable* runnable) {
+//   StructuresCounts counts;
 
-  doForEachNode(vm, runnable, [vm, &counts](Runnable* _, RichNode node) {
-    if (node.is<Cons>())
-      counts.consCount++;
-    if (node.is<Tuple>())
-      counts.tuplesCount++;
-    if (node.is<Arity>())
-      counts.aritiesCount++;
-    if (node.is<Record>())
-      counts.recordsCount++;
-  });
-}
+//   doForEachNode(vm, runnable, [vm, &counts](Runnable* _, RichNode node) {
+//     if (node.is<Cons>())
+//       counts.consCount++;
+//     if (node.is<Tuple>())
+//       counts.tuplesCount++;
+//     if (node.is<Arity>())
+//       counts.aritiesCount++;
+//     if (node.is<Record>())
+//       counts.recordsCount++;
+//   });
+// }
 
 }
 
