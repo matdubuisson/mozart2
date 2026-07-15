@@ -200,9 +200,21 @@ public:
     Created,
     Collected,
     Needed,
-    Bound,
-    Waited
+    Waited,
+    Bind
   };
+
+  template<typename V>
+  struct BoundVariable {
+    explicit BoundVariable(V* v, RichNode self, RichNode src) :
+      variable(v), self(self), src(src) {}
+
+    V* variable;
+    RichNode self, src;
+  };
+
+  template<typename V>
+  using BoundVariablesVector = std::vector<BoundVariable<V>>;
 
   template<typename V>
   struct WaitedVariable {
@@ -220,7 +232,7 @@ public:
     VariablesVector<V> createds;
     VariablesVector<V> collecteds;
     VariablesVector<V> neededs;
-    VariablesVector<V> bounds;
+    BoundVariablesVector<V> bounds;
     WaitedVariablesVector<V> waiteds;
 
     void clear() {
@@ -239,9 +251,13 @@ private:
       case VariableAnnounce::Created: vector.createds.push_back(variable); break;
       case VariableAnnounce::Collected: vector.collecteds.push_back(variable); break;
       case VariableAnnounce::Needed: vector.neededs.push_back(variable); break;
-      case VariableAnnounce::Bound: vector.bounds.push_back(variable); break;
       default: assert(false);
     }
+  }
+
+  template<typename V>
+  void announceBoundVariable(VariablesVectors<V>& vector, V* variable, RichNode self, RichNode src) {
+    vector.bounds.push_back(BoundVariable(variable, self, src));
   }
 
   template<typename V>
@@ -262,6 +278,17 @@ public:
   }
 
   template<class V>
+  void announceBoundVariableBase(VariableBase<V>* variable, RichNode self, RichNode src) {
+    if constexpr (std::is_same_v<V, Variable>) {
+      announceBoundVariable(aggregatedVariables,
+        static_cast<Variable*>(variable), self, src);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      announceBoundVariable(aggregatedReadOnlyVariables,
+        static_cast<ReadOnlyVariable*>(variable), self, src);
+    } else assert(false);
+  }
+
+  template<class V>
   void announceWaitedVariableBase(VariableBase<V>* variable, RichNode waiter) {
     if constexpr (std::is_same_v<V, Variable>) {
       announceWaitedVariable(aggregatedVariables,
@@ -276,6 +303,10 @@ public:
     announceVariable(aggregatedOptVariables, variable, announce);
   }
 
+  void announceBoundOptVariable(OptVar* variable, RichNode self, RichNode src) {
+    announceBoundVariable(aggregatedOptVariables, variable, self, src);
+  }
+
   void announceWaitedOptVariable(OptVar* variable, RichNode waiter) {
     announceWaitedVariable(aggregatedOptVariables, variable, waiter);
   }
@@ -284,12 +315,20 @@ public:
     announceVariable(aggregatedVariables, variable, announce);
   }
 
+  void announceBoundVariable(Variable* variable, RichNode self, RichNode src) {
+    announceBoundVariable(aggregatedVariables, variable, self, src);
+  }
+
   void announceWaitedVariable(Variable* variable, RichNode waiter) {
     announceWaitedVariable(aggregatedVariables, variable, waiter);
   }
 
   void announceReadOnlyVariable(ReadOnlyVariable* variable, VariableAnnounce announce) {
     announceVariable(aggregatedReadOnlyVariables, variable, announce);
+  }
+
+  void announceBoundReadOnlyVariable(ReadOnlyVariable* variable, RichNode self, RichNode src) {
+    announceBoundVariable(aggregatedReadOnlyVariables, variable, self, src);
   }
 
   void announceWaitedReadOnlyVariable(ReadOnlyVariable* variable, RichNode waiter) {
@@ -303,9 +342,13 @@ private:
       case VariableAnnounce::Created: return vector.createds;
       case VariableAnnounce::Collected: return vector.collecteds;
       case VariableAnnounce::Needed: return vector.neededs;
-      case VariableAnnounce::Bound: return vector.bounds;
       default: assert(false);
     }
+  }
+
+  template<typename V>
+  BoundVariablesVector<V>& getBoundVariables(VariablesVectors<V>& vector) {
+    return vector.bounds;
   }
 
   template<typename V>
@@ -322,6 +365,17 @@ public:
       return getVariables(aggregatedVariables, announce);
     } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
       return getVariables(aggregatedReadOnlyVariables, announce);
+    } else assert(false);
+  }
+
+  template<typename V>
+  BoundVariablesVector<V>& getBoundVariables() {
+    if constexpr (std::is_same_v<V, OptVar>) {
+      return getBoundVariables(aggregatedOptVariables);
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      return getBoundVariables(aggregatedVariables);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      return getBoundVariables(aggregatedReadOnlyVariables);
     } else assert(false);
   }
 

@@ -164,8 +164,9 @@ bool Variable::shouldWakeUpUnderSpace(VM vm, Space* space) {
 }
 
 void Variable::bind(RichNode self, VM vm, RichNode src) {
+  // std::cout << "Bind variable " << _id << ": self node " << self.getId() << ", src node " << src.getId() << std::endl;
   doBind(self, vm, src);
-  vm->getJournal().announceVariable(this, VariableAnnounce::Bound);
+  vm->getJournal().announceBoundVariable(this, self, src);
 }
 
 //////////////////////
@@ -180,12 +181,12 @@ ReadOnlyVariable::ReadOnlyVariable(VM vm, GR gr, ReadOnlyVariable& from):
 
 void ReadOnlyVariable::bind(RichNode self, VM vm, RichNode src) {
   waitFor(vm, self);
-  vm->getJournal().announceReadOnlyVariable(this, VariableAnnounce::Bound);
+  vm->getJournal().announceBoundReadOnlyVariable(this, self, src);
 }
 
 void ReadOnlyVariable::bindReadOnly(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
-  vm->getJournal().announceReadOnlyVariable(this, VariableAnnounce::Bound);
+  vm->getJournal().announceBoundReadOnlyVariable(this, self, src);
 }
 
 ////////////
@@ -213,13 +214,13 @@ void OptVar::markNeeded(RichNode self, VM vm) {
 void OptVar::bind(RichNode self, VM vm, UnstableNode&& src) {
   makeBackupForSpeculativeBindingIfNeeded(self, vm);
   self.become(vm, std::move(src));
-  vm->getJournal().announceOptVariable(this, VariableAnnounce::Bound);
+  vm->getJournal().announceBoundOptVariable(this, self, src);
 }
 
 void OptVar::bind(RichNode self, VM vm, RichNode src) {
   makeBackupForSpeculativeBindingIfNeeded(self, vm);
   self.become(vm, src);
-  vm->getJournal().announceOptVariable(this, VariableAnnounce::Bound);
+  vm->getJournal().announceBoundOptVariable(this, self, src);
 }
 
 void OptVar::makeBackupForSpeculativeBindingIfNeeded(RichNode self, VM vm) {

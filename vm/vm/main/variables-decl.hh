@@ -51,7 +51,8 @@ public:
    * @note By default the variable is not needed
    */
   explicit VariableBase(VM vm): WithHome(vm), _needed(false), _bound(false),
-    _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
+    _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {
+  }
 
   /**
    * Declares a new variable base
@@ -380,7 +381,7 @@ public:
    * Instantiates a new OPT variable from a space reference
    * @param home The home space reference of the variable
    */
-  explicit OptVar(SpaceRef home): WithHome(home), _id(_everCreatedVariablesCount++) {}
+  explicit OptVar(SpaceRef home): WithHome(home), _id(SIZE_MAX) {}
 
   size_t getId() {
     return _id;
