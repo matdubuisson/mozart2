@@ -35,16 +35,16 @@ namespace mozart {
 
 class Introspection {
 public:
-  using RunnableLambda = std::function<void(Runnable*)>;
-  using NodeLambda = std::function<void(RichNode)>;
-  using RunnableBoolLambda = std::function<bool(Runnable*)>;
-  using NodeBoolLambda = std::function<bool(RichNode)>;
-  using RunnableAndNodeLambda = std::function<void(Runnable*, RichNode)>;
+  using RunnableLambda = std::function<void(VM, Runnable*)>;
+  using NodeLambda = std::function<void(VM, RichNode)>;
+  using RunnableBoolLambda = std::function<bool(VM, Runnable*)>;
+  using NodeBoolLambda = std::function<bool(VM, RichNode)>;
+  using RunnableAndNodeLambda = std::function<void(VM, Runnable*, RichNode)>;
 
   inline static const
-  RunnableBoolLambda allRunnables = [](Runnable*) { return true; };
+  RunnableBoolLambda allRunnables = [](VM, Runnable*) { return true; };
   inline static const
-  NodeBoolLambda allNodes = [](RichNode) { return true; };
+  NodeBoolLambda allNodes = [](VM, RichNode) { return true; };
 
 public:
   Introspection() {}
@@ -114,7 +114,7 @@ public:
 public:
   /* ========== Threads executers ========== */
 
-  void doForEachThread(VM vm, RunnableLambda parse);
+  void doForEachThread(VM vm, RunnableBoolLambda valid, RunnableLambda parse);
 
 public:
   /* ========== Threads counters ========== */
@@ -224,7 +224,7 @@ public:
   inline
   NodesCounts getNodesCounts(VM vm) {
     NodesCounts counts;
-    doForEachThread(vm, [vm, this, &counts](Runnable* runnable) {
+    doForEachThread(vm, allRunnables, [this, &counts](VM vm, Runnable* runnable) {
       this->getNodesCounts(vm, runnable, counts);
     });
     return counts;
@@ -379,56 +379,55 @@ public:
 private:
   /* ========== Nodes executers ========== */
   void doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-    size_t depth, size_t from, size_t to, RunnableBoolLambda validRunnable,
-    NodeBoolLambda validNode, RunnableAndNodeLambda parse);
+    size_t depth, size_t from, size_t to, NodeBoolLambda validNode, RunnableAndNodeLambda parse);
 
 public:
   /* ========== Nodes executers ========== */
   inline
   void doForEachXNode(VM vm, Runnable* runnable, size_t from, size_t to,
-    RunnableBoolLambda validRunnable, NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
+    NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
     doForEachNode(vm, runnable, xRegister, 0, from, to,
-      validRunnable, validNode, parse);
+      validNode, parse);
   }
 
   inline
   void doForEachYNode(VM vm, Runnable* runnable, size_t depth, size_t from, size_t to,
-    RunnableBoolLambda validRunnable, NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
+    NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
     doForEachNode(vm, runnable, yRegister, depth, from, to,
-      validRunnable, validNode, parse);
+      validNode, parse);
   }
 
   inline
   void doForEachGNode(VM vm, Runnable* runnable, size_t depth, size_t from, size_t to,
-    RunnableBoolLambda validRunnable, NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
+    NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
     doForEachNode(vm, runnable, gRegister, depth, from, to,
-      validRunnable, validNode, parse);
+      validNode, parse);
   }
 
   inline
   void doForEachKNode(VM vm, Runnable* runnable, size_t depth, size_t from, size_t to,
-    RunnableBoolLambda validRunnable, NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
+    NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
     doForEachNode(vm, runnable, kRegister, depth, from, to,
-      validRunnable, validNode, parse);
+      validNode, parse);
   }
 
   inline
-  void doForEachNode(VM vm, Runnable* runnable, RunnableBoolLambda validRunnable,
+  void doForEachNode(VM vm, Runnable* runnable,
     NodeBoolLambda validNode, RunnableAndNodeLambda parse,
     size_t from = 0, size_t to = SIZE_MAX) {
     assert(runnable != nullptr);
     
     doForEachXNode(vm, runnable, 0,
-      getXNodesRegisterSize(vm, runnable), validRunnable, validNode, parse);
+      getXNodesRegisterSize(vm, runnable), validNode, parse);
 
     size_t depth = getStackDepth(vm, runnable);
     for (size_t i = 0; i < depth; i++) {
       doForEachYNode(vm, runnable, i, 0,
-        getYNodesRegisterSize(vm, runnable, i), validRunnable, validNode, parse);
+        getYNodesRegisterSize(vm, runnable, i), validNode, parse);
       doForEachGNode(vm, runnable, i, 0,
-        getGNodesRegisterSize(vm, runnable, i), validRunnable, validNode, parse);
+        getGNodesRegisterSize(vm, runnable, i), validNode, parse);
       doForEachKNode(vm, runnable, i, 0,
-        getKNodesRegisterSize(vm, runnable, i), validRunnable, validNode, parse);
+        getKNodesRegisterSize(vm, runnable, i), validNode, parse);
     }
   }
 
@@ -436,8 +435,8 @@ public:
   void doForEachNode(VM vm, RunnableBoolLambda validRunnable,
     NodeBoolLambda validNode, RunnableAndNodeLambda parse,
     size_t from = 0, size_t to = SIZE_MAX) {
-    doForEachThread(vm, [vm, this, validRunnable, validNode, parse](Runnable* runnable) {
-      this->doForEachNode(vm, runnable, validRunnable, validNode, parse);
+    doForEachThread(vm, validRunnable, [this, validNode, parse](VM vm, Runnable* runnable) {
+      this->doForEachNode(vm, runnable, validNode, parse);
     });
   }
 
@@ -475,7 +474,7 @@ public:
   inline
   VariablesCounts getVariablesCounts(VM vm) {
     VariablesCounts counts;
-    doForEachThread(vm, [vm, this, &counts](Runnable* runnable) {
+    doForEachThread(vm, allRunnables, [this, &counts](VM vm, Runnable* runnable) {
       this->getVariablesCounts(vm, runnable, counts);
     });
     return counts;
@@ -530,12 +529,9 @@ public:
 
   inline
   void doForEachVariable(VM vm, RunnableAndNodeLambda parse) {
-    RunnableList& runnables = getThreads(vm);
-
-    for (RunnableList::iterator iter = runnables.begin(); iter != runnables.end(); iter++) {
-      Runnable* runnable = *iter;
-      doForEachVariable(vm, runnable, parse);
-    }
+    doForEachThread(vm, allRunnables, [this, parse](VM vm, Runnable* runnable) {
+      this->doForEachVariable(vm, runnable, parse);
+    });
   }
 
 public:
@@ -571,61 +567,96 @@ public:
 
   VariableCandidatesMap getVariableCandidatesMap(VM vm);
 
-// public:
-//   /* ========== Structures ========== */
+public:
+  /* ========== Structures stats ========== */
 
-//   struct StructuresCounts {
-//     size_t consCount = 0;
-//     size_t tuplesCount = 0;
-//     size_t aritiesCount = 0;
-//     size_t recordsCount = 0;
-//   };
+  struct StructuresCounts {
+    size_t consCount = 0;
+    size_t tuplesCount = 0;
+    size_t aritiesCount = 0;
+    size_t recordsCount = 0;
+  };
 
-// public:
-//   StructuresCounts getStructuresCounts(VM vm, size_t from = 0, size_t to = SIZE_MAX);
+public:
+  /* ========== Structures counters ========== */
+  StructuresCounts getStructuresCounts(VM vm);
 
-//   StructuresCounts getStructuresCounts(VM vm, Runnable* runnable, size_t from = 0, size_t to = SIZE_MAX);
+  StructuresCounts getStructuresCounts(VM vm, Runnable* runnable);
 
-//   inline
-//   size_t getConsCount(VM vm) {
-//     return getStructuresCounts(vm).consCount;
-//   }
+  inline
+  size_t getConsCount(VM vm) {
+    return getStructuresCounts(vm).consCount;
+  }
 
-//   inline
-//   size_t getConsCount(VM vm, Runnable* runnable) {
-//     return getStructuresCounts(vm, runnable).consCount;
-//   }
+  inline
+  size_t getConsCount(VM vm, Runnable* runnable) {
+    return getStructuresCounts(vm, runnable).consCount;
+  }
 
-//   inline
-//   size_t getTuplesCount(VM vm) {
-//     return getStructuresCounts(vm).tuplesCount;
-//   }
+  inline
+  size_t getTuplesCount(VM vm) {
+    return getStructuresCounts(vm).tuplesCount;
+  }
 
-//   inline
-//   size_t getTuplesCount(VM vm, Runnable* runnable) {
-//     return getStructuresCounts(vm, runnable).tuplesCount;
-//   }
+  inline
+  size_t getTuplesCount(VM vm, Runnable* runnable) {
+    return getStructuresCounts(vm, runnable).tuplesCount;
+  }
 
-//   inline
-//   size_t getAritiesCount(VM vm) {
-//     return getStructuresCounts(vm).aritiesCount;
-//   }
+  inline
+  size_t getAritiesCount(VM vm) {
+    return getStructuresCounts(vm).aritiesCount;
+  }
 
-//   inline
-//   size_t getAritiesCount(VM vm, Runnable* runnable) {
-//     return getStructuresCounts(vm, runnable).aritiesCount;
-//   }
+  inline
+  size_t getAritiesCount(VM vm, Runnable* runnable) {
+    return getStructuresCounts(vm, runnable).aritiesCount;
+  }
 
-//   inline
-//   size_t getRecordsCount(VM vm) {
-//     return getStructuresCounts(vm).recordsCount;
-//   }
+  inline
+  size_t getRecordsCount(VM vm) {
+    return getStructuresCounts(vm).recordsCount;
+  }
 
-//   inline
-//   size_t getRecordsCount(VM vm, Runnable* runnable) {
-//     return getStructuresCounts(vm, runnable).recordsCount;
-//   }
+  inline
+  size_t getRecordsCount(VM vm, Runnable* runnable) {
+    return getStructuresCounts(vm, runnable).recordsCount;
+  }
 
+public:
+  /* ========== Structures list ========== */
+  using NodesList = std::vector<RichNode>;
+
+private:
+  static inline
+  RunnableAndNodeLambda getAddConsLambda(VM vm, NodesList& list);
+
+public:
+  /* ========== Structures list ========== */
+  // RichNode getList(VM vm, size_t id);
+
+  NodesList getLists(VM vm, Runnable* runnable) {
+    NodesList list;
+    std::cout << "A" << std::endl;
+    doForEachNode(vm, runnable,
+      allNodes,
+      getAddConsLambda(vm, list)
+    );
+    std::cout << "B" << std::endl;
+    return list;
+  }
+
+  NodesList getLists(VM vm) {
+    NodesList list;
+    std::cout << "A" << std::endl;
+    doForEachNode(vm,
+      allRunnables,
+      allNodes,
+      getAddConsLambda(vm, list)
+    );
+    std::cout << "B" << std::endl;
+    return list;
+  }
 };
 
 }

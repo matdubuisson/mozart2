@@ -64,7 +64,7 @@ inline
 Runnable* Introspection::getThread(VM vm, size_t id) {
   using iterator = RunnableList::iterator;
 
-  RunnableList& list = vm->aliveThreads;
+  RunnableList& list = getThreads(vm);
   for (iterator iter = list.begin(); iter != list.end(); ++iter) {
     Runnable* runnable = *iter;
     if (runnable->getId() == id)
@@ -75,19 +75,20 @@ Runnable* Introspection::getThread(VM vm, size_t id) {
 
 inline
 RunnableList& Introspection::getThreads(VM vm) {
-  return vm->aliveThreads;
+  return vm->threads;
 }
 
 /* ========== Threads executers ========== */
 
 inline
-void Introspection::doForEachThread(VM vm, Introspection::RunnableLambda parse) {
+void Introspection::doForEachThread(VM vm, Introspection::RunnableBoolLambda valid, Introspection::RunnableLambda parse) {
   using iterator = RunnableList::iterator;
 
   RunnableList& list = getThreads(vm);
   for (iterator iter = list.begin(); iter != list.end(); ++iter) {
     Runnable* runnable = *iter;
-    parse(runnable);
+    if (valid(vm, runnable))
+      parse(vm, runnable);
   }
 }
 
@@ -96,7 +97,7 @@ void Introspection::doForEachThread(VM vm, Introspection::RunnableLambda parse) 
 inline
 Introspection::ThreadsCounts Introspection::getThreadsCounts(VM vm) {
   ThreadsCounts counts;
-  doForEachThread(vm, [vm, &counts](Runnable* runnable) {
+  doForEachThread(vm, allRunnables, [&counts](VM vm, Runnable* runnable) {
     if (runnable->isRunnable() && !runnable->isTerminated() && !runnable->isDead())
       counts.activeThreadsCount++;
     else
@@ -287,23 +288,22 @@ RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRe
 template<class T>
 inline
 void doForEachNodeFromStaticArray(VM vm, Runnable* runnable, StaticArray<T> array,
-  size_t from, size_t to, Introspection::RunnableBoolLambda validRunnable,
-  Introspection::NodeBoolLambda validNode, Introspection::RunnableAndNodeLambda parse) {
+  size_t from, size_t to, Introspection::NodeBoolLambda validNode,
+  Introspection::RunnableAndNodeLambda parse) {
   for (size_t i = from; i < to && i < array.size(); i++) {
     RichNode node = RichNode(array[i]);
 
     if (node.isNullNode())
       continue;
 
-    if (validRunnable(runnable) && validNode(node))
-      parse(runnable, node);
+    if (validNode(vm, node))
+      parse(vm, runnable, node);
   }
 }
 
 inline
 void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-  size_t depth, size_t from, size_t to, RunnableBoolLambda validRunnable,
-  NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
+  size_t depth, size_t from, size_t to, NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
 
   if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
     assert(depth < thread->stack.size());
@@ -315,25 +315,25 @@ void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodes
         StaticArray<UnstableNode> xregs = thread->xregs._array;
         // assert(to <= xregs.size());
         doForEachNodeFromStaticArray(vm, runnable, xregs, from, to,
-          validRunnable, validNode, parse);
+          validNode, parse);
         break;
       } case yRegister: {
         StaticArray<UnstableNode> yregs = entry.yregs;
         // assert(to <= yregs.size());
         doForEachNodeFromStaticArray(vm, runnable, yregs, from, to,
-          validRunnable, validNode, parse);
+          validNode, parse);
         break;
       } case gRegister: {
         StaticArray<StableNode> gregs = entry.gregs;
         // assert(to <= gregs.size());
         doForEachNodeFromStaticArray(vm, runnable, gregs, from, to,
-          validRunnable, validNode, parse);
+          validNode, parse);
         break;
       } case kRegister: {
         StaticArray<StableNode> kregs = entry.kregs;
         // assert(to <= kregs.size());
         doForEachNodeFromStaticArray(vm, runnable, kregs, from, to,
-          validRunnable, validNode, parse);
+          validNode, parse);
         break;
       } default: assert(false);
     }
@@ -406,9 +406,8 @@ bool Introspection::isWaitedVariable(VM vm, RichNode node) {
 inline
 void Introspection::getVariablesCounts(VM vm, Runnable* runnable, VariablesCounts& counts) {
   doForEachNode(vm, runnable,
-    [](Runnable* _) { return true; },
-    [vm, this](RichNode node) { return this->isVariableNode(vm, node); },
-    [vm, this, &counts](Runnable* runnable, RichNode node) {
+    [this](VM vm, RichNode node) { return this->isVariableNode(vm, node); },
+    [this, &counts](VM vm, Runnable* runnable, RichNode node) {
       if (this->isBoundVariable(vm, node)) counts.boundVariablesCount++;
       else counts.unBoundVariablesCount++;
       if (this->isNeededVariable(vm, node)) counts.neededVariablesCount++;
@@ -423,9 +422,9 @@ inline
 void Introspection::doForEachVariable(VM vm, Runnable* runnable, NodesRegister nodesRegister,
   size_t depth, size_t from, size_t to, RunnableAndNodeLambda parse) {
   
-  doForEachNode(vm, runnable, nodesRegister, depth, from, to,
-    [](Runnable* runnable) { return true; },
-    [vm, this](RichNode node) { return this->isVariableNode(vm, node); },
+  doForEachNode(vm, runnable,
+    nodesRegister, depth, from, to,
+    [this](VM vm, RichNode node) { return this->isVariableNode(vm, node); },
     parse
   );
 }
@@ -472,23 +471,24 @@ void updateVariableCandidatesMap(Runnable* runnable, RichNode node,
 inline
 Introspection::VariableCandidates Introspection::getVariable(VM vm, size_t variableId) {
   VariableCandidates variable(RichNode(nullptr));
-  doForEachVariable(vm, [vm, &variable, variableId](Runnable* runnable, RichNode node) {
-    bool found = false;
-    if (node.is<Variable>()) {
-      Variable variable = Accessor<Variable>::get(node.value());
-      found = variable.getId() == variableId;
-    } else if (node.is<ReadOnlyVariable>()) {
-      ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-      found = variable.getId() == variableId;
-    } else {
-      assert(false);
-    }
+  doForEachNode(vm, allRunnables,
+    [this](VM vm, RichNode node) { return this->isVariableNode(vm, node); },
+    [this, &variable, variableId](VM vm, Runnable* runnable, RichNode node) {
+      bool found = false;
+      if (node.is<Variable>()) {
+        Variable variable = Accessor<Variable>::get(node.value());
+        found = variable.getId() == variableId;
+      } else if (node.is<ReadOnlyVariable>()) {
+        ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
+        found = variable.getId() == variableId;
+      } else assert(false);
 
-    if (found) {
-      variable.setNode(node);
-      variable.add(runnable->getId());
+      if (found) {
+        variable.setNode(node);
+        variable.add(runnable->getId());
+      }
     }
-  });
+  );
   return variable;
 }
 
@@ -496,7 +496,7 @@ inline
 Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM vm, Runnable* runnable) {
   size_t candidateThreadId = runnable->getId();
   VariableCandidatesMap map;
-  doForEachVariable(vm, [vm, candidateThreadId, &map](Runnable* runnable, RichNode node) {
+  doForEachVariable(vm, [candidateThreadId, &map](VM vm, Runnable* runnable, RichNode node) {
     if (runnable->getId() == candidateThreadId)
       updateVariableCandidatesMap(runnable, node, map);
   });
@@ -506,45 +506,53 @@ Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM 
 inline
 Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM vm) {
   VariableCandidatesMap map;
-  doForEachVariable(vm, [vm, &map](Runnable* runnable, RichNode node) {
+  doForEachVariable(vm, [&map](VM vm, Runnable* runnable, RichNode node) {
     updateVariableCandidatesMap(runnable, node, map);
   });
   return map;
 }
 
-// inline
-// Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm) {
-//   StructuresCounts counts;
+inline
+Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm) {
+  StructuresCounts counts;
 
-//   RunnableList& list = vm->aliveThreads;
-//   for (iterator iter = list.begin(); iter != list.end(); iter++) {
-//     Runnable *runnable = *iter;
-//     StructuresCounts threadCounts = getStructuresCounts(vm, runnable);
+  doForEachThread(vm, allRunnables, [this, &counts](VM vm, Runnable* runnable) {
+    StructuresCounts threadCounts = this->getStructuresCounts(vm, runnable);
 
-//     counts.consCount += threadCounts.consCount;
-//     counts.tuplesCount += threadCounts.tuplesCount;
-//     counts.aritiesCount += threadCounts.aritiesCount;
-//     counts.recordsCount += threadCounts.recordsCount;
-//   }
+    counts.consCount += threadCounts.consCount;
+    counts.tuplesCount += threadCounts.tuplesCount;
+    counts.aritiesCount += threadCounts.aritiesCount;
+    counts.recordsCount += threadCounts.recordsCount;
+  });
 
-//   return counts;
-// }
+  return counts;
+}
 
-// inline
-// Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm, Runnable* runnable) {
-//   StructuresCounts counts;
+inline
+Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm, Runnable* runnable) {
+  StructuresCounts counts;
 
-//   doForEachNode(vm, runnable, [vm, &counts](Runnable* _, RichNode node) {
-//     if (node.is<Cons>())
-//       counts.consCount++;
-//     if (node.is<Tuple>())
-//       counts.tuplesCount++;
-//     if (node.is<Arity>())
-//       counts.aritiesCount++;
-//     if (node.is<Record>())
-//       counts.recordsCount++;
-//   });
-// }
+  doForEachNode(vm, runnable,
+    allNodes,
+    [&counts](VM vm, Runnable* _, RichNode node) {
+    if (node.is<Cons>())
+      counts.consCount++;
+    if (node.is<Tuple>())
+      counts.tuplesCount++;
+    if (node.is<Arity>())
+      counts.aritiesCount++;
+    if (node.is<Record>())
+      counts.recordsCount++;
+  });
+}
+
+inline
+Introspection::RunnableAndNodeLambda Introspection::getAddConsLambda(VM vm, NodesList& list) {
+  return [&list](VM vm, Runnable* runnable, RichNode node) {
+    if (node.is<Cons>())
+      list.push_back(node);
+  };
+}
 
 }
 

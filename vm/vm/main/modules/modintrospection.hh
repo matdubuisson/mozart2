@@ -930,6 +930,7 @@ public:
         "bindingPriority",
         "copyable",
         "feature",
+        "id",
         "name",
         "structuralBehavior",
         "transient",
@@ -939,6 +940,7 @@ public:
       build(vm, type->getBindingPriority()),
       build(vm, type->isCopyable()),
       build(vm, type->isFeature()),
+      build(vm, node.getId()),
       build(vm, type->getName().c_str()),
       build(vm,
         nodeStructuralBehaviorToString(
@@ -1042,9 +1044,8 @@ public:
 
     OzListBuilder builder(vm);
     introspection.doForEachXNode(vm, runnable, from, to,
-      Introspection::allRunnables,
       Introspection::allNodes,
-      [vm, &builder](Runnable* runnable, RichNode node) {
+      [&builder](VM vm, Runnable* runnable, RichNode node) {
         builder.push_back(vm, buildNodeRecord(vm, node));
       }
     );
@@ -1069,9 +1070,8 @@ public:
       case NodesRegister::yRegister: {
         // assert(to < introspection.getYNodesRegisterSize(vm, runnable, depth));
         introspection.doForEachYNode(vm, runnable, depth, from, to,
-          Introspection::allRunnables,
           Introspection::allNodes,
-          [vm, &builder](Runnable* runnable, RichNode node) {
+          [&builder](VM vm, Runnable* runnable, RichNode node) {
             builder.push_back(vm, buildNodeRecord(vm, node));
           }
         );
@@ -1079,9 +1079,8 @@ public:
       } case NodesRegister::gRegister: {
         // assert(to < introspection.getGNodesRegisterSize(vm, runnable, depth));
         introspection.doForEachGNode(vm, runnable, depth, from, to,
-          Introspection::allRunnables,
           Introspection::allNodes,
-          [vm, &builder](Runnable* runnable, RichNode node) {
+          [&builder](VM vm, Runnable* runnable, RichNode node) {
             builder.push_back(vm, buildNodeRecord(vm, node));
           }
         );
@@ -1089,9 +1088,8 @@ public:
       } case NodesRegister::kRegister: {
         // assert(to < introspection.getKNodesRegisterSize(vm, runnable, depth));
         introspection.doForEachKNode(vm, runnable, depth, from, to,
-          Introspection::allRunnables,
           Introspection::allNodes,
-          [vm, &builder](Runnable* runnable, RichNode node) {
+          [&builder](VM vm, Runnable* runnable, RichNode node) {
             builder.push_back(vm, buildNodeRecord(vm, node));
           }
         );
@@ -1148,19 +1146,19 @@ public:
       Introspection& introspection = vm->getIntrospection();
       Introspection::NodeBoolLambda filter;
       if (matches(vm, nodeFamily, "variable")) {
-        filter = [vm, &introspection](RichNode node) {
+        filter = [&introspection](VM vm, RichNode node) {
           return introspection.isVariableNode(vm, node);
         };
       } else if (matches(vm, nodeFamily, "token")) {
-        filter = [vm, &introspection](RichNode node) {
+        filter = [&introspection](VM vm, RichNode node) {
           return introspection.isTokenNode(vm, node);
         };
       } else if (matches(vm, nodeFamily, "structural")) {
-        filter = [vm, &introspection](RichNode node) {
+        filter = [&introspection](VM vm, RichNode node) {
           return introspection.isStructuralNode(vm, node);
         };
       } else if (matches(vm, nodeFamily, "value")) {
-        filter = [vm, &introspection](RichNode node) {
+        filter = [&introspection](VM vm, RichNode node) {
           return introspection.isValueNode(vm, node);
         };
       } else {
@@ -1175,7 +1173,7 @@ public:
       vm->getIntrospection().doForEachNode(vm,
         Introspection::allRunnables,
         filter,
-        [vm, &builder, from, to, &i](Runnable* _, RichNode node) {
+        [&builder, from, to, &i](VM vm, Runnable* _, RichNode node) {
           if (i >= from && i < to) // TODO Ugly make it better
             builder.push_back(vm, buildNodeRecord(vm, node));
           i++;
@@ -1342,15 +1340,59 @@ public:
   public:
     GetAllVariables(): Builtin("getAllVariables") {}
 
-    static void call(VM vm, In fromNode, In toNode, Out result) {
-      size_t from = getArgument<size_t>(vm, fromNode);
-      size_t to = getArgument<size_t>(vm, toNode);
+    static void call(VM vm, Out result) {
       Introspection::VariableCandidatesMap map = vm->getIntrospection().getVariableCandidatesMap(vm);
       result = buildVariableRecordsList(vm, map);
     }
   };
 
-  /* ========== Structures ========== */
+  /* ========== Structures list ========== */
+
+  static inline
+  UnstableNode buildListNodeRecord(VM vm, RichNode node) {
+    return buildRecord(vm,
+      buildArity(vm,
+        "list",
+        "hash",
+        "id",
+        "repr"
+      ),
+      build(vm, ozListHash(vm, node)),
+      build(vm, node.getId()),
+      build(vm, nodeToString(vm, node).c_str())
+    );
+  }
+
+  static inline
+  UnstableNode buildListNodesListRecord(VM vm, Introspection::NodesList& list) {
+    OzListBuilder builder(vm);
+    for (size_t i = 0; i < list.size(); i++) {
+      builder.push_back(vm, buildListNodeRecord(vm, list[i]));
+    }
+    return builder.get(vm);
+  }
+
+  class GetThreadLists: public Builtin<GetThreadLists> {
+  public:
+    GetThreadLists(): Builtin("getThreadLists") {}
+
+    static void call(VM vm, In runnableNode, Out result) {
+      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
+      Introspection::NodesList list = vm->getIntrospection()
+        .getLists(vm, runnable);
+      result = buildListNodesListRecord(vm, list);
+    }
+  };
+
+  class GetLists: public Builtin<GetLists> {
+  public:
+    GetLists(): Builtin("getLists") {}
+
+    static void call(VM vm, Out result) {
+      Introspection::NodesList list = vm->getIntrospection().getLists(vm);
+      result = buildListNodesListRecord(vm, list);
+    }
+  };
 };
 
 }
