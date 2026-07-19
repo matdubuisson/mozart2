@@ -231,6 +231,11 @@ public:
   bool isDead() { return _dead; }
 
   inline
+  bool isAlive() {
+    return !_dead && !_terminated;
+  }
+
+  inline
   bool isPreempted() {
     return _preempted || _terminated || _dead || !_runnable;
   }

@@ -241,9 +241,11 @@ void VirtualMachine::beforeGR(GR gr) {
     assert(_currentSpace == _topLevelSpace);
   }
 
-  for (auto iter = aliveThreads.begin();
-       iter != aliveThreads.end(); ++iter) {
-    (*iter)->beforeGR();
+  for (auto iter = threads.begin();
+       iter != threads.end(); ++iter) {
+    Runnable* runnable = static_cast<Runnable*>(*iter);
+    if (runnable->isAlive())
+      runnable->beforeGR();
   }
 }
 
@@ -253,9 +255,11 @@ void VirtualMachine::afterGR(GR gr) {
     _currentSpace = _topLevelSpace;
   }
 
-  for (auto iter = aliveThreads.begin();
-       iter != aliveThreads.end(); ++iter) {
-    (*iter)->afterGR();
+  for (auto iter = threads.begin();
+       iter != threads.end(); ++iter) {
+    Runnable* runnable = static_cast<Runnable*>(*iter);
+    if (runnable->isAlive())
+      runnable->afterGR();
   }
 }
 
@@ -298,7 +302,7 @@ void VirtualMachine::startGC(GC gc, MemoryManager& secondMemoryManager) {
 
   // Forget lists of things
   atomTable = AtomTable();
-  aliveThreads = RunnableList();
+  threads = RunnableList();
   _alarms = VMAllocatedList<AlarmRecord>();
   rootGlobalNode = nullptr;
 

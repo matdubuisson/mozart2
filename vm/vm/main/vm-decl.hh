@@ -997,7 +997,7 @@ private:
   NodeDictionary* _builtinModules;
   PropertyRegistry _propertyRegistry;
 
-  RunnableList aliveThreads;
+  RunnableList threads;
   VMCleanupListNode* _cleanupList;
 
   GarbageCollector gc;

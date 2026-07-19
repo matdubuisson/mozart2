@@ -107,7 +107,7 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
 
   _space->notifyThreadCreated();
 
-  vm->aliveThreads.insert(this);
+  vm->threads.insert(this);
   vm->journal.announceRunnable(this,
     VirtualMachineJournal::RunnableAnnounce::Inserted);
 }
@@ -130,7 +130,7 @@ Runnable::Runnable(GR gr, Runnable& from) :
   _reification.init(vm, ReifiedThread::build(vm, this));
 
   if (!_dead) {
-    vm->aliveThreads.insert(this);
+    vm->threads.insert(this);
   }
 }
 
@@ -266,7 +266,7 @@ void Runnable::dispose() {
   _runnable = false;
   _dead = true;
 
-  vm->aliveThreads.remove(this);
+  // vm->threads.remove(this);
   vm->journal.announceRunnable(this,
     VirtualMachineJournal::RunnableAnnounce::Removed);
 }
