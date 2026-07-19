@@ -8,18 +8,26 @@ local
   % Aggregate options
 
   proc {DisplayOptions}
-    {PrintInfo "threads\tdisplay counters related to threads"}
-    {PrintInfo "nodes\tdisplay counters related to nodes"}
-    {PrintInfo "variables\tdisplay counters related to variables"}
+    {DisplayNameDescriptions
+      ["threads" "nodes" "variables"]
+      [
+        "display counters related to threads"
+        "display counters related to nodes"
+        "display counters related to variables"
+      ]}
   end
 
   % Threads aggregates
 
   proc {DisplayThreadsOptions}
-    {PrintInfo "active\tdisplay active threads counter"}
-    {PrintInfo "passive\tdisplay passive threads counter"}
-    {PrintInfo "total\tdisplay total threads counter"}
-    {PrintInfo "all\tdisplay all threads counters"}
+    {DisplayNameDescriptions
+      ["active" "passive" "total" "all"]
+      [
+        "display active threads counter"
+        "display passive threads counter"
+        "display total threads counter"
+        "display all threads counters"
+      ]}
   end
 
   proc {HandleThreadsOption Arguments}
@@ -69,24 +77,31 @@ local
   % Nodes aggregates
 
   proc {DisplayNodesOptions}
-   {PrintInfo "variable\tdisplay the counter of nodes behaving as variables"}
-   {PrintInfo "value\tdisplay the counter of nodes behaving as values"}
-   {PrintInfo "structural\tdisplay the counter of nodes behaving as structures"}
-   {PrintInfo "token\tdisplay the counter of nodes behaving as tokens"}
+    {DisplayNameDescriptions
+      [
+        "variable" "value" "structural" "token"
+        "stable" "unstable"
+        "x" "y" "g" "k"
+        "stackDepth" "total" "all"
+      ]
+      [
+        "display the counter of nodes behaving as variables"
+        "display the counter of nodes behaving as values"
+        "display the counter of nodes behaving as structures"
+        "display the counter of nodes behaving as tokens"
 
-   {PrintInfo "stable\tdisplay the stable nodes counter"}
-   {PrintInfo "unstable\tdisplay the unstable nodes counter"}
+        "display the stable nodes counter"
+        "display the unstable nodes counter"
 
-   {PrintInfo "x\tdisplay the counter of nodes stored inside X registers"}
-   {PrintInfo "y\tdisplay the counter of nodes stored inside Y registers"}
-   {PrintInfo "g\tdisplay the counter of nodes stored inside G registers"}
-   {PrintInfo "k\tdisplay the counter of nodes stored inside K registers"}
+        "display the counter of nodes stored inside X registers"
+        "display the counter of nodes stored inside Y registers"
+        "display the counter of nodes stored inside G registers"
+        "display the counter of nodes stored inside K registers"
 
-   {PrintInfo "stackDepth\tdisplay the depth of YGK registers, for several threads it is a sum of all"}
-
-   {PrintInfo "total\tdisplay the total count of nodes from anywhere and of any type"}
-
-   {PrintInfo "all\tdisplay every counter related to notes"}
+        "display the depth of YGK registers, for several threads it is a sum of all"
+        "display the total count of nodes from anywhere and of any type"
+        "display every counter related to nodes"
+      ]}
   end
 
   proc {HandleNodesOption Arguments}
@@ -205,10 +220,16 @@ local
   % Variables aggregates
 
   proc {DisplayVariablesOptions}
-    {PrintInfo "bound\tdisplay the number of bound variables (still garbage collected yet)"}
-    {PrintInfo "unbound\tdisplay the number of unbound variables (still garbage collected yet)"}
-    {PrintInfo "total\tdisplay the number of variables (still garbage collected yet)"}
-    {PrintInfo "all\tdisplay every counter related to variables"}
+    {DisplayNameDescriptions
+      ["REMARK:" "bound" "unbound" "total" "all"]
+      [
+        "All garbage collected variables are not parts of the aggregates"
+
+        "display the number of bound variables"
+        "display the number of unbound variables"
+        "display the number of variables"
+        "display every counter related to variables"
+      ]}
   end
 
   proc {HandleVariablesOption Arguments}

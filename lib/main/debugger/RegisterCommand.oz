@@ -48,9 +48,9 @@ local
     end
 
     {MaskedDisplayCSV
-      ["Name" "BindingPriority" "StructuralBehavior" "Copyable" "Transient" "Feature" "UUID" "Value"]
+      ["Id" "Name" "BindingPriority" "StructuralBehavior" "Copyable" "Transient" "Feature" "UUID" "Value"]
       Nodes 20 FormatNode
-      [true true true true true true true false]}
+      [true true true true true true true true false]}
   end
 
   proc {HandleOption Type Arguments}

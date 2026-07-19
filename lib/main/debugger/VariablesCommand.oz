@@ -1,9 +1,19 @@
 local
   proc {DisplayOptions}
-    {PrintInfo "state (optional: <id0> .... <idN>)\tdisplays variables' states"}
-    {PrintInfo "pendings (optional: <id0> .... <idN>)\tdisplays pending threads on the variable"}
-    {PrintInfo "candidates (optional: <id0> .... <idN>)\tdisplays candidate threads to bind the variable"}
-    {PrintInfo "value (optional: <id0> .... <idN>)\tdisplays variables' values"}
+    {DisplayNameDescriptions
+      [
+        "state (optional: <id0> .... <idN>)"
+        "pendings (optional: <id0> .... <idN>)"
+        "candidates (optional: <id0> .... <idN>)"
+        "value (optional: <id0> .... <idN>)"
+      ]
+      [
+        "displays variables' states"
+        "displays pending threads on the variable"
+        "displays candidate threads to bind the variable"
+        "displays variables' values"
+      ]
+    }
   end
 
   proc {FormatStateCase Variable ?Result}
@@ -123,35 +133,26 @@ local
   end
 
   proc {HandleOption Arguments Aggregate}
-    proc {ForEach I Arguments Ids}
-      case Arguments#Ids of nil#nil then skip
-      [] (Argument|NextArguments)#(Id|NextIds) then
-        if Id == none then
-          {PrintIndexedWrongArgumentError I "id" "integer" Argument}
-        else
-          Thread = {Boot_Introspection.getThread Id $}
+    proc {Execute I Id}
+      if {ValidId Id $} then
+        Thread = {GetThreadFromId Id $}
+      in
+        if Thread \= none then
+          Variables = {Boot_Introspection.getThreadVariables Thread $}
         in
-          if Thread == none then
-            {PrintThreadNotFoundError Id}
-          else
-            Variables = {Boot_Introspection.getThreadVariables Thread $}
-          in
-            {HandleCase Aggregate Variables}
-          end
+          {HandleCase Aggregate Variables}
         end
-
-        {ForEach I + 1 NextArguments NextIds}
-      end
+      else {PrintInvalidIdError I} end
     end
   in
     if Arguments == nil then
-      Variables = {Boot_Introspection.getAllVariables 0 ~1 $}
+      Variables = {Boot_Introspection.getAllVariables $}
     in
       {HandleCase Aggregate Variables}
     else
       Ids = {ExtractInputs int Arguments none $}
     in
-      {ForEach 0 Arguments Ids}
+      {ForEachI Ids Execute}
     end
   end
 in

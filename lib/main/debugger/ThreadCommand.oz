@@ -1,25 +1,20 @@
 local
   proc {DisplayOptions}
-    {PrintInfo "<id0> .... <idN>\tdisplay the state of one or several thread(s) specified by their id"}
+    {DisplayNameDescriptions
+      ["<id0> .... <idN>"]
+      [
+        "display the state of one or several thread(s) specified by their id"
+      ]}
   end
 
-  proc {ForEach I Arguments Ids}
-    case Arguments#Ids of nil#nil then skip
-    [] (Argument|NextArguments)#(Id|NextIds) then
-      if Id == none then
-        {PrintIndexedWrongArgumentError I "id" "integer" Argument}
-      else
-        Thread = {Boot_Introspection.getThread Id $}
-      in
-        if Thread == none then
-          {PrintThreadNotFoundError Id}
-        else
-          {DisplayThread "" Thread}
-        end
+  proc {Execute I Id}
+    if {ValidId Id $} then
+      Thread = {GetThreadFromId Id $}
+    in
+      if Thread \= none then
+        {DisplayThread "" Thread}
       end
-
-      {ForEach I + 1 NextArguments NextIds}
-    end
+    else {PrintInvalidIdError I} end
   end
 in
   case Arguments of nil then
@@ -29,6 +24,6 @@ in
   else
     Ids = {ExtractInputs int Arguments none $}
   in
-    {ForEach 0 Arguments Ids}
+    {ForEachI Ids Execute}
   end
 end

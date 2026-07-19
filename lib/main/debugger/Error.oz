@@ -1,3 +1,7 @@
+proc {PrintInvalidIdError Index}
+  {PrintError "Invalid provided "#{Int.toString Index $}#"th id"}
+end
+
 proc {PrintMissingArgumentError What Type}
   {PrintError "Provided "#What#" requires a parameter of type "#Type#TRYHELP}
 end
@@ -15,5 +19,9 @@ proc {PrintIndexedWrongArgumentError Index What Type Argument}
 end
 
 proc {PrintThreadNotFoundError Id}
-  {PrintError "Thread "#Id#" does not exist"}
+  {PrintError "Thread "#Id#" does not exist or has been garbage collected"}
+end
+
+proc {PrintVariableNotFoundError Id}
+  {PrintError "Variable "#Id#" does not exist or has been garbage collected"}
 end

@@ -1,42 +1,31 @@
 local
   proc {DisplayOptions}
-    {PrintInfo "<id0> .... <idN>\tdisplay the stack depth of one or several thread(s) specified by their id"}
+    {DisplayNameDescriptions
+      ["<id0> .... <idN>"]
+      [
+        "display the stack depth of one or several thread(s) specified by their id"
+      ]}
   end
 
-  proc {FindAndDisplayThread IdString}
-    Id
-  in
-    try
-      Id = {String.toInt IdString $}
-    catch _ then
-      Id = none
-    end
-
-    if Id == none then
-      {PrintError "Argument '"#IdString#"' is not an id"}
-    else
-      Th = {Boot_Introspection.getThread Id $}
+  proc {Execute I Id}
+    if {ValidId Id $} then
+      Thread = {GetThreadFromId Id $}
     in
-      if Th == none then
-        {PrintError "Thread "#Id#" does not exist"}
-      else
-        {PrintInfo "Thread "#Id#" stack depth: "#
-          {Boot_Introspection.getThreadStackDepth Th $}}
+      if Thread \= none then
+        Depth = {Boot_Introspection.getThreadStackDepth Thread $}
+      in
+        {PrintInfo "Thread "#Id#" stack depth: "#Depth}
       end
-    end
-  end
-
-  proc {ForEach Arguments}
-    case Arguments of nil then skip
-    [] Argument|NextArguments then
-      {FindAndDisplayThread Argument}
-      {ForEach NextArguments}
-    end
+    else {PrintInvalidIdError I} end
   end
 in
   case Arguments of nil then
     {DisplayOptions}
+  [] "help"|_ then
+    {DisplayOptions}
   else
-    {ForEach Arguments}
+    Ids = {ExtractInputs int Arguments none $}
+  in
+    {ForEachI Ids Execute}
   end
 end

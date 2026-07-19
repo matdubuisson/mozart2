@@ -1,6 +1,14 @@
 local
-  proc {DisplayMainOptions}
-    skip
+  proc {DisplayOptions}
+    {DisplayNameDescriptions
+      ["variable" "structural" "token" "value" "all"]
+      [
+        "display all nodes with variable behavior variable"
+        "display all nodes with structural behavior structural"
+        "display all nodes with token behavior token"
+        "display all nodes with value behavior value"
+        "display all nodes with any structural behavior"
+      ]}
   end
 
   proc {HandleOption Type Arguments}
@@ -8,19 +16,22 @@ local
     Nodes
   in
     {ExtractFromTo Arguments 0 100 From To}
-    Nodes = {Boot_Introspection.getNodes Type From To}
 
-    {MaskedDisplayCSV
-      ["Name" "BindingPriority" "StructuralBehavior" "Copyable" "Transient" "Feature" "UUID" "Value"]
-      Nodes 20 FormatNode
-      [true true true true true true true false]}
+    local
+      Nodes = {Boot_Introspection.getNodes Type From To}
+    in
+      {MaskedDisplayCSV
+        ["Id" "Name" "BindingPriority" "StructuralBehavior" "Copyable" "Transient" "Feature" "UUID" "Value"]
+        Nodes 20 FormatNode
+        [true true true true true true true true false]}
+    end
   end
 in
   case Arguments of nil then
-    {DisplayMainOptions}
+    {DisplayOptions}
   [] Argument|NextArguments then
     case Argument of "help" then
-      {DisplayMainOptions}
+      {DisplayOptions}
     [] "all" then
       {HandleOption all NextArguments}
     [] "variable" then

@@ -2,96 +2,56 @@ local
   % Common configuration for all aggregates
 
   proc {DisplayOptions}
-    {PrintInfo "state\tdisplay the state for each thread"}
-    {PrintInfo "statistics\tdisplay the statistics for each thread"}
-    {PrintInfo "nodes\tdisplay the nodes for each thread"}
+    {DisplayNameDescriptions
+      ["state" "statistics" "nodes"]
+      [
+        "display the state for each thread"
+        "display the statistics for each thread"
+        "display the nodes for each thread"
+      ]}
   end
 
-  proc {FormatThreadState State ?Result}
-    case State of state(
-      id: Id
-      kindId: KindId
-      generationId: GenerationId
-
-      priority: Priority
-      type: Type
-
-      runnable: Runnable
-      terminated: Terminated
-      dead: Dead
-      preempted: Preempted
-      preemptible: Preemptible
-    ) then
-      Result = [
-        {Int.toString Id $}
-        {Int.toString KindId $}
-        {Int.toString GenerationId $}
-
-        {Atom.toString Priority $}
-        {Atom.toString Type $}
-
-        {Bool.toString Runnable $}
-        {Bool.toString Terminated $}
-        {Bool.toString Dead $}
-        {Bool.toString Preempted $}
-        {Bool.toString Preemptible $}
-      ]
-    end
+  proc {HandleStateOption From To}
+    States = {Boot_Introspection.getAllThreadStates From To $}
+  in
+    {DisplayCSV
+      ["Id" "KindId" "GenerationId" "Priority" "Type" "Runnable" "Terminated" "Dead" "Preempted" "Preemptible"]
+      States
+      12
+      FormatThreadState}
   end
 
-  proc {FormatThreadStatistics Statistics ?Result}
-    case Statistics of statistics(
-      id: Id
-      runsCount: RunsCount
-      resumesCount: ResumesCount
-      suspendsCount: SuspendsCount
-      suspendsOnVarCount: SuspendsOnVarCount
-      operationsCount: OperationsCount
-      bindsCount: BindsCount
-    ) then
-      Result = [
-        {Int.toString Id $}
-        {Int.toString RunsCount $}
-        {Int.toString ResumesCount $}
-        {Int.toString SuspendsCount $}
-        {Int.toString SuspendsOnVarCount $}
-        {Int.toString OperationsCount $}
-        {Int.toString BindsCount $}
-      ]
-    end
+  proc {HandleStatisticsOption From To}
+    Statistics = {Boot_Introspection.getAllThreadStatistics From To $}
+  in
+    {DisplayCSV
+      ["Id" "RunsCount" "ResumesCount" "SuspendsCount" "SuspendsOnVarCount" "OperationsCount" "BindsCount"]
+      Statistics
+      12
+      FormatThreadStatistics}
   end
 
-  proc {FormatThreadNodesCounts NodesCounts ?Result}
-    case NodesCounts of nodes(
-      id: Id
-      variableNodesCount: VariableNodesCount
-      valueNodesCount: ValueNodesCount
-      structuralNodesCount: StructuralNodesCount
-      tokenNodesCount: TokenNodesCount
-      stableNodesCount: StableNodesCount
-      unstableNodesCount: UnstableNodesCount
-      xNodesCount: XNodesCount
-      yNodesCount: YNodesCount
-      gNodesCount: GNodesCount
-      kNodesCount: KNodesCount
-      stackDepth: StackDepth
-      nodesCount: NodesCount
-    ) then
-      Result = [
-        {Int.toString Id $}
-        {Int.toString VariableNodesCount $}
-        {Int.toString ValueNodesCount $}
-        {Int.toString StructuralNodesCount $}
-        {Int.toString TokenNodesCount $}
-        {Int.toString StableNodesCount $}
-        {Int.toString UnstableNodesCount $}
-        {Int.toString XNodesCount $}
-        {Int.toString YNodesCount $}
-        {Int.toString GNodesCount $}
-        {Int.toString KNodesCount $}
-        {Int.toString StackDepth $}
-        {Int.toString NodesCount $}
-      ]
+  proc {HandleNodesOption From To}
+    Nodes = {Boot_Introspection.getAllThreadNodesCounts From To $}
+  in
+    {DisplayCSV
+      ["Id" "Variables" "Values" "Structures" "Tokens" "Stable" "Unstable" "X" "Y" "G" "K" "StackDepth" "Total"]
+      Nodes
+      12
+      FormatThreadNodesCounts}
+  end
+
+  proc {HandleOption Option Arguments}
+    From To
+  in
+    {ExtractFromTo Arguments 0 100 From To}
+
+    case Option of state then
+      {HandleStateOption From To}
+    [] statistics then
+      {HandleStatisticsOption From To}
+    [] nodes then
+      {HandleNodesOption From To}
     end
   end
 in
@@ -101,25 +61,11 @@ in
     case Argument of "help" then
       {DisplayOptions}
     [] "state" then
-      States = {Boot_Introspection.getAllThreadStates 0 100000 $}
-    in
-      {DisplayCSV
-        ["Id" "KindId" "GenerationId" "Priority" "Type" "Runnable" "Terminated" "Dead" "Preempted" "Preemptible"]
-        States
-        12
-        FormatThreadState}
+      {HandleOption state NextArguments}
     [] "statistics" then
-      {DisplayCSV
-        ["Id" "RunsCount" "ResumesCount" "SuspendsCount" "SuspendsOnVarCount" "OperationsCount" "BindsCount"]
-        {Boot_Introspection.getAllThreadStatistics 0 100000 $}
-        12
-        FormatThreadStatistics}
+      {HandleOption statistics NextArguments}
     [] "nodes" then
-      {DisplayCSV
-        ["Id" "Variables" "Values" "Structures" "Tokens" "Stable" "Unstable" "X" "Y" "G" "K" "StackDepth" "Total"]
-        {Boot_Introspection.getAllThreadNodesCounts 0 100000 $}
-        12
-        FormatThreadNodesCounts}
+      {HandleOption nodes NextArguments}
     else
       {PrintUnexpectedOptionError Argument}
     end

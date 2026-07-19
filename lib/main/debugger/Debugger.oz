@@ -35,6 +35,7 @@ define
   Boot_Journal = {Boot.getInternal 'Journal'}
   Boot_Scheduler = {Boot.getInternal 'Scheduler'}
 
+  TAB = "\t"
   TRYHELP = ", try help to get more details"
 
   % All printers to display runtime data, infos and errors
@@ -44,9 +45,11 @@ define
 
   \insert Displaying
   
-  \insert Interface
+  \insert Extract
 
   \insert Format
+
+  \insert Util
 
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
@@ -156,6 +159,8 @@ define
           \insert AlarmCommand
         [] "nodes" then
           \insert NodesCommand
+        [] "lists" then
+          \insert ListsCommand
         else
           {PrintError "Unknown command '"#Command#"'"#TRYHELP}
         end
@@ -191,6 +196,9 @@ define
     {Loop NewState AlarmsCell WatchCell}
   end
 in
+
+
+
   
   {Loop state() {Cell.new nil $} {Cell.new nil $}}
 end
