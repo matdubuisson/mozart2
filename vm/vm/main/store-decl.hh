@@ -241,7 +241,7 @@ class TypedRichNode {
 class RichNode {
 public:
   /** Instantiates a new rich node */
-  RichNode() {}
+  RichNode(): _node(nullptr), _isStable(false) {}
 
   /**
    * Instantiates a new rich node with a reference of a stable node
@@ -292,6 +292,14 @@ public:
   __attribute__((always_inline))
   MemWord value() {
     return node()->value();
+  }
+
+  template<typename T>
+  __attribute__((always_inline))
+  T getAs() {
+    assert(node() != nullptr);
+    assert(is<T>());
+    return Accessor<T>::get(value());
   }
 
   __attribute__((always_inline))
