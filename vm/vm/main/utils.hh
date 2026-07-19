@@ -249,7 +249,7 @@ auto ozListForEach(VM vm, RichNode list, const F& f,
 size_t ozListLength(VM vm, RichNode list) {
   size_t result = 0;
 
-  UnstableNode nextList;
+  // UnstableNode nextList;
 
   while (true) {
     using namespace patternmatching;
@@ -261,6 +261,26 @@ size_t ozListLength(VM vm, RichNode list) {
       list = tail;
     } else if (matches(vm, list, vm->coreatoms.nil)) {
       return result;
+    } else {
+      raiseTypeError(vm, "list", list);
+    }
+  }
+}
+
+size_t ozListHash(VM vm, RichNode list) {
+  size_t hash = 0;
+  std::hash<size_t> hasher;
+
+  while (true) {
+    using namespace patternmatching;
+
+    hash = hasher(hash + list.getId());
+    RichNode tail;
+
+    if (matchesCons(vm, list, wildcard(), capture(tail))) {
+      list = tail;
+    } else if (matches(vm, list, vm->coreatoms.nil)) {
+      return hash;
     } else {
       raiseTypeError(vm, "list", list);
     }
