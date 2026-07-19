@@ -90,7 +90,7 @@ void VirtualMachine::scheduleThread(bool isSystem) {
 
 void VirtualMachine::scheduleSystemThreads() {
   threadPool.resetSchedule(tpSystem);
-  size_t n = threadPool.getRunnableCount(tpSystem);
+  size_t n = threadPool.getRunnableCount(true);
   while (n-- > 0)
     scheduleThread(true);
 

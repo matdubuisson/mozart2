@@ -50,7 +50,7 @@ Introspection::OperationArgument getData(
     case AT::Y: return {vm, type, index, YPC(index)};
     case AT::G: return {vm, type, index, GPC(index)};
     case AT::K: return {vm, type, index, KPC(index)};
-    default: assert(false);
+    default: assert(false); return {vm, type, 0, 0};
   }
 
 #undef IntPC
@@ -67,15 +67,13 @@ Introspection::Operation Introspection::getNextExecutedOperation(VM vm, bool inc
 
   Operation operation(OpSkip);
 
-  if (Thread* thread = dynamic_cast<Thread*>(vm, runnable)) {
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
     StackEntry& entry = thread->stack.front();
     assert(!entry.isExceptionHandler());
 
     XRegArray* const xregs = &thread->xregs;
 
-    StableNode* abstraction = entry.abstraction;
     ProgramCounter PC = entry.PC;
-    size_t yregCount = entry.yregCount;
     StaticArray<UnstableNode> yregs = entry.yregs;
     StaticArray<StableNode> gregs = entry.gregs;
     StaticArray<StableNode> kregs = entry.kregs;
@@ -324,7 +322,6 @@ Introspection::Operation Introspection::getNextExecutedOperation(VM vm, bool inc
 
         size_t argc = IntPC(2);
 
-        UnstableNode* args[argc];
         for (size_t i = 0; i < argc; i++)
           ARG(X, 3 + i);
 
@@ -626,24 +623,20 @@ Introspection::Operation Introspection::getNextExecutedOperation(VM vm, bool inc
       case OpCreateRecordUnifyK: NAME("CreateRecordUnifyK"); goto OpCreate;
 
       OpCreate: {
-        auto what = op & OpCreateStructWhatMask;
         auto where = op & OpCreateStructWhereMask;
 
-        bool isStoreMode;
-        UnstableNode* writeDest = nullptr;
+        bool isStoreMode = false;
         RichNode readDest = nullptr;
 
         switch (where) {
           case OpCreateStructStoreX: {
             isStoreMode = true;
-            writeDest = &XPC(3);
             ARG(X, 3);
             break;
           }
 
           case OpCreateStructStoreY: {
             isStoreMode = true;
-            writeDest = &YPC(3);
             ARG(Y, 3);
             break;
           }

@@ -130,6 +130,7 @@ public:
       case tpSystem: remainings[tpSystem] = queues[tpSystem].size(); break;
       case tpHi: remainings[tpHi] = HiToMiddlePriorityRatio; break;
       case tpMiddle: remainings[tpMiddle] = MiddleToLowPriorityRatio; break;
+      case tpLow: case tpCount: break;
     }
   }
 

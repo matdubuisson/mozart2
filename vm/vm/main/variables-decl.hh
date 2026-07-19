@@ -50,9 +50,8 @@ public:
    * @param vm The virtual machine in which the variable base is being created
    * @note By default the variable is not needed
    */
-  explicit VariableBase(VM vm): WithHome(vm), _needed(false), _bound(false),
-    _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {
-  }
+  explicit VariableBase(VM vm): WithHome(vm), _id(_everCreatedVariablesCount++),
+    _needed(false), _bound(false) {}
 
   /**
    * Declares a new variable base
@@ -60,8 +59,8 @@ public:
    * @param home The home space of the variable base
    * @note By default the variable is not needed
    */
-  VariableBase(VM vm, Space* home): WithHome(home), _needed(false), _bound(false),
-    _id(_everCreatedVariablesCount++), _kindId(0), _generationId(0) {}
+  VariableBase(VM vm, Space* home): WithHome(home), _id(_everCreatedVariablesCount++),
+    _needed(false), _bound(false) {}
 
   /**
    * Declares a new variable base with copies of the provided variable's pendings
@@ -77,16 +76,6 @@ public:
    * variable ever created
    */
   size_t getId() { return _id; }
-
-  /** @returns The variable kind id representing from which code this variable
-   * has been generated
-   */
-  size_t getKindId() { return _kindId; }
-
-  /** @returns The variable generation id representing the nth variable generated
-   * from the same code
-   */
-  size_t getGenerationId() { return _generationId; }
 
 public:
   // DataflowVariable interface
@@ -146,8 +135,6 @@ protected:
   inline
   void doBind(RichNode self, VM vm, RichNode src);
 
-protected:
-  const size_t _id, _kindId, _generationId;
 private:
   friend class Introspection;
 
@@ -180,6 +167,9 @@ private:
   inline
   void wakeUpPendingsSubSpace(VM vm, Space* currentSpace);
 
+protected:
+  const size_t _id;
+private:
   VMAllocatedList<StableNode*> pendings;
 
   /* TODO maybe we can squeeze this bit of information into pendings

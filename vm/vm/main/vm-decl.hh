@@ -189,7 +189,7 @@ public:
       case RunnableAnnounce::Removed: return removedRunnables;
       case RunnableAnnounce::Updated: return updatedRunnables;
       case RunnableAnnounce::Collected: return collectedRunnables;
-      default: assert(false);
+      default: assert(false); return insertedRunnables;
     }
   }
 public:
@@ -342,7 +342,7 @@ private:
       case VariableAnnounce::Created: return vector.createds;
       case VariableAnnounce::Collected: return vector.collecteds;
       case VariableAnnounce::Needed: return vector.neededs;
-      default: assert(false);
+      default: assert(false); return vector.createds;
     }
   }
 
@@ -834,6 +834,8 @@ public:
         else _executionCounter = 0;
         break;
       }
+      case OperationByOperation: break;
+      case Normal: default: break;
     }
 
     if (_executionCounter == 0)
@@ -848,6 +850,8 @@ public:
     switch (_executionMode) {
       case LimitedOperations: return _executionCounter;
       case OperationByOperation: return 1;
+      case LimitedSchedules:
+      case Normal:
       default: return SIZE_MAX;
     }
   }
@@ -861,11 +865,7 @@ public:
   }
 
   bool testLimitedOperationsExecutionMode() {
-    switch (_executionMode) {
-      case LimitedOperations:
-        return true;
-      default: return false;
-    }
+    return _executionMode == LimitedOperations;
   }
 
   bool testOperationByOperationExecutionMode() {

@@ -96,12 +96,12 @@ void IntermediateState::rewind(VM vm) {
 //////////////
 
 Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
-  vm(vm), _space(space), _priority(priority),
+  vm(vm),  _id(_everCreatedThreadsCount++),
+  _kindId(0), _generationId(0), _space(space), _priority(priority),
   _runnable(false), _terminated(false),
   _dead(false), _preempted(false), _preemptible(true),
   _raiseOnBlock(false), _intermediateState(vm),
-  _replicate(nullptr), _id(_everCreatedThreadsCount++),
-  _kindId(0), _generationId(0) {
+  _replicate(nullptr) {
 
   _reification.init(vm, ReifiedThread::build(vm, this));
 
@@ -113,9 +113,10 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
 }
 
 Runnable::Runnable(GR gr, Runnable& from) :
-  vm(gr->vm), _intermediateState(vm, gr, from._intermediateState),
-  _replicate(nullptr), _id(from._id),
-  _kindId(0), _generationId(0) {
+  vm(gr->vm),  _id(_everCreatedThreadsCount++),
+  _kindId(0), _generationId(0),
+  _intermediateState(vm, gr, from._intermediateState),
+  _replicate(nullptr) {
 
   gr->copySpace(_space, from._space);
   _priority = from._priority;

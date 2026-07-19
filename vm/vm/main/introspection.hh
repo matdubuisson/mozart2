@@ -129,7 +129,7 @@ size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
       return entry.gregs.size();
     } case kRegister: {
       return entry.kregs.size();
-    } default: assert(false);
+    } default: assert(false); return 0;
   }
 }
 
@@ -279,7 +279,7 @@ RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRe
       StaticArray<StableNode> kregs = entry.kregs;
       assert(index < kregs.size());
       return RichNode(kregs[index]);
-    } default: assert(false);
+    } default: assert(false); return RichNode(nullptr);
   }
 }
 
@@ -304,7 +304,7 @@ void doForEachNodeFromStaticArray(VM vm, Runnable* runnable, StaticArray<T> arra
 inline
 void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
   size_t depth, size_t from, size_t to, NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
-
+    
   if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
     assert(depth < thread->stack.size());
     StackEntry& entry = thread->stack[depth];
@@ -358,7 +358,10 @@ bool Introspection::isBoundVariable(VM vm, RichNode node) {
   else if (node.is<ReadOnlyVariable>())
     return _isBoundVariable<ReadOnlyVariable>(vm, node);
   else if (node.is<FailedValue>()) return false;
-  else assert(false);
+  else {
+    assert(false);
+    return false;
+  }
 }
 
 template<typename T>
@@ -380,7 +383,10 @@ bool Introspection::isNeededVariable(VM vm, RichNode node) {
     return _isNeededVariable<ReadOnlyVariable>(vm, node);
   else if (node.is<FailedValue>())
     return _isNeededVariable<FailedValue>(vm, node);
-  else assert(false);
+  else {
+    assert(false);
+    return false;
+  }
 }
 
 template<typename T>
@@ -399,7 +405,10 @@ bool Introspection::isWaitedVariable(VM vm, RichNode node) {
   else if (node.is<ReadOnlyVariable>())
     return _isWaitedVariable<ReadOnlyVariable>(vm, node);
   else if (node.is<FailedValue>()) return false;
-  else assert(false);
+  else {
+    assert(false);
+    return false;
+  }
 }
 
 /* ========== Variables counters ========== */
@@ -544,6 +553,8 @@ Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm, Runnab
     if (node.is<Record>())
       counts.recordsCount++;
   });
+
+  return counts;
 }
 
 inline

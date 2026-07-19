@@ -535,7 +535,7 @@ public:
       case sbValue: return "value";
       case sbStructural: return "structural";
       case sbTokenEq: return "tokenEq";
-      default: assert(false);
+      default: assert(false); return "";
     }
   }
 
@@ -889,7 +889,6 @@ public:
     GetThreadYNodesRegisterSize(): Builtin("getThreadYNodesRegisterSize") {}
 
     static void call(VM vm, In threadNode, In depthNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
       result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
         NodesRegister::yRegister);
     }
@@ -900,7 +899,6 @@ public:
     GetThreadGNodesRegisterSize(): Builtin("getThreadGNodesRegisterSize") {}
 
     static void call(VM vm, In threadNode, In depthNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
       result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
         NodesRegister::gRegister);
     }
@@ -911,7 +909,6 @@ public:
     GetThreadKNodesRegisterSize(): Builtin("getThreadKNodesRegisterSize") {}
 
     static void call(VM vm, In threadNode, In depthNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
       result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
         NodesRegister::kRegister);
     }
@@ -921,7 +918,6 @@ public:
 
   static inline
   UnstableNode buildNodeRecord(VM vm, RichNode node) {
-    Introspection& introspection = vm->getIntrospection();
     Type type = node.type();
 
     return buildRecord(vm,
@@ -1174,8 +1170,9 @@ public:
         Introspection::allRunnables,
         filter,
         [&builder, from, to, &i](VM vm, Runnable* _, RichNode node) {
-          if (i >= from && i < to) // TODO Ugly make it better
+          if (i >= from && i < to) { // TODO Ugly make it better
             builder.push_back(vm, buildNodeRecord(vm, node));
+          }
           i++;
         }
       );
@@ -1221,7 +1218,7 @@ public:
   static inline
   void buildVariablePendingsList(VM vm, OzListBuilder& builder,
     VMAllocatedList<StableNode*>& pendings) {
-    for (int i = 0; i < pendings.size(); i++) {
+    for (size_t i = 0; i < pendings.size(); i++) {
       RichNode node = RichNode(*pendings[i]);
       if (node.is<ReifiedThread>()) {
         Runnable* runnable = getArgument<Runnable*>(vm, node);
@@ -1237,8 +1234,8 @@ public:
 
     RichNode& node = variableCandidates.node;
 
-    size_t id;
-    bool isBound, isNeeded;
+    size_t id = 0;
+    bool isBound = false, isNeeded = false;
     std::string type = node.type()->getName();
     std::string representation = nodeToString(vm, node);
 
