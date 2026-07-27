@@ -242,7 +242,7 @@ Cons::Cons(VM vm) {
   _elements[1].init(vm);
 }
 
-Cons::Cons(VM vm, GR gr, Cons& from) {
+Cons::Cons(VM vm, GR gr, Cons& from) : Identifiable(from) {
   gr->copyStableNode(_elements[0], from._elements[0]);
   gr->copyStableNode(_elements[1], from._elements[1]);
 }

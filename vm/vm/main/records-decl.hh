@@ -181,7 +181,7 @@ private:
  * Cons (specialization of Tuple with label '|' and width 2)
  */
 class Cons: public DataType<Cons>, public IntegerDottableHelper<Cons>,
-  WithStructuralBehavior {
+  WithStructuralBehavior, public Identifiable {
 public:
   static atom_t getTypeAtom(VM vm) {
     return vm->coreatoms.tuple;

@@ -298,6 +298,10 @@ public:
     return _terminationVar;
   }
 
+  OpCode getLastOpCode() {
+    return _lastOpCode;
+  }
+
   Statistics getStatistics() {
     return _statistics;
   }
@@ -588,6 +592,7 @@ private:
   StableNode* injectedException;
   StableNode _terminationVar;
 
+  OpCode _lastOpCode;
   Statistics _statistics;
 };
 

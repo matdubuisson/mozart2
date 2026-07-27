@@ -357,7 +357,18 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
 
     // The big loop
 
-    while (!isPreempted() && instructionsNumber < maxInstructionsNumber) {
+    while (
+      !isPreempted()
+      && instructionsNumber < maxInstructionsNumber
+      && !vm->testEarlyPreemptionRequested()
+    ) {
+      // if (!vm->getJournal().empty(
+      //   VirtualMachineJournal::VariableAnnounce::Bind
+      // )) {
+      //   std::cout << "V bound" << std::endl;
+      //   break;
+      // }
+
       instructionsNumber++;
       _statistics.operationsCount++;
 

@@ -93,6 +93,25 @@ public:
     }
   };
 
+  class GetSystemSchedulesCounter: public Builtin<GetSystemSchedulesCounter> {
+  public:
+    GetSystemSchedulesCounter(): Builtin("getSystemSchedulesCounter") {}
+
+    static void call(VM vm, Out result) {
+      Introspection& introspection = vm->getIntrospection();
+      result = build(vm, introspection.getSystemSchedulesCounter(vm));
+    }
+  };
+
+  class GetSystemOperationsCounter: public Builtin<GetSystemOperationsCounter> {
+  public:
+    GetSystemOperationsCounter(): Builtin("getSystemOperationsCounter") {}
+
+    static void call(VM vm, Out result) {
+      Introspection& introspection = vm->getIntrospection();
+      result = build(vm, introspection.getSystemOperationsCounter(vm));
+    }
+  };
 
   class GetNextScheduledThread: public Builtin<GetNextScheduledThread> {
   public:
@@ -1215,11 +1234,13 @@ public:
 
   // Variables getters
 
+  using Pendings = VMAllocatedList<StableNode*>;
+
   static inline
   void buildVariablePendingsList(VM vm, OzListBuilder& builder,
-    VMAllocatedList<StableNode*>& pendings) {
-    for (size_t i = 0; i < pendings.size(); i++) {
-      RichNode node = RichNode(*pendings[i]);
+    Pendings& pendings) {
+    for (Pendings::iterator iter = pendings.begin(); iter != pendings.end(); ++iter) {
+      RichNode node = RichNode(*static_cast<StableNode*>(*iter));
       if (node.is<ReifiedThread>()) {
         Runnable* runnable = getArgument<Runnable*>(vm, node);
         builder.push_back(vm, build(vm, runnable->getId()));
@@ -1343,28 +1364,85 @@ public:
     }
   };
 
+  /* ========== Reachability graph ========== */
+
+  static inline
+  UnstableNode buildReachabilityMapRecord(VM vm, Introspection::IdToIdsMap& map) {
+    // for (Introspection::IdToIdsMap::iterator iter = map.begin();
+    //   iter != map.end(); ++iter) {
+    //   size_t fromId = iter->first;
+    //   Introspection::IdsVector vector = iter->second;
+    //   char numbers[vector.size()][21];
+
+    //   size_t i = 0;
+    //   for (Introspection::IdsVector::iterator iter2 = vector.begin();
+    //     iter2 != vector.end(); ++iter2) {
+    //     numbers[i++] = std::to_string(*iter2).c_str();
+        
+    //   }
+    // }
+    return build(vm, "none");
+  }
+
+  static inline
+  UnstableNode buildReachabilityGraphRecord(VM vm, Introspection::ReachabilityGraph& graph) {
+    return buildRecord(vm,
+      buildArity(vm,
+        "graph",
+        "threadToVariables",
+        "variableToThreads"
+      ),
+      buildReachabilityMapRecord(vm, graph.threadToVariables),
+      buildReachabilityMapRecord(vm, graph.variableToThreads)
+    );
+  }
+
+  class GetReachabilityGraph: public Builtin<GetReachabilityGraph> {
+  public:
+    GetReachabilityGraph(): Builtin("getReachabilityGraph") {}
+
+    static void call(VM vm, Out result) {
+      Introspection::ReachabilityGraph graph = vm->getIntrospection()
+        .computeReachabilityGraph(vm);
+      result = buildReachabilityGraphRecord(vm, graph);
+    }
+  };
+
   /* ========== Structures list ========== */
 
   static inline
-  UnstableNode buildListNodeRecord(VM vm, RichNode node) {
+  UnstableNode buildListNodeRecord(VM vm, Introspection::OwnedRichNode& ownedNode) {
+    Introspection::RunnableVector runnables = ownedNode.runnables;
+    RichNode node = ownedNode.node;
+
+    OzListBuilder builder(vm);
+    for (auto iter = runnables.begin(); iter != runnables.end(); ++iter) {
+      Runnable* runnable = *iter;
+      builder.push_back(vm, build(vm, runnable->getId()));
+    }
+
     return buildRecord(vm,
       buildArity(vm,
         "list",
         "hash",
         "id",
+        "owners",
         "repr"
       ),
       build(vm, ozListHash(vm, node)),
-      build(vm, node.getId()),
+      build(vm, node.as<Cons>().getId()),
+      builder.get(vm),
       build(vm, nodeToString(vm, node).c_str())
     );
   }
 
   static inline
-  UnstableNode buildListNodesListRecord(VM vm, Introspection::NodesList& list) {
+  UnstableNode buildListNodesListRecord(VM vm, Introspection::NodesMap& map) {
     OzListBuilder builder(vm);
-    for (size_t i = 0; i < list.size(); i++) {
-      builder.push_back(vm, buildListNodeRecord(vm, list[i]));
+    for (auto iter = map.begin(); iter != map.end(); ++iter) {
+      size_t nodeId = iter->first;
+      Introspection::OwnedRichNode& ownedNode = iter->second;
+      builder.push_back(vm, buildListNodeRecord(vm, ownedNode));
     }
     return builder.get(vm);
   }
@@ -1375,9 +1453,9 @@ public:
 
     static void call(VM vm, In runnableNode, Out result) {
       Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
-      Introspection::NodesList list = vm->getIntrospection()
+      Introspection::NodesMap map = vm->getIntrospection()
         .getLists(vm, runnable);
-      result = buildListNodesListRecord(vm, list);
+      result = buildListNodesListRecord(vm, map);
     }
   };
 
@@ -1386,8 +1464,8 @@ public:
     GetLists(): Builtin("getLists") {}
 
     static void call(VM vm, Out result) {
-      Introspection::NodesList list = vm->getIntrospection().getLists(vm);
-      result = buildListNodesListRecord(vm, list);
+      Introspection::NodesMap map = vm->getIntrospection().getLists(vm);
+      result = buildListNodesListRecord(vm, map);
     }
   };
 };

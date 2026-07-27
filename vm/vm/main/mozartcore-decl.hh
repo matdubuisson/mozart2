@@ -46,6 +46,7 @@
 #include "coders-decl.hh"
 #include "utf-decl.hh"
 #include "functiontraits-decl.hh"
+#include "identifiable-decl.hh"
 #include "introspection-decl.hh"
 #include "vm-decl.hh"
 

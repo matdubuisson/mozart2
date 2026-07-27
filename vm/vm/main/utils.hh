@@ -271,20 +271,15 @@ size_t ozListHash(VM vm, RichNode list) {
   size_t hash = 0;
   std::hash<size_t> hasher;
 
-  while (true) {
-    using namespace patternmatching;
-
+  while (list.is<Cons>()) {
     hash = hasher(hash + list.getId());
-    RichNode tail;
-
-    if (matchesCons(vm, list, wildcard(), capture(tail))) {
-      list = tail;
-    } else if (matches(vm, list, vm->coreatoms.nil)) {
-      return hash;
-    } else {
-      raiseTypeError(vm, "list", list);
-    }
+    StableNode* p = list.as<Cons>().getTail();
+    assert(p != nullptr);
+    RichNode tail = RichNode(*p);
+    list = tail;
   }
+
+  return hash;
 }
 
 //////////////////////////////////////

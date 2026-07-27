@@ -26,6 +26,7 @@
 #define MOZART_MODTIME_H
 
 #include <chrono>
+#include <thread>
 
 #include "../mozartcore.hh"
 
@@ -77,6 +78,16 @@ public:
       auto now = steady_clock::now();
       nanoseconds dur = duration_cast<nanoseconds>(now.time_since_epoch());
       result = build(vm, dur.count());
+    }
+  };
+
+  class Sleep: public Builtin<Sleep> {
+  public:
+    Sleep(): Builtin("sleep") {}
+
+    static void call(VM vm, In millisNode) {
+      size_t millis = getArgument<size_t>(vm, millisNode);
+      std::this_thread::sleep_for(std::chrono::microseconds(millis));
     }
   };
 };

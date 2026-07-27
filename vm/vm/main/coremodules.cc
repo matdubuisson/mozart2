@@ -73,7 +73,7 @@ void registerCoreModules(VM vm) {
   registerBuiltinModVirtualString(vm);
   registerBuiltinModWeakReference(vm);
   registerBuiltinModScheduler(vm);
-  registerBuiltinModJournal(vm);
+  registerBuiltinModEventManager(vm);
   registerBuiltinModIntrospection(vm);
 }
 

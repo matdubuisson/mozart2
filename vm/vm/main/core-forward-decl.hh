@@ -140,6 +140,13 @@ class OptVar;
 class Variable;
 class ReadOnlyVariable;
 
+class Abstraction;
+class Cons;
+class Tuple;
+class Record;
+template<typename S>
+class TypedRichNode;
+
 class VirtualMachine;
 typedef VirtualMachine* VM;
 

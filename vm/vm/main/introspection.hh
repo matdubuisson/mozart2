@@ -54,6 +54,16 @@ size_t Introspection::getOperationsCounter(VM vm) {
 }
 
 inline
+size_t Introspection::getSystemSchedulesCounter(VM vm) {
+  return vm->_systemSchedulesCounter;
+}
+
+inline
+size_t Introspection::getSystemOperationsCounter(VM vm) {
+  return vm->_systemOperationsCounter;
+}
+
+inline
 Runnable* Introspection::getNextScheduledThread(VM vm, bool includeSystemThreads) {
   return vm->getThreadPool().getNext(includeSystemThreads);
 }
@@ -521,6 +531,69 @@ Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM 
   return map;
 }
 
+/* ========== Reachability graph ========== */
+
+inline
+void Introspection::computeReachabilityGraph(VM vm, ReachabilityGraph& graph, size_t variableId,
+  Introspection::Pendings& pendings) {
+  for (Pendings::iterator iter = pendings.begin(); iter != pendings.end(); ++iter) {
+    RichNode node = RichNode(*static_cast<StableNode*>(*iter));
+    if (node.is<ReifiedThread>()) {
+      Runnable* runnable = getArgument<Runnable*>(vm, node);
+      size_t threadId = runnable->getId();
+
+      bool isNewVariableId =
+        graph.variableToThreads.find(variableId) == graph.variableToThreads.end();
+
+      if (isNewVariableId)
+        graph.variableToThreads.insert({variableId, {threadId}});
+      else
+        graph.variableToThreads.at(variableId).push_back(threadId);
+    }
+  }
+}
+
+inline
+Introspection::ReachabilityGraph Introspection::computeReachabilityGraph(VM vm) {
+  ReachabilityGraph graph;
+
+  doForEachNode(vm,
+    [](VM vm, Runnable* runnable) {
+      return runnable->isRunnable() && runnable->isAlive();
+    },
+    [this](VM vm, RichNode node) {
+      return this->isVariableNode(vm, node);
+    },
+    [this, &graph](VM vm, Runnable* runnable, RichNode node) {
+      size_t threadId = runnable->getId();
+      size_t variableId = SIZE_MAX;
+      
+      if (node.isNullNode()) return;
+      else if (node.is<Variable>()) {
+        Variable variable = node.getAs<Variable>();
+        variableId = variable.getId();
+        this->computeReachabilityGraph(vm, graph, variableId, variable.getPendings(vm));
+      } else if (node.is<ReadOnlyVariable>()) {
+        ReadOnlyVariable readOnlyVariable = node.getAs<ReadOnlyVariable>();
+        variableId = readOnlyVariable.getId();
+        this->computeReachabilityGraph(vm, graph, variableId, readOnlyVariable.getPendings(vm));
+      } else return;
+
+      bool isNewThreadId =
+        graph.threadToVariables.find(threadId) == graph.threadToVariables.end();
+      
+      if (isNewThreadId)
+        graph.threadToVariables.insert({threadId, {variableId}});
+      else
+        graph.threadToVariables.at(threadId).push_back(variableId);
+    }
+  );
+
+  return graph;
+}
+
+/* ========== Structures counters ========== */
+
 inline
 Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm) {
   StructuresCounts counts;
@@ -555,14 +628,6 @@ Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm, Runnab
   });
 
   return counts;
-}
-
-inline
-Introspection::RunnableAndNodeLambda Introspection::getAddConsLambda(VM vm, NodesList& list) {
-  return [&list](VM vm, Runnable* runnable, RichNode node) {
-    if (node.is<Cons>())
-      list.push_back(node);
-  };
 }
 
 }

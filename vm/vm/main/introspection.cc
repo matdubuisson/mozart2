@@ -61,9 +61,7 @@ Introspection::OperationArgument getData(
 
 }
 
-Introspection::Operation Introspection::getNextExecutedOperation(VM vm, bool includeSystemThreads) {
-  Runnable* runnable = vm->threadPool.getNext(includeSystemThreads);
-  assert(runnable != nullptr);
+Introspection::Operation Introspection::getNextExecutedOperation(VM vm, Runnable* runnable) {
 
   Operation operation(OpSkip);
 
@@ -828,6 +826,30 @@ Introspection::Operation Introspection::getNextExecutedOperation(VM vm, bool inc
 #undef KPC
 
   return operation;
+}
+
+Introspection::Operation Introspection::getNextExecutedOperation(VM vm, bool includeSystemThreads) {
+  Runnable* runnable = vm->threadPool.getNext(includeSystemThreads);
+  assert(runnable != nullptr);
+  return getNextExecutedOperation(vm, runnable);
+}
+
+Introspection::RunnableAndNodeLambda Introspection::getAddConsLambda(VM vm, NodesMap& map) {
+  return [&map](VM vm, Runnable* runnable, RichNode node) {
+    if (node.is<Cons>()) {
+      size_t nodeId = node.as<Cons>().getId();
+      bool isNotKey = map.find(nodeId) == map.end();
+
+      if (isNotKey) {
+        map.insert({
+          nodeId,
+          OwnedRichNode(node)
+        });
+      }
+
+      map.at(nodeId).runnables.push_back(runnable);
+    }
+  };
 }
 
 }

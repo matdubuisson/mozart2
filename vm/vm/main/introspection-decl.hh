@@ -55,6 +55,10 @@ public:
 
   size_t getOperationsCounter(VM vm);
 
+  size_t getSystemSchedulesCounter(VM vm);
+
+  size_t getSystemOperationsCounter(VM vm);
+
   Runnable* getNextScheduledThread(VM vm, bool includeSystemThreads);
 
   enum ArgumentType {
@@ -95,7 +99,8 @@ public:
     std::vector<OperationArgument> arguments;
   };
 
-  Operation getNextExecutedOperation(VM vm, bool includeSystemThreads);  
+  Operation getNextExecutedOperation(VM vm, Runnable* runnable);
+  Operation getNextExecutedOperation(VM vm, bool includeSystemThreads = false);
 public:
   /* ========== Threads stats ========== */
 
@@ -568,6 +573,25 @@ public:
   VariableCandidatesMap getVariableCandidatesMap(VM vm);
 
 public:
+  /* ========== Reachability graph ========== */
+
+  using IdsVector = std::vector<size_t>;
+  using IdToIdsMap = std::unordered_map<size_t, IdsVector>;
+
+  struct ReachabilityGraph {
+    IdToIdsMap threadToVariables;
+    IdToIdsMap variableToThreads;
+  };
+
+private:
+  using Pendings = VMAllocatedList<StableNode*>;
+  
+  void computeReachabilityGraph(VM vm, ReachabilityGraph& graph, size_t variableId, Pendings& pendings);
+
+public:
+  ReachabilityGraph computeReachabilityGraph(VM vm);
+
+public:
   /* ========== Structures stats ========== */
 
   struct StructuresCounts {
@@ -624,38 +648,41 @@ public:
   }
 
 public:
+  using RunnableVector = std::vector<Runnable*>;
+
   /* ========== Structures list ========== */
-  using NodesList = std::vector<RichNode>;
+  struct OwnedRichNode {
+    OwnedRichNode(RichNode node) : node(node) {}
+
+    RunnableVector runnables;
+    RichNode node;
+  };
+  using NodesMap = std::unordered_map<size_t, OwnedRichNode>;
 
 private:
-  static inline
-  RunnableAndNodeLambda getAddConsLambda(VM vm, NodesList& list);
+  RunnableAndNodeLambda getAddConsLambda(VM vm, NodesMap& map);
 
 public:
   /* ========== Structures list ========== */
   // RichNode getList(VM vm, size_t id);
 
-  NodesList getLists(VM vm, Runnable* runnable) {
-    NodesList list;
-    std::cout << "A" << std::endl;
+  NodesMap getLists(VM vm, Runnable* runnable) {
+    NodesMap map;
     doForEachNode(vm, runnable,
       allNodes,
-      getAddConsLambda(vm, list)
+      getAddConsLambda(vm, map)
     );
-    std::cout << "B" << std::endl;
-    return list;
+    return map;
   }
 
-  NodesList getLists(VM vm) {
-    NodesList list;
-    std::cout << "A" << std::endl;
+  NodesMap getLists(VM vm) {
+    NodesMap map;
     doForEachNode(vm,
       allRunnables,
       allNodes,
-      getAddConsLambda(vm, list)
+      getAddConsLambda(vm, map)
     );
-    std::cout << "B" << std::endl;
-    return list;
+    return map;
   }
 };
 

@@ -31,7 +31,7 @@
 
 namespace mozart {
 
-using VariableAnnounce = VirtualMachineJournal::VariableAnnounce;
+using VariableAnnounce = VirtualMachineEventManager::VariableAnnounce;
 
 //////////////////
 // VariableBase //
@@ -194,7 +194,7 @@ public:
    * @note The variable is not needed by default
    */
   explicit Variable(VM vm): VariableBase(vm) {
-    vm->getJournal().announceVariable(this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(this, VariableAnnounce::Created);
   }
 
   /**
@@ -204,7 +204,7 @@ public:
    * @note The variable is not needed by default
    */
   Variable(VM vm, Space* home): VariableBase(vm, home) {
-    vm->getJournal().announceVariable(this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(this, VariableAnnounce::Created);
   }
 
   /**
@@ -287,7 +287,7 @@ public:
    * @note The variable is not needed by default
    */
   explicit ReadOnlyVariable(VM vm): VariableBase(vm) {
-    vm->getJournal().announceReadOnlyVariable(this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(this, VariableAnnounce::Created);
   }
 
   /**
@@ -297,7 +297,7 @@ public:
    * @note The variable is not needed by default
    */
   ReadOnlyVariable(VM vm, Space* home): VariableBase(vm, home) {
-    vm->getJournal().announceReadOnlyVariable(this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(this, VariableAnnounce::Created);
   }
 
   /**
