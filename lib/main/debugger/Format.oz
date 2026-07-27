@@ -126,16 +126,28 @@ in
   end
 end
 
-proc {FormatList List ?Result}
-  case List of list(
+proc {FormatList ListRecord ?Result}
+  proc {AreThereDifferentOwners Owners ?Result}
+    case Owners of nil then Result = false
+    [] Id|NextOwners then
+      if Id \= ThisId then Result = true
+      else {AreThereDifferentOwners NextOwners Result} end
+    end
+  end
+in
+  case ListRecord of list(
     id: Id
     hash: Hash
+    owners: Owners
     repr: Repr
   ) then
-    Result = [
-      {Int.toString Id $}
-      {Int.toString Hash $}
-      Repr
-    ]
+    if {AreThereDifferentOwners Owners $} then
+      Result = [
+        {Int.toString Id $}
+        {Int.toString Hash $}
+        {ExtractString {Boot_System.getRepr Owners ~1 ~1 $} $}
+        {ExtractString Repr $}
+      ]
+    else Result = none end
   end
 end

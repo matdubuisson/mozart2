@@ -31,8 +31,9 @@ import
 define
   Boot_Thread = {Boot.getInternal 'Thread'}
   Boot_System = {Boot.getInternal 'System'}
+  Boot_Time = {Boot.getInternal 'Time'}
   Boot_Introspection = {Boot.getInternal 'Introspection'}
-  Boot_Journal = {Boot.getInternal 'Journal'}
+  Boot_EventManager = {Boot.getInternal 'EventManager'}
   Boot_Scheduler = {Boot.getInternal 'Scheduler'}
 
   TAB = "\t"
@@ -55,9 +56,9 @@ define
   ThisId = {Boot_Thread.getId This $}
 
   ModeCell = {Cell.new true $}
- 
+
   proc {UpdateState State AlarmsCell Alarms ?AlarmRaised ?NewState}
-    Journal = {Boot_Journal.getJournal $}
+    Journal = {Boot_EventManager.getJournal $}
   in
     case Journal of journal(
       runnables: runnablesJournal(
@@ -96,6 +97,13 @@ define
         variables: VariablesJournal
         readOnlyVariables: ReadOnlyVariablesJournal
       )
+
+      structures: structuresJournal(
+        created: CreatedStructures
+        collected: CollectedStructures
+      )
+
+      ...
 
     ) then
       \insert Alarm
@@ -161,6 +169,8 @@ define
           \insert NodesCommand
         [] "lists" then
           \insert ListsCommand
+        [] "gc" then
+          \insert GCCommand
         else
           {PrintError "Unknown command '"#Command#"'"#TRYHELP}
         end
@@ -177,28 +187,55 @@ define
     NewState
   in
     % if {Boot_Scheduler.isGCReady $} then
-    %   {PrintWarning "Garbage collector is about to run"}
+    %   {PrintWarning "GC ready"}
     % end
 
     % if {Boot_Scheduler.isGCDone $} then
-    %   {PrintWarning "Garbage collector just ran"}
+    %   {PrintWarning "GC done"}
     % end
 
-    {UpdateState State AlarmsCell Alarms AlarmRaised NewState}
+    % {UpdateState State AlarmsCell Alarms AlarmRaised NewState}
 
-    if AlarmRaised orelse (IsNormalExecutionMode andthen IsActiveMode) then
-      {Cell.assign ModeCell true}
-      {ProcessCommand AlarmsCell Alarms}
-    else
-      {Boot_Thread.preempt This}
+    % if AlarmRaised orelse (IsNormalExecutionMode andthen IsActiveMode) then
+    %   {Cell.assign ModeCell true}
+    %   {ProcessCommand AlarmsCell Alarms}
+    % else
+    %   {Boot_Thread.preempt This}
+    % end
+
+    if 
+      {Boot_Scheduler.isGCReady $} == false
+      andthen {Boot_Scheduler.isGCDone $} == false
+      andthen {Boot_EventManager.trackingTriggered $} then
+    %   Journal = {Boot_EventManager.getJournal $}
+    %   % BoundOptVariables = Journal.variables.optVariables.bound
+    %   % BoundVariables = Journal.variables.variables.bound
+    %   % BoundReadOnlyVariables = Journal.variables.readOnlyVariables.bound
+    % in
+    %   {Boot_System.printRepr Journal false true}
+      % {Boot_System.printRepr 
+      %   nBound(
+      %     nOptVarBound: {List.length BoundOptVariables $}
+      %     nVarBound: {List.length BoundVariables $}
+      %     nROVarBound: {List.length BoundReadOnlyVariables $}
+      %   )
+      % false true}
+
+      local Lists = {Boot_Introspection.getLists $} in
+        {MaskedDisplayCSV
+          ["Id" "Hash" "Owners" "Repr"]
+          Lists 10 FormatList
+          [true true true false]}
+      end
+
+      {PrintWarning "Make a stop...."}
+      {Boot_System.inputEnter}
     end
 
+    {Boot_Thread.preempt This}
     {Loop NewState AlarmsCell WatchCell}
   end
 in
-
-
-
-  
+  {Boot_EventManager.addTracking variable created}
   {Loop state() {Cell.new nil $} {Cell.new nil $}}
 end

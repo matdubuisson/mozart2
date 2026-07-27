@@ -217,13 +217,23 @@ proc {MaskedDisplayCSV Labels Rows Width Format Masks}
   end
 
   proc {DisplayRows Index Rows}
+    NewIndex
+  in
     case Rows of nil then skip
     [] Row|NextRows then
-      {PrintExactly {Int.toString Index $} Width}
-      {Print " "}
+      local
+        Formatting = {Format Row $}
+      in
+        if Formatting \= none then
+          NewIndex = (Index + 1)
 
-      {DisplayRow {Format Row $} if Masks == none then nil else Masks end}
-      {DisplayRows (Index + 1) NextRows}
+          {PrintExactly {Int.toString Index $} Width}
+          {Print " "}
+          {DisplayRow Formatting if Masks == none then nil else Masks end}
+        else NewIndex = Index end
+      end
+
+      {DisplayRows NewIndex NextRows}
     end
   end
 in

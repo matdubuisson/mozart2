@@ -7,13 +7,13 @@ local
     Lists = {Boot_Introspection.getLists $}
   in
     {MaskedDisplayCSV
-      ["Id" "Hash" "Repr"]
+      ["Id" "Hash" "Owners" "Repr"]
       Lists 10 FormatList
-      [true true false]}
+      [true true true false]}
   end
 in
   case Arguments of nil then
-    {DisplayMainOptions}
+    {HandleOption}
   [] "help"|_ then
     {DisplayMainOptions}
   else

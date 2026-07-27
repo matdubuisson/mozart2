@@ -59,3 +59,20 @@ in
   {GetPercent Count Scale Percent DotPercent}
   String = Percent#"."#DotPercent#"%"
 end
+
+proc {ListToString ThisList ?String}
+  String = ""
+end
+
+proc {ToString Something ?String}
+  if {Bool.is Something $} then String = {Bool.toString Something $}
+  elseif {Int.is Something $} then String = {Int.toString Something $}
+  elseif {Float.is Something $} then String = {Float.toString Something $}
+  elseif {Atom.is Something $} then String = {Atom.toString Something $}
+  elseif {String.is Something $} then String = Something
+  elseif {List.is Something $} then String = {ListToString Something $}
+  else
+    String = "<error>"
+    {PrintError "Not type found for "#Something}
+  end
+end
