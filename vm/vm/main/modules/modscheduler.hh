@@ -57,7 +57,7 @@ public:
 
       vm->setExecutionMode(
         ExecutionMode::LimitedSchedules,
-        nSchedules + 1 // Current schedule does not count
+        nSchedules // Current schedule does not count
       );
     }
   };
@@ -134,6 +134,24 @@ public:
 
     static void call(VM vm, Out result) {
       result = build(vm, vm->isGCDone());
+    }
+  };
+
+  class EnableGC: public Builtin<EnableGC> {
+  public:
+    EnableGC(): Builtin("enableGC") {}
+
+    static void call(VM vm) {
+      vm->enableGC();
+    }
+  };
+
+  class DisableGC: public Builtin<DisableGC> {
+  public:
+    DisableGC(): Builtin("disableGC") {}
+
+    static void call(VM vm) {
+      vm->disableGC();
     }
   };
 
