@@ -67,6 +67,16 @@ void VirtualMachineEnvironment::sendOnVMPort(VM from, VMIdentifier to, RichNode 
   raiseError(from, "{Send VMPort} not implemented in this environment");
 }
 
+////////////////////////////////
+// VirtualMachineEventManager //
+////////////////////////////////
+
+size_t VirtualMachineEventManager::getStructureId(Structure structure) {
+  if (structure.node.is<Cons>())
+    return structure.node.as<Cons>().getId();
+  else return SIZE_MAX;
+}
+
 ////////////////////
 // VirtualMachine //
 ////////////////////
@@ -93,6 +103,7 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
   _currentSpace = _topLevelSpace;
   _currentThread = nullptr;
   _isOnTopLevel = true;
+  _gcEnabled = true;
   _gcReady = _gcDone = false;
 
   // Built-in modules size is non-predictable so make it independent
@@ -109,6 +120,7 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
 
   resetExecutionMode();
   _schedulesCounter = _operationsCounter = 0;
+  _systemSchedulesCounter = _systemOperationsCounter = 0;
 
   initialize();
   _pickleTypesRecord = new (this) StableNode(this, Pickler::buildTypesRecord(this));

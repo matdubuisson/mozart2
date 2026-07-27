@@ -33,22 +33,16 @@ namespace mozart {
 ////////////////////
 
 void VirtualMachine::scheduleThread(bool isSystem) {
-  //std::cout  << "VM A+" << std::endl;
-
   // Select a thread
   Runnable* currentThread;
   do {
-    //std::cout  << "VM B+" << std::endl;
     currentThread = threadPool.popNext(isSystem);
-    //std::cout  << "VM C+" << std::endl;
   } while (currentThread != nullptr && currentThread->isTerminated());
 
-  //std::cout  << "VM D+" << std::endl;
   // When there is no runnable thread left, return to the external world
   if (currentThread == nullptr)
     return; // break
 
-  //std::cout  << "VM E+" << std::endl;
   // Install the thread's space
   if (!currentThread->getSpace()->install()) {
     // The space is failed, kill the thread now
@@ -60,29 +54,29 @@ void VirtualMachine::scheduleThread(bool isSystem) {
   assert(currentThread->isRunnable());
   _currentThread = currentThread;
 
-  // //std::cout  << "VM Schedule thread " << currentThread->getId() << " for maximally "
+  // std::cout << "Thread " << currentThread->getId() << std::endl;
+
   //   << getMaxOperations() << " operations" << std::endl;
-  //std::cout  << "VM F+" << std::endl;
   size_t nOperations = currentThread->run(getMaxOperationsExecutionMode());
 
-  //std::cout  << "VM G+" << std::endl;
+  std::cout << "Thread " << currentThread->getId() << " executed " << nOperations << " operations" << std::endl;
+
   // Update the execution mode (normally manipulated by system threads for specific purposes)
   updateExecutionMode(nOperations);
 
-  //std::cout  << "VM H+" << std::endl;
   _currentThread = nullptr;
 
   // Schedule the thread anew if it is still runnable
-  if (currentThread->isRunnable()) {
-    bool isOperationByOperation = testOperationByOperationExecutionMode();
+  if (currentThread->isRunnable()) {    
+    bool isPreempted = currentThread->isPreempted();
 
     // In OBO mode non naturally preempted thread must be rescheduled first
-    threadPool.schedule(currentThread,
-      currentThread->isPreempted() ||
-      !isOperationByOperation);
+    threadPool.schedule(currentThread, isPreempted);
 
-    if (isOperationByOperation)
+    if (!isPreempted) {
+      std::cout << "Early preemption" << std::endl;
       currentThread->preempt();
+    }
   }
 
   return;
@@ -94,23 +88,19 @@ void VirtualMachine::scheduleSystemThreads() {
   while (n-- > 0)
     scheduleThread(true);
 
-  journal.clear();
+  eventManager.clear();
 }
 
 VirtualMachine::run_return_type VirtualMachine::run() {
   while (!(testAndClearExitRunRequested() ||
       (_envUseDynamicPreemption && environment.testDynamicExitRun()))) {
 
-    //std::cout  << "VM A" << std::endl;
-
     // Runs Garbage Collector if needed
     // System threads are run in between
     _gcReady = _gcDone = false;
-    while (testAndClearGCRequested() || gc.isGCRequired()) {
+    while (_gcEnabled && (testAndClearGCRequested() || gc.isGCRequired())) {
       _gcReady = true;
       scheduleSystemThreads();
-
-      //std::cout  << "VM B" << std::endl;
 
       getTopLevelSpace()->install();
       doGC();
@@ -118,13 +108,9 @@ VirtualMachine::run_return_type VirtualMachine::run() {
       _gcDone = true;
     }
 
-    //std::cout  << "VM C" << std::endl;
-
     _gcReady = false;
     scheduleSystemThreads();
     _gcDone = false;
-
-    //std::cout  << "VM D" << std::endl;
 
     // Trigger alarms
     std::int64_t now = getReferenceTime();
@@ -136,12 +122,9 @@ VirtualMachine::run_return_type VirtualMachine::run() {
       _alarms.remove_front(this);
     }
 
-    //std::cout  << "VM E" << std::endl;
-
     // Schedules thread
     scheduleThread(false);
-    //std::cout  << "VM F" << std::endl;
-
+    
     if (threadPool.empty())
       break;
   }

@@ -156,10 +156,9 @@ private:
   bool _useDynamicPreemption;
 };
 
-class VirtualMachineJournal {
+class VirtualMachineEventManager {
 public:
-  VirtualMachineJournal() {
-
+  VirtualMachineEventManager() {
   }
 
 public:
@@ -192,6 +191,10 @@ public:
       default: assert(false); return insertedRunnables;
     }
   }
+
+  bool empty(RunnableAnnounce announce) {
+    return getRunnables(announce).empty();
+  }
 public:
   template<typename V>
   using VariablesVector = std::vector<V*>;
@@ -201,7 +204,7 @@ public:
     Collected,
     Needed,
     Waited,
-    Bind
+    Bound
   };
 
   template<typename V>
@@ -299,40 +302,37 @@ public:
     } else assert(false);
   }
 
-  void announceOptVariable(OptVar* variable, VariableAnnounce announce) {
-    announceVariable(aggregatedOptVariables, variable, announce);
+  template<class V>
+  void announceVariable(V* variable, VariableAnnounce announce) {
+    if constexpr (std::is_same_v<V, OptVar>) {
+      announceVariable(aggregatedOptVariables, variable, announce);
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      announceVariable(aggregatedVariables, variable, announce);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      announceVariable(aggregatedReadOnlyVariables, variable, announce);
+    } else assert(false);
   }
 
-  void announceBoundOptVariable(OptVar* variable, RichNode self, RichNode src) {
-    announceBoundVariable(aggregatedOptVariables, variable, self, src);
+  template<class V>
+  void announceBoundVariable(V* variable, RichNode self, RichNode src) {
+    if constexpr (std::is_same_v<V, OptVar>) {
+      announceBoundVariable(aggregatedOptVariables, variable, self, src);
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      announceBoundVariable(aggregatedVariables, variable, self, src);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      announceBoundVariable(aggregatedReadOnlyVariables, variable, self, src);
+    } else assert(false);
   }
 
-  void announceWaitedOptVariable(OptVar* variable, RichNode waiter) {
-    announceWaitedVariable(aggregatedOptVariables, variable, waiter);
-  }
-
-  void announceVariable(Variable* variable, VariableAnnounce announce) {
-    announceVariable(aggregatedVariables, variable, announce);
-  }
-
-  void announceBoundVariable(Variable* variable, RichNode self, RichNode src) {
-    announceBoundVariable(aggregatedVariables, variable, self, src);
-  }
-
-  void announceWaitedVariable(Variable* variable, RichNode waiter) {
-    announceWaitedVariable(aggregatedVariables, variable, waiter);
-  }
-
-  void announceReadOnlyVariable(ReadOnlyVariable* variable, VariableAnnounce announce) {
-    announceVariable(aggregatedReadOnlyVariables, variable, announce);
-  }
-
-  void announceBoundReadOnlyVariable(ReadOnlyVariable* variable, RichNode self, RichNode src) {
-    announceBoundVariable(aggregatedReadOnlyVariables, variable, self, src);
-  }
-
-  void announceWaitedReadOnlyVariable(ReadOnlyVariable* variable, RichNode waiter) {
-    announceWaitedVariable(aggregatedReadOnlyVariables, variable, waiter);
+  template<class V>
+  void announceWaitedVariable(V* variable, RichNode waiter) {
+    if constexpr (std::is_same_v<V, OptVar>) {
+      announceWaitedVariable(aggregatedOptVariables, variable, waiter);
+    } else if constexpr (std::is_same_v<V, Variable>) {
+      announceWaitedVariable(aggregatedVariables, variable, waiter);
+    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
+      announceWaitedVariable(aggregatedReadOnlyVariables, variable, waiter);
+    } else assert(false);
   }
 
 private:
@@ -390,7 +390,80 @@ public:
     } else assert(false);
   }
 
+  template<typename V>
+  bool empty(VariableAnnounce announce) {
+    if (announce == VariableAnnounce::Bound)
+      return getBoundVariables<V>().empty();
+    else if (announce == VariableAnnounce::Waited)
+      return getWaitedVariables<V>().empty();
+    else
+      return getVariables<V>(announce).empty();
+  }
+
+  bool empty(VariableAnnounce announce) {
+    return empty<OptVar>(announce)
+      && empty<Variable>(announce)
+      && empty<ReadOnlyVariable>(announce);
+  }
+
 public:
+  enum class StructureAnnounce {
+    Created,
+    Collected
+  };
+
+  struct Structure {
+    Structure(Runnable* runnable, RichNode node) : runnable(runnable), node(node) {}
+
+    Runnable* runnable;
+    RichNode node;
+  };
+
+  using StructuresVector = std::vector<Structure>;
+
+  struct StructuresVectors {
+    StructuresVector createds;
+    StructuresVector collecteds;
+
+    void clear() {
+      createds.clear();
+      collecteds.clear();
+    }
+  };
+
+public:
+  void announceStructure(Runnable* runnable, RichNode node, StructureAnnounce announce) { 
+    Structure structure = Structure(runnable, node);
+
+    switch (announce) {
+      case StructureAnnounce::Created:
+        structuresVectors.createds.push_back(structure);
+        break;
+      case StructureAnnounce::Collected:
+        structuresVectors.collecteds.push_back(structure);
+        break;
+    }
+  }
+
+  StructuresVector& getStructures(StructureAnnounce announce) {
+    switch (announce) {
+      case StructureAnnounce::Created: return structuresVectors.createds;
+      case StructureAnnounce::Collected: return structuresVectors.collecteds;
+      default: assert(false);
+    }
+  }
+
+  bool empty(StructureAnnounce announce) {
+    return getStructures(announce).empty();
+  }
+
+public:
+  enum class Event {
+    Runnable,
+    Variable,
+    Structure
+  };
+
   void clear() {
     insertedRunnables.clear();
     removedRunnables.clear();
@@ -400,6 +473,163 @@ public:
     aggregatedOptVariables.clear();
     aggregatedVariables.clear();
     aggregatedReadOnlyVariables.clear();
+
+    structuresVectors.clear();
+  }
+
+public:
+  using IdsVector = std::vector<size_t>;
+
+  struct EventTracking {
+  private:
+    EventTracking(Event event, IdsVector idsVector) : event(event), idsVector(idsVector) {}
+  public:
+    explicit EventTracking(Event event, RunnableAnnounce announce, IdsVector idsVector) :
+      EventTracking(event, idsVector) {
+      runnableAnnounce = announce;
+    }
+
+    explicit EventTracking(Event event, VariableAnnounce announce, IdsVector idsVector) :
+      EventTracking(event, idsVector) {
+      variableAnnounce = announce;
+    }
+
+    explicit EventTracking(Event event, StructureAnnounce announce, IdsVector idsVector) :
+      EventTracking(event, idsVector) {
+      structureAnnounce = announce;
+    }
+
+    Event event;
+
+    union {
+      RunnableAnnounce runnableAnnounce;
+      VariableAnnounce variableAnnounce;
+      StructureAnnounce structureAnnounce;
+    };
+
+    IdsVector idsVector;
+  };
+
+  using TrackingVector = std::vector<EventTracking>;
+
+public:
+  template<typename A>
+  void addTracking(Event event, A announce) {
+    addTracking<A>(event, announce, {});
+  }
+
+  template<typename A>
+  void addTracking(Event event, A announce, IdsVector idsVector) {
+    trackingVector.push_back(EventTracking(event, announce, idsVector));
+  }
+
+  TrackingVector& getTrackingVector() {
+    return trackingVector;
+  }
+
+private:
+  inline
+  bool contains(IdsVector& idsVector, size_t id) {
+    return id != SIZE_MAX && count(idsVector.begin(), idsVector.end(), id) > 0;
+  }
+
+  bool trackingTriggered(RunnableAnnounce announce, IdsVector& idsVector) {
+    // RunnablesVector& vector = getRunnables(announce);
+    // for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
+    //   Runnable* runnable = static_cast<Runnable*>(*iter);
+    //   assert(runnable != nullptr);
+      
+    //   // if (contains(idsVector, runnable->getId()))
+    //   //   return true;
+    // }
+    // return false;
+
+    return !empty(announce);
+  }
+
+  template<class V>
+  bool trackingTriggered(VariableAnnounce announce, IdsVector& idsVector) {
+    // if (announce == VariableAnnounce::Bound) {
+    //   BoundVariablesVector<V>& vector = getBoundVariables<V>();
+    //   for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
+    //     V* variable = static_cast<V*>((*iter).variable);
+    //     assert(variable != nullptr);
+
+    //     // if (contains(idsVector, variable->getId()))
+    //     //   return true;
+    //   }
+    //   return false;
+    // } else if (announce == VariableAnnounce::Waited) {
+    //   WaitedVariablesVector<V>& vector = getWaitedVariables<V>();
+    //   for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
+    //     V* variable = static_cast<V*>((*iter).variable);
+    //     assert(variable != nullptr);
+
+    //     if (contains(idsVector, variable->getId()))
+    //       return true;
+    //   }
+    //   return false;
+    // } else {
+    //   VariablesVector<V>& vector = getVariables<V>(announce);
+    //   for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
+    //     V* variable = static_cast<V*>(*iter);
+    //     assert(variable != nullptr);
+
+    //     // if (contains(idsVector, variable->getId()))
+    //     //   return true;
+    //   }
+    //   return false;
+    // }
+    return !empty<V>(announce);
+  }
+
+  bool trackingTriggered(VariableAnnounce announce, IdsVector& idsVector) {
+    return trackingTriggered<OptVar>(announce, idsVector)
+      || trackingTriggered<Variable>(announce, idsVector)
+      || trackingTriggered<ReadOnlyVariable>(announce, idsVector);
+  }
+
+  inline
+  size_t getStructureId(Structure structure);
+
+  bool trackingTriggered(StructureAnnounce announce, IdsVector& idsVector) {
+    // StructuresVector& vector = getStructures(announce);
+    // for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
+    //   Structure structure = static_cast<Structure>(*iter);
+
+    //   // if (structure.node.is<Cons>()
+    //   //   && contains(idsVector, getStructureId(structure))) {
+    //   //   return true;
+    //   // }
+    // }
+    // return false;
+    return !empty(announce);
+  }
+
+public:
+  bool trackingTriggered() {
+    for (TrackingVector::iterator iter = trackingVector.begin();
+      iter != trackingVector.end(); ++iter) {
+      EventTracking event = *iter;
+
+      switch (event.event) {
+        case Event::Runnable: {
+          if (trackingTriggered(event.runnableAnnounce, event.idsVector))
+            return true;
+          break;
+        } case Event::Variable: {
+          if (trackingTriggered(event.variableAnnounce, event.idsVector))
+            return true;
+          break;
+        } case Event::Structure: {
+          if (trackingTriggered(event.structureAnnounce, event.idsVector))
+            return true;
+          break;
+        } default: assert(false);
+      }
+    }
+
+    return false;
   }
 
 private:
@@ -411,6 +641,10 @@ private:
   VariablesVectors<OptVar> aggregatedOptVariables;
   VariablesVectors<Variable> aggregatedVariables;
   VariablesVectors<ReadOnlyVariable> aggregatedReadOnlyVariables;
+
+  StructuresVectors structuresVectors;
+
+  TrackingVector trackingVector;
 };
 
 class VirtualMachine {
@@ -419,7 +653,8 @@ public:
     Normal = 0,
     LimitedSchedules,
     LimitedOperations,
-    OperationByOperation // Without system threads by definition: they are responsible to advance the VM
+    OperationByOperation, // Without system threads by definition: they are responsible to advance the VM
+    FollowingJournal
   };
 
   /**
@@ -756,8 +991,8 @@ public:
     return introspection;
   }
 
-  VirtualMachineJournal& getJournal() {
-    return journal;
+  VirtualMachineEventManager& getEventManager() {
+    return eventManager;
   }
 public:
   /**
@@ -791,6 +1026,14 @@ public:
     _preemptRequestedNot.clear(std::memory_order_release);
   }
 
+  void enableGC() {
+    _gcEnabled = true;
+  }
+
+  void disableGC() {
+    _gcEnabled = false;
+  }
+
   bool isGCReady() {
     return _gcReady;
   }
@@ -821,8 +1064,11 @@ public:
     _schedulesCounter++;
     _operationsCounter += nOperations;
 
-    if (_currentThread->getPriority() == tpSystem)
+    if (_currentThread->getPriority() == tpSystem) {
+      _systemSchedulesCounter++;
+      _systemOperationsCounter += nOperations;
       return;
+    }
 
     switch (_executionMode) {
       case LimitedSchedules: {
@@ -834,8 +1080,10 @@ public:
         else _executionCounter = 0;
         break;
       }
-      case OperationByOperation: break;
-      case Normal: default: break;
+      case OperationByOperation:
+      case FollowingJournal:
+      case Normal:
+      default: break;
     }
 
     if (_executionCounter == 0)
@@ -851,6 +1099,7 @@ public:
       case LimitedOperations: return _executionCounter;
       case OperationByOperation: return 1;
       case LimitedSchedules:
+      case FollowingJournal:
       case Normal:
       default: return SIZE_MAX;
     }
@@ -871,6 +1120,14 @@ public:
   bool testOperationByOperationExecutionMode() {
     return _executionMode == OperationByOperation;
   }
+
+  bool testEarlyPreemptionRequested() {
+    assert(_currentThread != nullptr);
+    return _currentThread->isPreemptible()
+      && _currentThread->getPriority() != tpSystem
+      && eventManager.trackingTriggered();
+  }
+
 private:
   /** Checks if preemption is requested and clears the flag */
   bool testAndClearPreemptRequested() {
@@ -982,7 +1239,7 @@ private:
   GlobalNode* rootGlobalNode;
 
   VirtualMachineEnvironment& environment;
-  VirtualMachineJournal journal;
+  VirtualMachineEventManager eventManager;
 
   MemoryManager memoryManager;
 
@@ -992,7 +1249,7 @@ private:
   Space* _currentSpace;
   Runnable* _currentThread;
   bool _isOnTopLevel;
-  bool _gcReady, _gcDone;
+  bool _gcEnabled, _gcReady, _gcDone;
 
   NodeDictionary* _builtinModules;
   PropertyRegistry _propertyRegistry;
@@ -1027,6 +1284,8 @@ private:
   size_t _executionCounter;
   size_t _schedulesCounter;
   size_t _operationsCounter;
+  size_t _systemSchedulesCounter;
+  size_t _systemOperationsCounter;
 
   // During GC, we need a SpaceRef version of the top-level space
   SpaceRef _topLevelSpaceRef;
