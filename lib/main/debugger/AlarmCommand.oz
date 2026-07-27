@@ -11,10 +11,11 @@ local
 
   proc {DisplayAggregateOptions}
     {DisplayOptions
-      ["threads" "variables"]
+      ["threads" "variables" "structures"]
       [
         "create an alarm about thread events"
         "create an alarm about variable events"
+        "create an alarm about structures events (abstraction, cons, tuple and record)"
       ]
     }
   end
@@ -87,11 +88,26 @@ local
     }
   end
 
+  proc {DisplayStructuresAggregateOptions}
+    {DisplayOptions
+      [
+        "created"
+        "collected"
+      ]
+      [
+        "detects a new created structure"
+        "detects a garbage collected structure"
+      ]
+    }
+  end
+
   proc {DisplaySpecificAggregateOptions Aggregate}
     case Aggregate of threads then
       {DisplayThreadsAggregateOptions}
     [] variables then 
       {DisplayVariablesAggregateOptions}
+    [] structures then
+      {DisplayStructuresAggregateOptions}
     end
   end
 
@@ -183,11 +199,22 @@ local
     end
   end
 
+  proc {GetStructuresCondition Argument NextArguments ?Result}
+    case Argument of "created" then Result = created
+    [] "collected" then Result = collected
+    else
+      Result = none
+      {PrintUnexpectedOptionError Argument}
+    end
+  end
+
   proc {GetSpecificCondition Aggregate Argument NextArguments ?Result}
     case Aggregate of threads then
       Result = {GetThreadsCondition Argument NextArguments $}
     [] variables then
       Result = {GetVariablesCondition Argument NextArguments $}
+    [] structures then
+      Result = {GetStructuresCondition Argument NextArguments $}
     end
   end
 
@@ -268,6 +295,8 @@ local
         {HandleAggregate Type threads NextArguments}
       [] "variables" then
         {HandleAggregate Type variables NextArguments}
+      [] "structures" then
+        {HandleAggregate Type structures NextArguments}
       else
         {PrintUnexpectedOptionError Argument}
       end
