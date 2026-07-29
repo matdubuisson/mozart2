@@ -67,4 +67,6 @@
 #include "modules/modvirtualstring.hh"
 #include "modules/modweakref.hh"
 
+#include "modules/modexample.hh"
+
 #endif // MOZART_COREMODULES_H

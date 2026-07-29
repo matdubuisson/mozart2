@@ -75,6 +75,7 @@ void registerCoreModules(VM vm) {
   registerBuiltinModScheduler(vm);
   registerBuiltinModEventManager(vm);
   registerBuiltinModIntrospection(vm);
+  registerBuiltinModExample(vm);
 }
 
 // Workaround a problem which LString.slice() is a undefined symbol in this file.
