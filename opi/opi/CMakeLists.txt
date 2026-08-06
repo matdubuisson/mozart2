@@ -3,6 +3,7 @@ set(OPI_FUNCTORS
     "${CMAKE_CURRENT_SOURCE_DIR}/Emacs.oz"
     "${CMAKE_CURRENT_SOURCE_DIR}/OPIEnv.oz"
     "${CMAKE_CURRENT_SOURCE_DIR}/OPIServer.oz")
+log("OPI functors: ${OPI_FUNCTORS}")
 
 set(OPI_FUNCTORS_OZF "")
 
@@ -22,6 +23,8 @@ foreach(FUNCTOR ${OPI_FUNCTORS})
     COMMENT "(compiling) ${FUNCTOR_OZF}"
     VERBATIM)
 endforeach()
+
+log("OPI functors ozf: ${OPI_FUNCTORS_OZF}")
 
 add_custom_target(
   opilibrary ALL

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 4.0)
 project(MOZARTBOOSTHOST CXX)
 
-add_subdirectory(emulator)
+add_subdirectory_and_log(emulator)

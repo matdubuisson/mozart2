@@ -1,3 +1,5 @@
 if(NOT MOZART_CACHED_BUILD)
-  add_subdirectory(main)
+  add_subdirectory_and_log(main)
+else()
+  log("Nothing to do: uses pre-generated sources")
 endif()

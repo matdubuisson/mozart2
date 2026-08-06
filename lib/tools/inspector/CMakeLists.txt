@@ -1,3 +1,5 @@
+log_section("Inspector files")
+
 set(INSPECTOR_FUNCTORS
     "${CMAKE_CURRENT_SOURCE_DIR}/InspectorMain.oz"
     "${CMAKE_CURRENT_SOURCE_DIR}/InspectorOptions.oz"
@@ -11,11 +13,14 @@ set(INSPECTOR_FUNCTORS
     "${CMAKE_CURRENT_SOURCE_DIR}/treewidget/StoreListener.oz"
     "${CMAKE_CURRENT_SOURCE_DIR}/treewidget/TreeNodes.oz"
     "${CMAKE_CURRENT_SOURCE_DIR}/treewidget/TreeWidget.oz")
-
 set(INSPECTOR_FUNCTOR
     "${CMAKE_CURRENT_SOURCE_DIR}/Inspector.oz")
-
 set(INSPECTOR_SUB_DIR "${CMAKE_CURRENT_BINARY_DIR}/inspector")
+
+log("Inspector functors: ${INSPECTOR_FUNCTORS}")
+log("Inspector functor: ${INSPECTOR_FUNCTOR}")
+log("Inspector sub directory: ${INSPECTOR_SUB_DIR}")
+
 file(MAKE_DIRECTORY "${INSPECTOR_SUB_DIR}")
 
 set(INSPECTOR_FUNCTORS_OZF "")
@@ -38,7 +43,10 @@ foreach(FUNCTOR ${INSPECTOR_FUNCTORS})
     VERBATIM)
 endforeach()
 
+log("Inspector functors ozf: ${INSPECTOR_FUNCTORS_OZF}")
+
 set(INSPECTOR_OZF "${CMAKE_CURRENT_BINARY_DIR}/Inspector.ozf")
+log("Inspector ozf: ${INSPECTOR_OZF}")
 
 add_custom_command(
   OUTPUT "${INSPECTOR_OZF}"
@@ -56,8 +64,13 @@ add_custom_target(
 
 # Supplementary files
 
+log_section("Supplementary files")
+
 set(SRC_IMAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/images")
 set(BIN_IMAGE_DIR "${CMAKE_CURRENT_BINARY_DIR}/images/inspector")
+
+log("Source image directory: ${SRC_IMAGE_DIR}")
+log("Binary image directory: ${BIN_IMAGE_DIR}")
 
 file(GLOB SUPPLEMENTARY_FILES RELATIVE "${SRC_IMAGE_DIR}"
   "${SRC_IMAGE_DIR}/*.xbm"
@@ -78,6 +91,8 @@ foreach(SUPP_FILE ${SUPPLEMENTARY_FILES})
       "${SRC_FILE}" "${TARGET_FILE}"
     VERBATIM)
 endforeach()
+
+log("Target supplementary files: ${TARGET_SUPPLEMENTARY_FILES}")
 
 # Install
 install(FILES ${INSPECTOR_FUNCTORS_OZF}
