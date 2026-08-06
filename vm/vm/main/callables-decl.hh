@@ -159,7 +159,8 @@ private:
 /**
  * Abstraction value, i.e., user-defined procedure
  */
-class Abstraction: public DataType<Abstraction>, public WithHome,
+class Abstraction: public Identifiable<Abstraction>,
+  public DataType<Abstraction>, public WithHome,
   StoredWithArrayOf<StableNode> {
 public:
   static atom_t getTypeAtom(VM vm) {
