@@ -50,6 +50,7 @@ public:
   }
 
 private:
+  using RunnableInfo = VirtualMachineEventManager::RunnableInfo;
   using RunnablesVector = VirtualMachineEventManager::RunnablesVector;
   using RunnableAnnounce = VirtualMachineEventManager::RunnableAnnounce;
   // using RunnableToRecordLambda = std::function<UnstableNode(VM, Runnable*)>;
@@ -115,8 +116,8 @@ private:
     OzListBuilder builder(vm);
 
     for (auto iter = runnables.begin(); iter != runnables.end(); ++iter) {
-      Runnable* runnable = static_cast<Runnable*>(*iter);
-      builder.push_back(vm, buildThreadStateRecord(vm, runnable));
+      RunnableInfo info = *iter;
+      builder.push_back(vm, buildThreadStateRecord(vm, info.runnable));
     }
 
     return builder.get(vm);
@@ -141,13 +142,15 @@ private:
 
 private:
   template<typename V>
+  using VariableInfo = VirtualMachineEventManager::VariableInfo<V>;  
+  template<typename V>
   using VariablesVector = VirtualMachineEventManager::VariablesVector<V>;
   template<typename V>
-  using BoundVariable = VirtualMachineEventManager::BoundVariable<V>;
+  using BoundVariableInfo = VirtualMachineEventManager::BoundVariableInfo<V>;
   template<typename V>
   using BoundVariablesVector = VirtualMachineEventManager::BoundVariablesVector<V>;
   template<typename V>
-  using WaitedVariable = VirtualMachineEventManager::WaitedVariable<V>;
+  using WaitedVariableInfo = VirtualMachineEventManager::WaitedVariableInfo<V>;
   template<typename V>
   using WaitedVariablesVector = VirtualMachineEventManager::WaitedVariablesVector<V>;
   template<typename V>
@@ -300,8 +303,8 @@ private:
     OzListBuilder builder(vm);
 
     for (auto iter = variables.begin(); iter != variables.end(); ++iter) {
-      V* variable = static_cast<V*>(*iter);
-      builder.push_back(vm, buildVariableStateRecord(vm, variable));
+      VariableInfo<V> info = *iter;
+      builder.push_back(vm, buildVariableStateRecord(vm, info.variable));
     }
 
     return builder.get(vm);
@@ -314,7 +317,7 @@ private:
     OzListBuilder builder(vm);
 
     for (auto iter = variables.begin(); iter != variables.end(); ++iter) {
-      BoundVariable<V> boundVariable = static_cast<BoundVariable<V>>(*iter);
+      BoundVariableInfo<V> boundVariable = *iter;
       builder.push_back(vm, buildVariableStateRecord(vm,
         boundVariable.variable, boundVariable.self, boundVariable.src));
     }
@@ -329,7 +332,7 @@ private:
     OzListBuilder builder(vm);
 
     for (auto iter = variables.begin(); iter != variables.end(); ++iter) {
-      WaitedVariable<V> waitedVariable = static_cast<WaitedVariable<V>>(*iter);
+      WaitedVariableInfo<V> waitedVariable = *iter;
       builder.push_back(vm, buildVariableStateRecord(vm,
         waitedVariable.variable, waitedVariable.waiter));
     }
@@ -381,28 +384,32 @@ private:
     );
   }
 
+  template<class S>
+  using StructureInfo = VirtualMachineEventManager::StructureInfo<S>;
+  template<class S>
+  using StructuresVector = VirtualMachineEventManager::StructuresVector<S>;
+  template<class S>
+  using StructuresVectors = VirtualMachineEventManager::StructuresVectors<S>;
+
+  template<class S>
   static inline
-  UnstableNode buildStructuresList(VM vm, VirtualMachineEventManager::StructuresVector& vector) {
+  UnstableNode buildStructuresList(VM vm, StructuresVector<S>& vector) {
     OzListBuilder builder(vm);
 
     for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
-      VirtualMachineEventManager::Structure structure = *iter;
-      Runnable* runnable = structure.runnable;
-      RichNode node = structure.node;
+      StructureInfo<S> info = *iter;
+      Runnable* author = info.author;
+      S* structure = info.structure;
 
       std::string type;
-      size_t id = SIZE_MAX;
-      size_t hash = SIZE_MAX;
 
-      if (node.is<Abstraction>()) {
+      if (std::is_same_v<S, Abstraction>) {
         type = "abstraction";
-      } else if (node.is<Cons>()) {
+      } else if (std::is_same_v<S, Cons>) {
         type = "cons";
-        TypedRichNode<Cons> typedNode = node.as<Cons>();
-        id = typedNode.getId();
-      } else if (node.is<Tuple>()) {
+      } else if (std::is_same_v<S, Tuple>) {
         type = "tuple";
-      } else if (node.is<Record>()) {
+      } else if (std::is_same_v<S, Record>) {
         type = "record";
       } else assert(false);
 
@@ -410,15 +417,11 @@ private:
         buildRecord(vm,
           buildArity(vm,
             "structure",
-            "hash",
             "id",
-            "repr",
             "type"
           ),
-          hash,
-          id,
-          nodeToString(vm, node).c_str(),
-          type.c_str()
+          build(vm, structure->getId()),
+          build(vm, type.c_str())
         )
       );
     }
@@ -426,18 +429,48 @@ private:
     return builder.get(vm);
   }
 
+  template<class S>
+  static inline
+  UnstableNode buildStructuresSubJournalRecord(VM vm, VirtualMachineEventManager& journal) {
+    std::string recordName;
+    
+    if (std::is_same_v<S, Abstraction>) {
+      recordName = "abstractionsJournal";
+    } else if (std::is_same_v<S, Cons>) {
+      recordName = "consJournal";
+    } else if (std::is_same_v<S, Tuple>) {
+      recordName = "tuplesJournal";
+    } else if (std::is_same_v<S, Record>) {
+      recordName = "recordsJournal";
+    } else assert(false);
+
+    return buildRecord(vm,
+      buildArity(vm,
+        recordName.c_str(),
+        "collected",
+        "created"
+      ),
+      buildStructuresList(vm, journal.getStructures<S>(
+        VirtualMachineEventManager::StructureAnnounce::Collected)),
+      buildStructuresList(vm, journal.getStructures<S>(
+        VirtualMachineEventManager::StructureAnnounce::Created))
+    );
+  }
+
   static inline
   UnstableNode buildStructuresJournalRecord(VM vm, VirtualMachineEventManager& journal) {
     return buildRecord(vm,
       buildArity(vm,
         "structuresJournal",
-        "collected",
-        "created"
+        "abstractions",
+        "cons",
+        "records",
+        "tuples"
       ),
-      buildStructuresList(vm, journal.getStructures(
-        VirtualMachineEventManager::StructureAnnounce::Collected)),
-      buildStructuresList(vm, journal.getStructures(
-        VirtualMachineEventManager::StructureAnnounce::Created))
+      buildStructuresSubJournalRecord<Abstraction>(vm, journal),
+      buildStructuresSubJournalRecord<Cons>(vm, journal),
+      buildStructuresSubJournalRecord<Record>(vm, journal),
+      buildStructuresSubJournalRecord<Tuple>(vm, journal)
     );
   }
 
@@ -486,59 +519,77 @@ public:
 
 
 public:
-  class AddTracking: public Builtin<AddTracking> {
+  class Track: public Builtin<Track> {
   public:
-    AddTracking(): Builtin("addTracking") {}
+    Track(): Builtin("track") {}
 
-    static void call(VM vm, In event, In announce/*, In identifier*/) {
+    static void call(VM vm, In event, In announce, In announcerId, In idsList) {
       VirtualMachineEventManager& eventManager = vm->getEventManager();
       
       using Event = VirtualMachineEventManager::Event;
       using RunnableAnnounce = VirtualMachineEventManager::RunnableAnnounce;
       using VariableAnnounce = VirtualMachineEventManager::VariableAnnounce;
       using StructureAnnounce = VirtualMachineEventManager::StructureAnnounce;
-
+      using RunnableTracking = VirtualMachineEventManager::RunnableTracking;
+      using VariableTracking = VirtualMachineEventManager::VariableTracking;
+      using StructureTracking = VirtualMachineEventManager::StructureTracking;
+      using IdsVector = VirtualMachineEventManager::IdsVector;
 
       using namespace patternmatching;
 
-      // size_t id;
-      // if (matches(vm, identifier, "none")) {
-      //   id = SIZE_MAX;
-      // } else {
-      //   id = getArgument<size_t>(vm, identifier);
-      // }
+      size_t announcerThreadId = 0;
+      if (matches(vm, announcerId, "none"))
+        announcerThreadId = SIZE_MAX;
+      else
+        announcerThreadId = getArgument<size_t>(vm, announcerId);
+
+      IdsVector ids;
+      ozListForEach(vm, idsList, [&ids](size_t id) {
+        ids.push_back(id);
+      }, "List of integer ids");
 
       if (matches(vm, event, "runnable")) {
         if (matches(vm, announce, "inserted")) {
-          eventManager.addTracking(Event::Runnable, RunnableAnnounce::Inserted);
+          eventManager.track(vm, 
+            RunnableTracking(vm, announcerThreadId, ids, RunnableAnnounce::Inserted));
         } else if (matches(vm, announce, "removed")) {
-          eventManager.addTracking(Event::Runnable, RunnableAnnounce::Removed);
+          eventManager.track(vm, 
+            RunnableTracking(vm, announcerThreadId, ids, RunnableAnnounce::Removed));
         } else if (matches(vm, announce, "updated")) {
-          eventManager.addTracking(Event::Runnable, RunnableAnnounce::Updated);
+          eventManager.track(vm, 
+            RunnableTracking(vm, announcerThreadId, ids, RunnableAnnounce::Updated));
         } else if (matches(vm, announce, "collected")) {
-          eventManager.addTracking(Event::Runnable, RunnableAnnounce::Collected);
+          eventManager.track(vm, 
+            RunnableTracking(vm, announcerThreadId, ids, RunnableAnnounce::Collected));
         } else {
           raiseTypeError(vm, "inserted, removed, updated or collected", announce);
         }
       } else if (matches(vm, event, "variable")) {
         if (matches(vm, announce, "created")) {
-          eventManager.addTracking(Event::Variable, VariableAnnounce::Created);
+          eventManager.track(vm, 
+            VariableTracking(vm, announcerThreadId, ids, VariableAnnounce::Created));
         } else if (matches(vm, announce, "collected")) {
-          eventManager.addTracking(Event::Variable, VariableAnnounce::Collected);
+          eventManager.track(vm, 
+            VariableTracking(vm, announcerThreadId, ids, VariableAnnounce::Collected));
         } else if (matches(vm, announce, "needed")) {
-          eventManager.addTracking(Event::Variable, VariableAnnounce::Needed);
+          eventManager.track(vm, 
+            VariableTracking(vm, announcerThreadId, ids, VariableAnnounce::Needed));
         } else if (matches(vm, announce, "waited")) {
-          eventManager.addTracking(Event::Variable, VariableAnnounce::Waited);
+          eventManager.track(vm, 
+            VariableTracking(vm, announcerThreadId, ids, VariableAnnounce::Waited));
         } else if (matches(vm, announce, "bound")) {
-          eventManager.addTracking(Event::Variable, VariableAnnounce::Bound);
+          eventManager.track(vm, 
+            VariableTracking(vm, announcerThreadId, ids, VariableAnnounce::Bound));
         } else {
           raiseTypeError(vm, "created, collected, needed, waited or bound", announce);
         }
       } else if (matches(vm, event, "structure")) {
         if (matches(vm, announce, "created")) {
-          eventManager.addTracking(Event::Structure, StructureAnnounce::Created);
+          eventManager.track(vm, 
+            StructureTracking(vm, announcerThreadId, ids, StructureAnnounce::Created));
         } else if (matches(vm, announce, "collected")) {
-          eventManager.addTracking(Event::Structure, StructureAnnounce::Collected);
+          eventManager.track(vm, 
+            StructureTracking(vm, announcerThreadId, ids, StructureAnnounce::Collected));
         } else {
           raiseTypeError(vm, "created or collected", announce);
         }
@@ -548,13 +599,13 @@ public:
     }
   };
 
-  class TrackingTriggered: public Builtin<TrackingTriggered> {
+  class IsTrackingTriggered: public Builtin<IsTrackingTriggered> {
   public:
-    TrackingTriggered(): Builtin("trackingTriggered") {}
+    IsTrackingTriggered(): Builtin("isTrackingTriggered") {}
 
     static void call(VM vm, Out result) {
       result = build(vm,
-        vm->getEventManager().trackingTriggered());
+        vm->getEventManager().isTrackingTriggered());
     }
   };
 };
@@ -565,4 +616,4 @@ public:
 
 #endif // MOZART_GENERATOR
 
-#endif // MOZART_MODINTROSPECTIONJOURNAL_H
+#endif // MOZART_MODINTROSPECTION_H
