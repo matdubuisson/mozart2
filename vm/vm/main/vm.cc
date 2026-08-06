@@ -59,7 +59,7 @@ void VirtualMachine::scheduleThread(bool isSystem) {
   //   << getMaxOperations() << " operations" << std::endl;
   size_t nOperations = currentThread->run(getMaxOperationsExecutionMode());
 
-  std::cout << "Thread " << currentThread->getId() << " executed " << nOperations << " operations" << std::endl;
+  //std::cout << "Thread " << currentThread->getId() << " executed " << nOperations << " operations" << std::endl;
 
   // Update the execution mode (normally manipulated by system threads for specific purposes)
   updateExecutionMode(nOperations);
@@ -74,7 +74,7 @@ void VirtualMachine::scheduleThread(bool isSystem) {
     threadPool.schedule(currentThread, isPreempted);
 
     if (!isPreempted) {
-      std::cout << "Early preemption" << std::endl;
+      //std::cout << "Early preemption" << std::endl;
       currentThread->preempt();
     }
   }

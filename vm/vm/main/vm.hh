@@ -71,11 +71,48 @@ void VirtualMachineEnvironment::sendOnVMPort(VM from, VMIdentifier to, RichNode 
 // VirtualMachineEventManager //
 ////////////////////////////////
 
-size_t VirtualMachineEventManager::getStructureId(Structure structure) {
-  if (structure.node.is<Cons>())
-    return structure.node.as<Cons>().getId();
+Runnable* VirtualMachineEventManager::getCurrentThread(VM vm) {
+  return vm->getCurrentThread();
+}
+
+template<class S>
+size_t VirtualMachineEventManager::getStructureId(StructureInfo<S> structure) {
+  if (structure.node.template is<S>())
+    return structure.node.template as<S>().getId();
   else return SIZE_MAX;
 }
+
+// void VirtualMachineEventManager::detectTriggeredRunnableTracking(
+//   Runnable* runnable, RunnableAnnounce announce) {
+  
+// }
+
+// void VirtualMachineEventManager::detectTriggeredRunnableTracking(
+//   RunnableTracking& tracking) {
+  
+// }
+
+// template<class V>
+// void VirtualMachineEventManager::detectTriggeredVariableTracking(
+//   V* runnable, VariableAnnounce announce) {
+
+// }
+
+// template<class V>
+// void VirtualMachineEventManager::detectTriggeredVariableTracking(
+//   VariableTracking& tracking) {
+
+// }
+
+// void VirtualMachineEventManager::detectTriggeredStructureTracking(
+//   Runnable* runnable, RichNode node, StructureAnnounce announce) {
+  
+// }
+
+// void VirtualMachineEventManager::detectTriggeredStructureTracking(
+//   StructureTracking& tracking) {
+  
+// }
 
 ////////////////////
 // VirtualMachine //
