@@ -28,6 +28,7 @@
 #include "../mozartcore.hh"
 #include "../introspection.hh"
 
+#include <unordered_set>
 #include <iostream>
 
 #ifndef MOZART_GENERATOR
@@ -62,7 +63,7 @@ public:
       );
     }
   };
-
+  
   static inline
   std::string nodeToString(VM vm, RichNode node) {
     auto& config = vm->getPropertyRegistry().config;
@@ -1421,28 +1422,56 @@ public:
       builder.push_back(vm, build(vm, runnable->getId()));
     }
 
+    ozListPropagateKind(vm, node);
+
+    TypedRichNode<Cons> cons = node.as<Cons>();
+
     return buildRecord(vm,
       buildArity(vm,
         "list",
+        "generationId",
         "hash",
         "id",
-        "owners",
-        "repr"
+        "kindId",
+        "list",
+        "owners"
       ),
+      build(vm, cons.getGenerationId()),
       build(vm, ozListHash(vm, node)),
-      build(vm, node.as<Cons>().getId()),
-      builder.get(vm),
-      build(vm, nodeToString(vm, node).c_str())
+      build(vm, cons.getId()),
+      build(vm, cons.getKindId()),
+      Reference::build(vm, node.getStableRef(vm)),
+      builder.get(vm)
     );
   }
 
   static inline
-  UnstableNode buildListNodesListRecord(VM vm, Introspection::NodesMap& map) {
+  UnstableNode buildListNodesListRecord(VM vm, RichNode idsList, Introspection::NodesMap& map) {
+    std::unordered_set<size_t> set;
+
+    bool isNil = ozListIsNil(vm, idsList);
+
+    if (!isNil) {
+      ozListForEach(vm, idsList, [vm, &set](nativeint id) {
+        set.insert(id);
+        std::cout << "Add: " << id << std::endl;
+      }, "List of integer ids");
+    }
+
     OzListBuilder builder(vm);
     for (auto iter = map.begin(); iter != map.end(); ++iter) {
       size_t nodeId = iter->first;
       Introspection::OwnedRichNode& ownedNode = iter->second;
-      builder.push_back(vm, buildListNodeRecord(vm, ownedNode));
+
+      Cons& cons = ownedNode.node.as<Cons>().getSelf();
+      std::cout << "Match: " << cons.getId() << " and " << cons.getKindId() << std::endl;
+
+      if (isNil
+        || set.find(cons.getId()) != set.end()
+        || set.find(cons.getKindId()) != set.end()
+      ) {
+        builder.push_back(vm, buildListNodeRecord(vm, ownedNode));
+      }
     }
     return builder.get(vm);
   }
@@ -1451,11 +1480,11 @@ public:
   public:
     GetThreadLists(): Builtin("getThreadLists") {}
 
-    static void call(VM vm, In runnableNode, Out result) {
+    static void call(VM vm, In runnableNode, In idsList, Out result) {
       Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
       Introspection::NodesMap map = vm->getIntrospection()
         .getLists(vm, runnable);
-      result = buildListNodesListRecord(vm, map);
+      result = buildListNodesListRecord(vm, idsList, map);
     }
   };
 
@@ -1463,9 +1492,9 @@ public:
   public:
     GetLists(): Builtin("getLists") {}
 
-    static void call(VM vm, Out result) {
+    static void call(VM vm, In idsList, Out result) {
       Introspection::NodesMap map = vm->getIntrospection().getLists(vm);
-      result = buildListNodesListRecord(vm, map);
+      result = buildListNodesListRecord(vm, idsList, map);
     }
   };
 };
