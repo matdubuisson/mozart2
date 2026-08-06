@@ -31,16 +31,38 @@
 
 namespace mozart {
 
+/**
+ * @brief This interface exists to resolve an object access problem.
+ * Basically nodes (ie RichNode) carry any type of data and allows access to data thanks to
+ * the as<Stg>() method. However it returns a TypedRichNode<Stg> and not a Stg& or Stg* that might
+ * be needed by some calls developed specifically for the debugger.
+ * 
+ * The Self interface allows us to convert a RichNode to a Stg& reference or a Stg* pointer.
+ * ie: Stg& stg = RichNode(....).as<Stg>().getSelf()
+ * 
+ * @tparam SelfReturned the interfaced class
+ */
 template<class SelfReturned>
 class Self {
 public:
+  /** @brief Instantiate a new Self interface */
   Self() {}
 
 public:
+  /**
+   * @brief Get a SelfReturned object reference of the current interfaced instance
+   * 
+   * @return SelfReturned& 
+   */
   SelfReturned& getSelf() {
     return static_cast<SelfReturned&>(*this);
   }
 
+  /**
+   * @brief Get a SelfReturned object pointer on the current interfaced instance
+   * 
+   * @return SelfReturned*
+   */
   SelfReturned* getSelfPointer() {
     return static_cast<SelfReturned*>(this);
   }
