@@ -37,20 +37,15 @@ using VariableAnnounce = VirtualMachineEventManager::VariableAnnounce;
 // VariableBase //
 //////////////////
 
-class VariableBaseCommon {
-protected:
-  static size_t _everCreatedVariablesCount;
-};
-
 template <class This>
-class VariableBase: public VariableBaseCommon, public WithHome {
+class VariableBase: public WithHome {
 public:
   /**
    * Declares a new variable base
    * @param vm The virtual machine in which the variable base is being created
    * @note By default the variable is not needed
    */
-  explicit VariableBase(VM vm): WithHome(vm), _id(_everCreatedVariablesCount++),
+  explicit VariableBase(VM vm): WithHome(vm),
     _needed(false), _bound(false) {}
 
   /**
@@ -59,7 +54,7 @@ public:
    * @param home The home space of the variable base
    * @note By default the variable is not needed
    */
-  VariableBase(VM vm, Space* home): WithHome(home), _id(_everCreatedVariablesCount++),
+  VariableBase(VM vm, Space* home): WithHome(home),
     _needed(false), _bound(false) {}
 
   /**
@@ -71,12 +66,6 @@ public:
    */
   inline
   VariableBase(VM vm, GR gr, This& from);
-public:
-  /** @returns The variable id representing that the variable is the 'id' th
-   * variable ever created
-   */
-  size_t getId() { return _id; }
-
 public:
   // DataflowVariable interface
 
@@ -167,8 +156,6 @@ private:
   inline
   void wakeUpPendingsSubSpace(VM vm, Space* currentSpace);
 
-protected:
-  const size_t _id;
 private:
   VMAllocatedList<StableNode*> pendings;
 
@@ -185,7 +172,8 @@ private:
 #include "Variable-implem-decl.hh"
 #endif
 
-class Variable: public DataType<Variable>, public VariableBase<Variable>,
+class Variable: public AdvancedIdentifiable<Variable>,
+  public DataType<Variable>, public VariableBase<Variable>,
   Transient, WithVariableBehavior<90> {
 public:
   /**
@@ -194,7 +182,7 @@ public:
    * @note The variable is not needed by default
    */
   explicit Variable(VM vm): VariableBase(vm) {
-    vm->getEventManager().announceVariable(this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
   }
 
   /**
@@ -204,7 +192,7 @@ public:
    * @note The variable is not needed by default
    */
   Variable(VM vm, Space* home): VariableBase(vm, home) {
-    vm->getEventManager().announceVariable(this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
   }
 
   /**
@@ -277,7 +265,8 @@ public:
 #include "ReadOnlyVariable-implem-decl.hh"
 #endif
 
-class ReadOnlyVariable: public DataType<ReadOnlyVariable>,
+class ReadOnlyVariable: public AdvancedIdentifiable<ReadOnlyVariable>,
+  public DataType<ReadOnlyVariable>,
   public VariableBase<ReadOnlyVariable>,
   Transient, WithVariableBehavior<80> {
 public:
@@ -287,7 +276,7 @@ public:
    * @note The variable is not needed by default
    */
   explicit ReadOnlyVariable(VM vm): VariableBase(vm) {
-    vm->getEventManager().announceVariable(this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
   }
 
   /**
@@ -297,7 +286,7 @@ public:
    * @note The variable is not needed by default
    */
   ReadOnlyVariable(VM vm, Space* home): VariableBase(vm, home) {
-    vm->getEventManager().announceVariable(this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
   }
 
   /**
@@ -364,18 +353,15 @@ public:
 #include "OptVar-implem-decl.hh"
 #endif
 
-class OptVar: public VariableBaseCommon, public DataType<OptVar>, public WithHome,
+class OptVar: public AdvancedIdentifiable<OptVar>,
+  public DataType<OptVar>, public WithHome,
   Transient, StoredAs<SpaceRef>, WithVariableBehavior<100> {
 public:
   /**
    * Instantiates a new OPT variable from a space reference
    * @param home The home space reference of the variable
    */
-  explicit OptVar(SpaceRef home): WithHome(home), _id(SIZE_MAX) {}
-
-  size_t getId() {
-    return _id;
-  }
+  explicit OptVar(SpaceRef home): WithHome(home) {}
 
   /**
    * Attributes to the provided referenced space reference VM's current space
@@ -478,9 +464,6 @@ public:
   void printReprToStream(VM vm, std::ostream& out, int depth, int width) {
     out << "_<optimized>";
   }
-
-private:
-  size_t _id;
 };
 
 #ifndef MOZART_GENERATOR

@@ -25,26 +25,112 @@
 #ifndef MOZART_IDENTIFIABLE_DECL_H
 #define MOZART_IDENTIFIABLE_DECL_H
 
-#include "mozartcore-decl.hh"
+#include <cstdint>
+#include <cstddef>
+#include <cassert>
 
 namespace mozart {
 
+template<class Identified>
 class Identifiable {
 private:
-  static size_t _idsCounter;
+  inline static size_t _idsCounter = 0;
 
 public:
   Identifiable() : _id(_idsCounter++) {}
 
-  Identifiable(Identifiable& other) : _id(other._id) {}
+  Identifiable(const Identifiable& other) : _id(other._id) {}
 
 public:
-  size_t getId() {
+  template<class OtherIdentified>
+  void copyIdentity(const Identifiable<OtherIdentified>& other) {
+    _id = other.getId();
+  }
+
+  template<class OtherIdentified>
+  void copyIdentity(const Identifiable<OtherIdentified>* other) {
+    assert(other != nullptr);
+    copyIdentity<OtherIdentified>(*other);
+  }
+
+public:
+  size_t getId() const {
     return _id;
   }
 
-private:
+  void setId(size_t id) {
+    _id = id;
+  }
+
+public:
+  Identifiable<Identified>& getIdentity() {
+    return *this;
+  }
+
+protected:
   size_t _id;
+};
+
+template<class Identified>
+class AdvancedIdentifiable: public Identifiable<Identified> {
+public:
+  AdvancedIdentifiable(): Identifiable<Identified>(),
+    _kindId(SIZE_MAX), _generationId(0) {}
+  
+  AdvancedIdentifiable(const AdvancedIdentifiable& other): Identifiable<Identified>(other),
+    _kindId(other._kindId), _generationId(other._generationId) {}
+
+public:
+  using Identifiable<Identified>::copyIdentity;
+
+  template<class OtherIdentified>
+  void copyIdentity(const AdvancedIdentifiable<OtherIdentified>& other) {
+    Identifiable<Identified>::copyIdentity(other);
+
+    _kindId = other.getKindId();
+    _generationId = other.getGenerationId();
+  }
+
+  template<class OtherIdentified>
+  void copyIdentity(const AdvancedIdentifiable<OtherIdentified>* other) {
+    assert(other != nullptr);
+    copyIdentity<OtherIdentified>(*other);
+  }
+
+  template<class OtherIdentified>
+  void followIdentity(const AdvancedIdentifiable<OtherIdentified>& other) {
+    _kindId = other.getKindId();
+    _generationId = other.getGenerationId() + 1;
+  }
+
+  template<class OtherIdentified>
+  void followIdentity(const AdvancedIdentifiable<OtherIdentified>* other) {
+    assert(other != nullptr);
+    followIdentity<OtherIdentified>(*other);
+  }
+
+public:
+  size_t getKindId() const {
+    return _kindId == SIZE_MAX ?
+      Identifiable<Identified>::getId() : _kindId;
+  }
+
+  size_t getGenerationId() const {
+    return _generationId;
+  }
+
+public:
+  bool isKindLeader() const {
+    return _kindId == SIZE_MAX;
+  }
+
+public:
+  AdvancedIdentifiable<Identified>& getAdvancedIdentity() {
+    return *this;
+  }
+
+private:
+  size_t _kindId, _generationId;
 };
 
 }

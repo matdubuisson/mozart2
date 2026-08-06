@@ -28,6 +28,7 @@
 #include "core-forward-decl.hh"
 #include "store-decl.hh"
 #include "vmallocatedlist-decl.hh"
+#include "identifiable-decl.hh"
 
 #include <cassert>
 
@@ -145,10 +146,8 @@ private:
 // Runnable //
 //////////////
 
-class Runnable {
+class Runnable : public AdvancedIdentifiable<Runnable> {
 public:
-  static size_t _everCreatedThreadsCount;
-
   struct Statistics {
     size_t runsCount = 0;
     size_t resumesCount = 0;
@@ -181,21 +180,6 @@ public:
   Space* getSpace() {
     return _space;
   }
-
-  /** @returns The thread id representing that the thread is the 'id' th
-   * thread ever created
-   */
-  size_t getId() { return _id; }
-
-  /** @returns The thread kind id representing from which code this thread
-   * has been generated
-   */
-  size_t getKindId() { return _kindId; }
-
-  /** @returns The thread generation id representing the nth thread generated
-   * from the same code
-   */
-  size_t getGenerationId() { return _generationId; }
 
   /** @returns The priority of the thread */
   ThreadPriority getPriority() { return _priority; }
@@ -366,7 +350,6 @@ public:
   virtual void dump() {}
 protected:
   VM vm;
-  const size_t _id, _kindId, _generationId;
 private:
   friend class RunnableList;
   friend class Introspection;

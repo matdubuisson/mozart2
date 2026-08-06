@@ -25,6 +25,7 @@
 #ifndef MOZART_IDENTIFIABLE_H
 #define MOZART_IDENTIFIABLE_H
 
+#include "identifiable-decl.hh"
 #include "mozartcore.hh"
 
 namespace mozart {

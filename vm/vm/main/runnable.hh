@@ -96,8 +96,7 @@ void IntermediateState::rewind(VM vm) {
 //////////////
 
 Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
-  vm(vm),  _id(_everCreatedThreadsCount++),
-  _kindId(0), _generationId(0), _space(space), _priority(priority),
+  vm(vm), _space(space), _priority(priority),
   _runnable(false), _terminated(false),
   _dead(false), _preempted(false), _preemptible(true),
   _raiseOnBlock(false), _intermediateState(vm),
@@ -108,13 +107,13 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
   _space->notifyThreadCreated();
 
   vm->threads.insert(this);
-  vm->eventManager.announceRunnable(this,
+  vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Inserted);
 }
 
 Runnable::Runnable(GR gr, Runnable& from) :
-  vm(gr->vm),  _id(_everCreatedThreadsCount++),
-  _kindId(0), _generationId(0),
+  AdvancedIdentifiable<Runnable>(from),
+  vm(gr->vm),
   _intermediateState(vm, gr, from._intermediateState),
   _replicate(nullptr) {
 
@@ -143,7 +142,7 @@ size_t Runnable::run(size_t maxInstructionsNumber) {
 
   _preempted = false;
 
-  vm->eventManager.announceRunnable(this,
+  vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Updated);
 
   return doRun(maxInstructionsNumber);
@@ -156,7 +155,7 @@ void Runnable::setPriority(ThreadPriority priority) {
     if (_runnable && vm->getCurrentThread() != this)
       vm->threadPool.reschedule(this);
 
-    vm->eventManager.announceRunnable(this,
+    vm->eventManager.announceRunnable(vm, this,
       VirtualMachineEventManager::RunnableAnnounce::Updated);
   }
 }
@@ -164,7 +163,7 @@ void Runnable::setPriority(ThreadPriority priority) {
 void Runnable::setPreemptible(bool preemptible) {
   _preemptible = preemptible;
 
-  vm->eventManager.announceRunnable(this,
+  vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Updated);
 }
 
@@ -181,7 +180,7 @@ void Runnable::resume(bool skipSchedule) {
   if (!skipSchedule)
     vm->getThreadPool().schedule(this);
 
-  vm->eventManager.announceRunnable(this,
+  vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Updated);
 }
 
@@ -198,7 +197,7 @@ void Runnable::suspend(bool skipUnschedule) {
   if (!skipUnschedule)
     vm->getThreadPool().unschedule(this);
 
-  vm->eventManager.announceRunnable(this,
+  vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Updated);
 }
 
@@ -215,7 +214,7 @@ void Runnable::suspendOnVar(VM vm, RichNode variable, bool skipUnschedule) {
 void Runnable::preempt() {
   _preempted = true;
 
-  vm->eventManager.announceRunnable(this,
+  vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Updated);
 }
 
@@ -268,7 +267,7 @@ void Runnable::dispose() {
   _dead = true;
 
   // vm->threads.remove(this);
-  vm->eventManager.announceRunnable(this,
+  vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Removed);
 }
 

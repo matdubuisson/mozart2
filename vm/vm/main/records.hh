@@ -235,14 +235,20 @@ template <typename Head, typename Tail, typename>
 Cons::Cons(VM vm, Head&& head, Tail&& tail) {
   _elements[0].init(vm, std::forward<Head>(head));
   _elements[1].init(vm, std::forward<Tail>(tail));
+
+  vm->getEventManager().announceStructure<Cons>(vm, this,
+    VirtualMachineEventManager::StructureAnnounce::Created);
 }
 
 Cons::Cons(VM vm) {
   _elements[0].init(vm);
   _elements[1].init(vm);
+
+  vm->getEventManager().announceStructure<Cons>(vm, this,
+    VirtualMachineEventManager::StructureAnnounce::Created);
 }
 
-Cons::Cons(VM vm, GR gr, Cons& from) : Identifiable(from) {
+Cons::Cons(VM vm, GR gr, Cons& from) : AdvancedIdentifiable<Cons>(from) {
   gr->copyStableNode(_elements[0], from._elements[0]);
   gr->copyStableNode(_elements[1], from._elements[1]);
 }

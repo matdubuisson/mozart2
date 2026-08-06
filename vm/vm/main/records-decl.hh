@@ -90,7 +90,8 @@ protected:
 /**
  * Tuple (specialization of Record)
  */
-class Tuple: public DataType<Tuple>, public BaseRecord<Tuple>,
+class Tuple: public AdvancedIdentifiable<Tuple>, public Self<Tuple>,
+  public DataType<Tuple>, public BaseRecord<Tuple>,
   public IntegerDottableHelper<Tuple>,
   StoredWithArrayOf<StableNode>, WithStructuralBehavior {
 public:
@@ -180,8 +181,9 @@ private:
 /**
  * Cons (specialization of Tuple with label '|' and width 2)
  */
-class Cons: public DataType<Cons>, public IntegerDottableHelper<Cons>,
-  WithStructuralBehavior, public Identifiable {
+class Cons: public AdvancedIdentifiable<Cons>, public Self<Cons>,
+  public DataType<Cons>, public IntegerDottableHelper<Cons>,
+  WithStructuralBehavior {
 public:
   static atom_t getTypeAtom(VM vm) {
     return vm->coreatoms.tuple;
@@ -362,7 +364,8 @@ private:
 /**
  * Record
  */
-class Record: public DataType<Record>, public BaseRecord<Record>,
+class Record: public AdvancedIdentifiable<Record>, public Self<Record>,
+  public DataType<Record>, public BaseRecord<Record>,
   StoredWithArrayOf<StableNode>, WithStructuralBehavior {
 public:
   static atom_t getTypeAtom(VM vm) {

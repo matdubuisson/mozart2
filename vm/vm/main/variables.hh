@@ -25,6 +25,7 @@
 #ifndef MOZART_VARIABLES_H
 #define MOZART_VARIABLES_H
 
+#include <typeinfo>
 #include "mozartcore.hh"
 
 #ifndef MOZART_GENERATOR
@@ -38,7 +39,6 @@ namespace mozart {
 template <class This>
 VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
   WithHome(vm, gr, from),
-  _id(from._id),
   _needed(from._needed), _bound(from._bound) {
 
   /**
@@ -56,7 +56,7 @@ VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
 template <class This>
 void VariableBase<This>::addToSuspendList(VM vm, RichNode variable) {
   pendings.push_back(vm, variable.getStableRef(vm));
-  vm->getEventManager().announceWaitedVariableBase(this, variable);
+  vm->getEventManager().announceWaitedVariableBase(vm, this, variable);
 }
 
 template <class This>
@@ -73,33 +73,13 @@ void VariableBase<This>::markNeeded(VM vm) {
   if (!_needed) {
     _needed = true;
     wakeUpPendings(vm);
-    vm->getEventManager().announceVariableBase(this, VariableAnnounce::Needed);
+    vm->getEventManager().announceVariableBase(vm, this, VariableAnnounce::Needed);
   }
 }
 
 template <class This>
 void VariableBase<This>::doBind(RichNode self, VM vm, RichNode src) {
   _bound = true;
-
-  // std::cout << "ALERT[" << src.getId() << "]: " << src.type()->getName().c_str() << std::endl;
-
-  // if (src.is<Cons>()) {
-  //   StableNode* tail = src.as<Cons>().getTail();
-  //   assert(tail != nullptr);
-  //   RichNode node = RichNode(*tail);
-
-  //   std::cout << "It is cons" << std::endl;
-
-  //   if (node.is<OptVar>()) {
-  //     std::cout << "Tail is optvar" << std::endl;
-  //   } else if (node.is<Variable>()) {
-  //     std::cout << "Tail is variable" << std::endl;
-  //   } else if (node.is<ReadOnlyVariable>()) {
-  //     std::cout << "Tail is read-only-variable" << std::endl;
-  //   } else {
-  //     std::cout << "Tail is something else" << std::endl;
-  //   }
-  // }
 
   if (vm->isOnTopLevel()) {
     // The simple, fast binding when on top-level
@@ -169,7 +149,8 @@ void VariableBase<This>::wakeUpPendingsSubSpace(VM vm, Space* currentSpace) {
 
 #include "Variable-implem.hh"
 
-Variable::Variable(VM vm, GR gr, Variable& from): VariableBase(vm, gr, from) {
+Variable::Variable(VM vm, GR gr, Variable& from):
+  AdvancedIdentifiable<Variable>(from), VariableBase(vm, gr, from) {
 }
 
 void Variable::wakeUp(RichNode self, VM vm) {
@@ -183,7 +164,7 @@ bool Variable::shouldWakeUpUnderSpace(VM vm, Space* space) {
 
 void Variable::bind(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
-  vm->getEventManager().announceBoundVariable(this, self, src);
+  vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
 //////////////////////
@@ -193,17 +174,17 @@ void Variable::bind(RichNode self, VM vm, RichNode src) {
 #include "ReadOnlyVariable-implem.hh"
 
 ReadOnlyVariable::ReadOnlyVariable(VM vm, GR gr, ReadOnlyVariable& from):
-  VariableBase(vm, gr, from) {
+  AdvancedIdentifiable<ReadOnlyVariable>(from), VariableBase(vm, gr, from) {
 }
 
 void ReadOnlyVariable::bind(RichNode self, VM vm, RichNode src) {
   waitFor(vm, self);
-  vm->getEventManager().announceBoundVariable(this, self, src);
+  vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
 void ReadOnlyVariable::bindReadOnly(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
-  vm->getEventManager().announceBoundVariable(this, self, src);
+  vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
 ////////////
@@ -219,25 +200,25 @@ void OptVar::create(SpaceRef& self, VM vm, GR gr, OptVar from) {
 void OptVar::addToSuspendList(RichNode self, VM vm, RichNode variable) {
   self.become(vm, Variable::build(vm));
   DataflowVariable(self).addToSuspendList(vm, variable);
-  vm->getEventManager().announceWaitedVariable(this, variable);
+  vm->getEventManager().announceWaitedVariable(vm, this, variable);
 }
 
 void OptVar::markNeeded(RichNode self, VM vm) {
   self.become(vm, Variable::build(vm));
   DataflowVariable(self).markNeeded(vm);
-  vm->getEventManager().announceVariable(this, VariableAnnounce::Needed);
+  vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Needed);
 }
 
 void OptVar::bind(RichNode self, VM vm, UnstableNode&& src) {
   makeBackupForSpeculativeBindingIfNeeded(self, vm);
   self.become(vm, std::move(src));
-  vm->getEventManager().announceBoundVariable(this, self, src);
+  vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
 void OptVar::bind(RichNode self, VM vm, RichNode src) {
   makeBackupForSpeculativeBindingIfNeeded(self, vm);
   self.become(vm, src);
-  vm->getEventManager().announceBoundVariable(this, self, src);
+  vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
 void OptVar::makeBackupForSpeculativeBindingIfNeeded(RichNode self, VM vm) {
