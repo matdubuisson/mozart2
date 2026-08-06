@@ -146,10 +146,16 @@ auto ozListForEach(VM vm, RichNode list, const F& f,
     -> typename std::enable_if<function_traits<F>::arity == 2, void>::type;
 
 inline
+bool ozListIsNil(VM vm, RichNode list);
+
+inline
 size_t ozListLength(VM vm, RichNode list);
 
 inline
 size_t ozListHash(VM vm, RichNode list);
+
+inline
+void ozListPropagateKind(VM vm, RichNode list);
 
 //////////////////////////////////////
 // Virtual strings and byte strings //

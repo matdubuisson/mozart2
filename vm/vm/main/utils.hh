@@ -246,6 +246,11 @@ auto ozListForEach(VM vm, RichNode list, const F& f,
     raiseTypeError(vm, expectedType, list);
 }
 
+bool ozListIsNil(VM vm, RichNode list) {
+  using namespace patternmatching;
+  return matches(vm, list, vm->coreatoms.nil);
+}
+
 size_t ozListLength(VM vm, RichNode list) {
   size_t result = 0;
 
@@ -267,19 +272,40 @@ size_t ozListLength(VM vm, RichNode list) {
   }
 }
 
+static inline
+RichNode getNext(VM vm, RichNode list) {
+  StableNode* p = list.as<Cons>().getTail();
+  assert(p != nullptr);
+  RichNode tail = RichNode(*p);
+  return tail;
+}
+
 size_t ozListHash(VM vm, RichNode list) {
   size_t hash = 0;
   std::hash<size_t> hasher;
 
   while (list.is<Cons>()) {
     hash = hasher(hash + list.getId());
-    StableNode* p = list.as<Cons>().getTail();
-    assert(p != nullptr);
-    RichNode tail = RichNode(*p);
-    list = tail;
+    list = getNext(vm, list);
   }
 
   return hash;
+}
+
+void ozListPropagateKind(VM vm, RichNode list) {
+  // if (!leader.isKindLeader()) return;
+
+  // std::cout << "Propagate : " << leader.getKindId() << std::endl;
+
+  RichNode previous = list;
+  RichNode current = getNext(vm, list);
+
+  while (current.is<Cons>()) {
+    current.as<Cons>().followIdentity(previous.as<Cons>().getSelf());
+    previous = current;
+    // std::cout << "\t=> " << current.as<Cons>().getKindId() << std::endl;
+    current = getNext(vm, current);
+  }
 }
 
 //////////////////////////////////////
