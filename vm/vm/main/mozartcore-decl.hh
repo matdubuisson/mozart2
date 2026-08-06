@@ -26,6 +26,8 @@
 #define MOZART_MOZARTCORE_DECL_H
 
 #include "core-forward-decl.hh"
+#include "identifiable-decl.hh"
+#include "self-decl.hh"
 
 #include "nullable-decl.hh"
 #include "type-decl.hh"
