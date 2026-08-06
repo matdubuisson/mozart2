@@ -206,10 +206,11 @@ proc {MaskedDisplayCSV Labels Rows Width Format Masks}
       [] Mask|NextMasks then
         if Mask then
           {PrintExactly Element Width}
-          {Print " "}
         else
           {Print Element}
         end
+
+        {Print " "}
 
         {DisplayRow NextElements NextMasks}
       end

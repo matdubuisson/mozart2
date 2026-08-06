@@ -206,36 +206,58 @@ define
     if 
       {Boot_Scheduler.isGCReady $} == false
       andthen {Boot_Scheduler.isGCDone $} == false
-      andthen {Boot_EventManager.trackingTriggered $} then
-    %   Journal = {Boot_EventManager.getJournal $}
-    %   % BoundOptVariables = Journal.variables.optVariables.bound
-    %   % BoundVariables = Journal.variables.variables.bound
-    %   % BoundReadOnlyVariables = Journal.variables.readOnlyVariables.bound
-    % in
-    %   {Boot_System.printRepr Journal false true}
-      % {Boot_System.printRepr 
-      %   nBound(
-      %     nOptVarBound: {List.length BoundOptVariables $}
-      %     nVarBound: {List.length BoundVariables $}
-      %     nROVarBound: {List.length BoundReadOnlyVariables $}
-      %   )
-      % false true}
+      andthen {Boot_EventManager.isTrackingTriggered $} then
 
-      local Lists = {Boot_Introspection.getLists $} in
-        {MaskedDisplayCSV
-          ["Id" "Hash" "Owners" "Repr"]
-          Lists 10 FormatList
-          [true true true false]}
+      local
+        % PingPong :
+        % Lists = {Boot_Introspection.getLists [100000] $}
+        Lists = {Boot_Introspection.getLists [100000] $}
+      in
+        if Lists \= nil then
+          {MaskedDisplayCSV
+            ["Id" "KindId" "GenerationId" "Hash" "Owners" "List"]
+            Lists 10 FormatList
+            [true true true true false false]}
+
+          {PrintWarning "Make a stop...."}
+          {Boot_System.inputEnter}
+        end
       end
-
-      {PrintWarning "Make a stop...."}
-      {Boot_System.inputEnter}
     end
 
     {Boot_Thread.preempt This}
     {Loop NewState AlarmsCell WatchCell}
   end
 in
-  {Boot_EventManager.addTracking variable created}
+  {Boot_EventManager.track variable bound 100000 nil}
+  {Boot_EventManager.track variable bound 200000 nil}
+  
   {Loop state() {Cell.new nil $} {Cell.new nil $}}
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

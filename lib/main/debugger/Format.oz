@@ -137,16 +137,22 @@ proc {FormatList ListRecord ?Result}
 in
   case ListRecord of list(
     id: Id
+    kindId: KindId
+    generationId: GenerationId
     hash: Hash
     owners: Owners
-    repr: Repr
+    list: Lst
   ) then
     if {AreThereDifferentOwners Owners $} then
       Result = [
         {Int.toString Id $}
+        {Int.toString KindId $}
+        {Int.toString GenerationId $}
         {Int.toString Hash $}
-        {ExtractString {Boot_System.getRepr Owners ~1 ~1 $} $}
-        {ExtractString Repr $}
+        {ExtractString
+          {Boot_System.getRepr Owners 100 100 $} $}
+        {ExtractString
+          {Boot_System.getRepr Lst 10000 10000 $} $}
       ]
     else Result = none end
   end

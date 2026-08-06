@@ -1,5 +1,30 @@
+% proc {ExtractStringFromList Lst ?String}
+%   proc {Loop Lst Accumulated ?String}
+%     {Boot_System.printRepr acc(Accumulated) false true}
+%     case Lst of nil then String = Accumulated
+%     [] Head|Tail then
+%       if {IsDet Head} then
+%         NewEnd = if Tail == nil then "" else " " end
+%         NewAccumulated = Accumulated#{Boot_System.getRepr Head ~1 ~1 $}#NewEnd
+%       in
+%         {Loop Tail NewAccumulated String}
+%       else
+%         String = Accumulated#"_"
+%       end
+%     [] LeftLst#RightLst then
+%       String = {ExtractStringFromList LeftLst $}#"#"#{ExtractStringFromList RightLst $}
+%     end
+%   end
+%   InsideString
+% in
+%   InsideString = {Loop Lst "" $}
+%   String = "["#InsideString#"]"
+% end
+
 proc {ExtractString Argument ?String}
-  if {Bool.is Argument $} then
+  if {Not {IsDet Argument}} then
+    String = "_"
+  elseif {Bool.is Argument $} then
     String = {Bool.toString Argument $}
   elseif {Int.is Argument $} then
     String = {Int.toString Argument $}
