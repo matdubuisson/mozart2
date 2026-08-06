@@ -36,10 +36,26 @@ enum GenMode {
 
 GenMode mode;
 
+/**
+ * @brief Tells if the provided declared record is not a 'Module'
+ * 
+ * @param base A pointer on the declared record
+ * @param data Unused pointer
+ * @return If the base's name is 'Module'
+ */
 bool baseIsNotModule(const CXXRecordDecl* base, void* data) {
   return base->getNameAsString() != "Module";
 }
 
+/**
+ * @brief 
+ * 
+ * @param outputDir 
+ * @param ds 
+ * @param builtinHeaderFile 
+ * @param builtinCodeFile 
+ * @param emulateInlineTo 
+ */
 void processDeclContext(const std::string outputDir, const DeclContext* ds,
                         llvm::raw_fd_ostream* builtinHeaderFile,
                         llvm::raw_fd_ostream* builtinCodeFile,
@@ -76,6 +92,12 @@ void processDeclContext(const std::string outputDir, const DeclContext* ds,
   }
 }
 
+/**
+ * Launches the LLVM generator creating implementations for templates and code for
+ * mozart builtin modules
+ * @param argc N arguments
+ * @param argv Arguments <intfimpl|builtins> <ast-file> <output-dir> (<builtin-name> if builtins)
+ */
 int main(int argc, char* argv[]) {
   CompilerInstance CI;
 
@@ -88,7 +110,7 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<ostream> builtinCodeFile = nullptr;
   std::unique_ptr<ostream> emulateInlineTo = nullptr;
 
-  // Parse mode
+  /** Configure the parsing mode */
   if (modeStr == "intfimpl") {
     mode = gmIntfImpl;
   } else if (modeStr == "builtins") {
@@ -96,6 +118,12 @@ int main(int argc, char* argv[]) {
     builtinFileName = argv[4];
     builtinHeaderFile = openFileOutputStream(outputDir + builtinFileName + ".hh");
     builtinCodeFile = openFileOutputStream(outputDir + builtinFileName + ".cc");
+
+    /**
+     * @brief Mozart's VM optimization
+     * Some very often used inlined operation are directly taken as builtin in
+     * order to not be emulated by the expensive switch/case in emulate.cc
+     */
     if (builtinFileName == "mozartbuiltins")
       emulateInlineTo = openFileOutputStream(outputDir + "emulate-inline.cc");
   } else {
@@ -103,20 +131,54 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // Parse source file
+  /** Parse the source file */
+
+  // Get access to the pre-compiled headers
+  const PCHContainerReader &pchContainerReader = CI.getPCHContainerReader();
+
+  // Get access to CLang's own virtual file system
+  IntrusiveRefCntPtr<llvm::vfs::FileSystem> virtualFileSystemPtr = CI.getVirtualFileSystemPtr();
+
+  // Create the diagnostic used to report compilation events to the user (ie warnings, errors, ....)
   CI.createDiagnostics();
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags(&CI.getDiagnostics());
+  std::shared_ptr<DiagnosticOptions> DiagOpts = std::make_shared<DiagnosticOptions>(CI.getDiagnosticOpts());
+
+  // File system options when loading the AST (ie paths)
+  FileSystemOptions &fileSystemOptions = CI.getFileSystemOpts();
+
+  // Options telling how to find header files
+  HeaderSearchOptions &headerSearchOptions = CI.getHeaderSearchOpts();
+
   std::unique_ptr<ASTUnit> unit =
-      ASTUnit::LoadFromASTFile(astFile,
-                               CI.getPCHContainerReader(),
-                               Diags,
-                               CI.getFileSystemOpts());
+      ASTUnit::LoadFromASTFile(
+                                astFile,
+                                pchContainerReader,
+                                ASTUnit::LoadASTOnly,
+                                virtualFileSystemPtr,
+                                DiagOpts,
+                                Diags,
+                                fileSystemOptions,
+                                headerSearchOptions
+                              );
 
   // Setup printing policy
   // We want the bool type to be printed as "bool"
   context = &(unit->getASTContext());
   PrintingPolicy policy = context->getPrintingPolicy();
-  policy.Bool=1;
+  policy.Bool = 1;
+  policy.SuppressSpecifiers = false;
+  policy.SuppressTagKeyword = false;
+  policy.SuppressTagKeywordInAnonNames = false;
+  policy.IncludeTagDefinition = true;
+  policy.SuppressScope = false;
+  policy.SuppressUnwrittenScope = false;
+  policy.SuppressInlineNamespace = (unsigned int) PrintingPolicy::SuppressInlineNamespaceMode::None;
+  policy.SuppressInitializers = false;
+  policy.SuppressStrongLifetime = false;
+  policy.SuppressLifetimeQualifiers = false;
+  policy.SuppressTemplateArgsInCXXConstructors = false;
+  policy.SuppressDefaultTemplateArgs = false;
   context->setPrintingPolicy(policy);
 
   // Process
