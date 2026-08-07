@@ -2,6 +2,8 @@
 
 This readme describes how to build the mozart code but also how to re-generate the pre-generated files with llvm.
 
+Some 
+
 ## Installing build tools
 
 <!-- ============================================================= -->
@@ -204,7 +206,7 @@ $ sudo apt install -y ninja-build
 $ sudo apt install -y binutils binutils-dev
 ```
 
-Then build the project.
+Then build the project but before doing it take a loog at [`/tmp/` running out of memory](./README.Linux.issues.md#missing-memory-space-in-tmp) because it is a heavy build taking more than 3.5GB.
 
 ```bash
 $ mkdir -v llvm/build/
