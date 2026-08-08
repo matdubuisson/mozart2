@@ -67,7 +67,7 @@ set(MOZART_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 log("Mozart directory: ${MOZART_DIR}")
 log("Mozart build directory: ${MOZART_BUILD_DIR}")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(DEFAULT_MOZART_GENERATOR_FLAGS
       "--std=c++17"
