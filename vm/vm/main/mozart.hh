@@ -54,6 +54,7 @@
 #include "introspection.hh"
 #include "vm.hh"
 #include "vmallocatedlist.hh"
+#include "vmeventmanager.hh"
 
 #include "emulate.hh"
 

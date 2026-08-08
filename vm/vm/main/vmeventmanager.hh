@@ -22,35 +22,32 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_MOZARTCORE_DECL_H
-#define MOZART_MOZARTCORE_DECL_H
+#ifndef MOZART_VMEVENTMANAGER_H
+#define MOZART_VMEVENTMANAGER_H
 
-#include "core-forward-decl.hh"
-#include "identifiable-decl.hh"
-#include "self-decl.hh"
+#include "mozartcore.hh"
 
-#include "nullable-decl.hh"
-#include "type-decl.hh"
-#include "memword.hh"
-#include "store-decl.hh"
-#include "exceptions-decl.hh"
-#include "uuid-decl.hh"
-#include "typeinfo-decl.hh"
-#include "datatype-decl.hh"
-#include "runnable-decl.hh"
-#include "threadpool-decl.hh"
-#include "space-decl.hh"
-#include "graphreplicator-decl.hh"
-#include "gcollect-decl.hh"
-#include "sclone-decl.hh"
-#include "unify-decl.hh"
-#include "lstring-decl.hh"
-#include "coders-decl.hh"
-#include "utf-decl.hh"
-#include "functiontraits-decl.hh"
-#include "identifiable-decl.hh"
-#include "introspection-decl.hh"
-#include "vm-decl.hh"
-#include "vmeventmanager-decl.hh"
+#ifndef MOZART_GENERATOR
 
-#endif // MOZART_MOZARTCORE_DECL_H
+namespace mozart {
+
+////////////////////////////////
+// VirtualMachineEventManager //
+////////////////////////////////
+
+Runnable* VirtualMachineEventManager::getCurrentThread(VM vm) {
+  return vm->getCurrentThread();
+}
+
+template<class S>
+size_t VirtualMachineEventManager::getStructureId(StructureInfo<S> structure) {
+  if (structure.node.template is<S>())
+    return structure.node.template as<S>().getId();
+  else return SIZE_MAX;
+}
+
+}
+
+#endif // MOZART_GENERATOR
+
+#endif // MOZART_VMEVENTMANAGER_H
