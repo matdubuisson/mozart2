@@ -47,18 +47,51 @@ public:
   NodeBoolLambda allNodes = [](VM, RichNode) { return true; };
 
 public:
+  /** @brief Create a introspection object */
   Introspection() {}
 
 public:
   /* ========== VM state ========== */
+
+  /**
+   * @brief Get the total number of schedules since VM launch
+   * 
+   * @param vm A pointer on the virtual machine
+   * @return size_t 
+   */
   size_t getSchedulesCounter(VM vm);
 
+  /**
+   * @brief Get the total number of executed operations since VM launch
+   * 
+   * @param vm A pointer on the virtual machine
+   * @return size_t 
+   */
   size_t getOperationsCounter(VM vm);
 
+  /**
+   * @brief Get the number of system thread schedules since VM launch
+   * 
+   * @param vm A pointer on the virtual machine
+   * @return size_t 
+   */
   size_t getSystemSchedulesCounter(VM vm);
 
+  /**
+   * @brief Get the total number of executed system thread operations since VM launch
+   * 
+   * @param vm A pointer on the virtual machine
+   * @return size_t 
+   */
   size_t getSystemOperationsCounter(VM vm);
 
+  /**
+   * @brief Get the next thread that will be chosen by the scheduler 
+   * 
+   * @param vm A pointer on the virtual machine
+   * @param includeSystemThreads If system threads are included in the threads set or not
+   * @return Runnable* The next scheduled thread
+   */
   Runnable* getNextScheduledThread(VM vm, bool includeSystemThreads);
 
   enum ArgumentType {
@@ -69,6 +102,10 @@ public:
     K,
   };
 
+  /**
+   * @brief A simple structure to represent a bytecode instruction's argument containing
+   * a type, an index (nth argument) and a value representation.
+   */
   struct OperationArgument {
   private:
     inline
@@ -99,11 +136,30 @@ public:
     std::vector<OperationArgument> arguments;
   };
 
+  /**
+   * @brief Get the next bytecode instruction executed by a specified thread
+   * 
+   * @param vm A pointer on the virtual machine
+   * @param runnable A pointer on a thread
+   * @return Operation A representation of a bytecode instruction and its arguments
+   */
   Operation getNextExecutedOperation(VM vm, Runnable* runnable);
+
+  /**
+   * @brief Get the next executed bytecode instruction
+   * 
+   * @param vm A pointer on the virtual machine
+   * @param runnable A pointer on a thread
+   * @return Operation A representation of a bytecode instruction and its arguments
+   */
   Operation getNextExecutedOperation(VM vm, bool includeSystemThreads = false);
 public:
   /* ========== Threads stats ========== */
 
+  /**
+   * @brief Threads' counts have the following types
+   * @
+   */
   struct ThreadsCounts {
     size_t activeThreadsCount = 0;
     size_t passiveThreadsCount = 0;
