@@ -29,6 +29,8 @@
 
 #include <atomic>
 
+#include <boost/random.hpp>
+
 #include <boost/thread.hpp>
 
 #include <boost/uuid/uuid.hpp>
@@ -38,6 +40,9 @@
 
 namespace mozart { namespace boostenv {
 
+using work_guard_t = boost::asio::executor_work_guard<
+  boost::asio::io_context::executor_type>;
+
 class BoostEnvironment;
 
 /////////////
@@ -46,7 +51,7 @@ class BoostEnvironment;
 
 // All member functions are called by the thread running the VM.
 
-class BoostVM : VirtualMachine {
+class BoostVM : public VirtualMachine {
 public:
   BoostVM(BoostEnvironment& environment, VMIdentifier parent,
           VMIdentifier identifier,
@@ -144,7 +149,7 @@ public:
 
 // Random number and UUID generation
 public:
-  typedef boost::random::mt19937 random_generator_t;
+  using random_generator_t = boost::random::mt19937;
   random_generator_t random_generator;
 private:
   boost::uuids::random_generator uuidGenerator;
@@ -190,7 +195,7 @@ private:
 
 // Running thread management
 private:
-  boost::asio::io_context::work* const _work;
+  work_guard_t* const _work;
 };
 
 } }

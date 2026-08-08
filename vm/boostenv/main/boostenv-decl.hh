@@ -35,12 +35,18 @@
 #include <boost/thread.hpp>
 
 #include <boost/asio.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "boostvm-decl.hh"
 #include "boostenvbigint-decl.hh"
 
+#include <vector>
+
 namespace mozart { namespace boostenv {
+
+using work_guard_t = boost::asio::executor_work_guard<
+  boost::asio::io_context::executor_type>;
 
 //////////////////////
 // BoostEnvironment //
@@ -98,7 +104,7 @@ public:
 
   inline
   void removeTerminatedVM(VMIdentifier identifier, nativeint exitCode,
-                          boost::asio::io_context::work* work);
+                          work_guard_t* work);
 
   // Executes callback on behalf of the target VM if it is still alive.
   inline

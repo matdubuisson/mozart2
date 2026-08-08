@@ -25,7 +25,6 @@
 #include "boostenv.hh"
 
 #include <exception>
-#include <boost/bind.hpp>
 #include <boost/random/random_device.hpp>
 
 #ifdef MOZART_WINDOWS
@@ -56,7 +55,7 @@ BoostVM::BoostVM(BoostEnvironment& environment,
   _terminationStatus(0),
   _terminationReason("normal"),
   // Make sure the IO thread will wait for us
-  _work(new boost::asio::io_context::work(environment.io_context)) {
+  _work(new work_guard_t(environment.io_context.get_executor())) {
 
   if (identifier != parent)
     addMonitor(parent);
