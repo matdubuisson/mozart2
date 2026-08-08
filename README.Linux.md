@@ -2,26 +2,54 @@
 
 This readme describes how to build the mozart code but also how to re-generate the pre-generated files with llvm.
 
-## Install build tools
+Some 
 
-The cmake project will be compiled using make and LLVM/CLang will use ninja.
+## Installing build tools
+
+<!-- ============================================================= -->
+
+### OpenJDK 8
+
+The boot-compiler is written with an old Scala version running above the JVM of Java 8. In order to make it run, install openjdk-8 using apt or any other packages manager.
 
 ```bash
 $ sudo apt update
-$ sudo apt install make ninja-build
+$ sudo apt install -y openjdk-8-jdk # Should migrate to openjdk-21-jdk soon
 ```
 
-## Install gcc/g++ 15
+Once it is done, ensure the system has taken the right version if several are co-existing.
+
+```bash
+$ sudo update-alternatives --config java
+There are 2 choices for the alternative java (providing /usr/bin/java).
+
+  Selection    Path                                            Priority   Status
+------------------------------------------------------------
+* 0            /usr/lib/jvm/java-25-openjdk-amd64/bin/java      2511      auto mode
+  1            /usr/lib/jvm/java-25-openjdk-amd64/bin/java      2511      manual mode
+  2            /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java   1081      manual mode
+
+Press <enter> to keep the current choice[*], or type selection number: 2
+update-alternatives: using /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java to provide /usr/bin/java (java) in manual mode
+
+$ java -version
+openjdk version "1.8.0_492"
+OpenJDK Runtime Environment (build 1.8.0_492-8u492-ga~us2-0ubuntu1~26.04.1-b09)
+OpenJDK 64-Bit Server VM (build 25.492-b09, mixed mode)
+```
+
+<!-- ============================================================= -->
+
+### Build-essential and gcc/g++ 15
+
+The Mozart programming system has been updated to C++20 so install GNU C compiles version 15 supporting well this standard.
 
 ```bash
 $ sudo apt update
-$ sudo apt install build-essential
-$ sudo apt install -y gcc-15 g++-15
+$ sudo apt install -y build-essential gcc-15 g++-15
 ```
 
-### Manage multiple gcc/g++ versions
-
-#### Add new alternatives for gcc/g++
+Maybe there are several gcc/g++ versions on the system so alternatives to it can be added as shown below.
 
 ```bash
 $ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14
@@ -30,7 +58,7 @@ $ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 15
 $ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 15
 ```
 
-#### Select the latest alternative
+Then select the right alternative that is gcc/g++ 15.
 
 ```bash
 $ sudo update-alternatives --config gcc
@@ -55,7 +83,7 @@ There are 2 choices for the alternative g++ (providing /usr/bin/g++).
 Press <enter> to keep the current choice[*], or type selection number: 0
 ```
 
-#### Check the versions
+Finally check the right version is taken by the system.
 
 ```bash
 $ gcc -v
@@ -70,94 +98,115 @@ This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ```
 
-## Install OpenJDK 21
+<!-- ============================================================= -->
 
-The boot-compiler has been made in Scala using a version executed with Java 8. **It should be updated soon.**
+### CMake >= 4.2.x
+
+First go to the right place to do that and download the appropriate version from [CMake releases](https://cmake.org/download/) according to your linux distribution. After extract the archive and go inside.
+
+```bash
+$ cd /tmp/
+$ wget https://github.com/Kitware/CMake/releases/download/v4.4.2/cmake-4.4.2.tar.gz
+$ tar -xvf cmake-4.4.2.tar.gz 
+$ cd cmake-4.4.2/
+```
+
+Follow the instructions displayed by `cat README*` to compile CMake.
+
+CMake build chain relies on make so it needs to be installed.
 
 ```bash
 $ sudo apt update
-$ sudo apt install -y openjdk-8-jdk # Should migrate to openjdk-21-jdk soon
+$ sudo apt install -y make
 ```
 
-### Manage multiple openjdk versions
-
-#### Select the latest java version
+Finally build CMake and install the project.
 
 ```bash
-$ sudo update-alternatives --config java
-There are 3 choices for the alternative java (providing /usr/bin/java).
-
-  Selection    Path                                            Priority   Status
-------------------------------------------------------------
-  0            /usr/lib/jvm/java-25-openjdk-amd64/bin/java      2511      auto mode
-  1            /usr/lib/jvm/java-21-openjdk-amd64/bin/java      2111      manual mode
-  2            /usr/lib/jvm/java-25-openjdk-amd64/bin/java      2511      manual mode
-* 3            /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java   1081      manual mode
-
-Press <enter> to keep the current choice[*], or type selection number: 3
-```
-
-#### Check the java version
-
-```bash
-$ java -version
-openjdk version "1.8.0_472"
-OpenJDK Runtime Environment (build 1.8.0_472-8u472-ga-1~25.04-b08)
-OpenJDK 64-Bit Server VM (build 25.472-b08, mixed mode)
-```
-
-## Install cmake-4.3.1 from sources
-
-### Download the sources
-
-```bash
-$ cd
-$ mkdir -p builds/
-$ cd builds/
-$ wget https://cmake.org/files/v4.3/cmake-4.3.1.tar.gz
-$ tar -xvf cmake-4.3.1.tar.gz
-$ cd cmake-4.3.1/
-```
-
-### Compile the sources
-
-```bash
-$ sed -i '/"lib64"/s/64//' Modules/GNUInstallDirs.cmake
-$ ./bootstrap --prefix=/usr        \
-            --system-libs        \
-            --mandir=/share/man  \
-            --no-system-jsoncpp  \
-            --no-system-cppdap   \
-            --no-system-librhash \
-            --docdir=/share/doc/cmake-4.3.1
-```
-
-See [here](./README.Linux.issues.md#missing-dependencies-cmake-installation) if you have some cmake errors about missing dependencies after these two steps.
-
-By default make builds one thing at a time but you could speed up the compilation by allowing it to use multiple cores with `make -j$(nproc)`.
-
-```bash
+$ ./bootstrap # Or with -- -DCMAKE_USE_OPENSSL=OFF to disable openssl
 $ make
-$ ./bin/cmake --version
-cmake version 4.3.1
-
-CMake suite maintained and supported by Kitware (kitware.com/cmake).
-```
-
-```bash
 $ sudo make install
+```
+
+Note if you see the following error `
+CMake Error at Utilities/cmcurl/CMakeLists.txt:1014 (message):
+  Could not find OpenSSL. Install an OpenSSL development package or
+  configure CMake with -DCMAKE_USE_OPENSSL=OFF to build without OpenSSL.` just run the first command as `./bootstrap -- -DCMAKE_USE_OPENSSL=OFF`.
+
+Once it is installed check the proper version has been chosed by the system.
+
+```bash
 $ cmake --version
-cmake version 4.3.1
+cmake version 4.4.2
 
 CMake suite maintained and supported by Kitware (kitware.com/cmake).
 ```
 
-## Install llvm 22.1.0 from sources
+<!-- ============================================================= -->
+
+### Boost 1.88
+
+After this boost version, the sub-library libboost-system becomes header only (see [here](https://github.com/gnss-sdr/gnss-sdr/pull/990)) thus it makes the current CMakeLists files fail. It should be updated soon but for now we do not cross this version for newer ones.
+
+Anyway from the [Boost releases](https://www.boost.org/releases/1.88.0/) download the right archive and extract it.
 
 ```bash
-$ grep -rl '#!.*python$' | xargs sed -i '1s/python$/python3/'
-$ sed 's/utility/tool/' -i llvm/utils/FileCheck/CMakeLists.txt
+$ cd /tmp/
+$ wget https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.gz
+$ tar -xvf boost_1_88_0.tar.gz
+$ cd boost_1_88_0/
 ```
+
+From the tutorial [here](https://www.boost.org/doc/user-guide/getting-started.html) compile the boost project using the recommended b2 method.
+
+```bash
+$ ./bootstrap.sh --prefix=/usr/local/
+$ ./b2
+$ sudo ./b2 install
+```
+
+Finally check the installation : if there are libboost files with the right version it means everything went fine.
+
+```bash
+$ ls /usr/local/lib/ | grep libboost
+```
+
+You may need to add the following environment variable at the end of the file `~/.bashrc` in order to help the system to find easily boost header files.
+
+```bash
+$ export BOOST_ROOT=/usr/local
+$ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+$ export CPLUS_INCLUDE_PATH=/usr/local/include:$CPLUS_INCLUDE_PATH
+```
+
+Then reload it.
+
+```bash
+$ source ~/.bashrc
+```
+
+<!-- ============================================================= -->
+
+### CLang/LLVM 22.1.0
+
+From the [LLVM 22.1.0 releases](https://github.com/llvm/llvm-project/releases/tag/llvmorg-22.1.0) download the archive containing the source code and extract it.
+
+```bash
+$ cd /tmp/
+$ wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-22.1.0.tar.gz
+$ tar -xvf llvmorg-22.1.0.tar.gz
+$ cd llvm-project-llvmorg-22.1.0/
+```
+
+Install the ninja build tool that is used by LLVM to be built.
+
+```bash
+$ sudo apt update
+$ sudo apt install -y ninja-build
+$ sudo apt install -y binutils binutils-dev
+```
+
+Then build the project but before doing it take a loog at [`/tmp/` running out of memory](./README.Linux.issues.md#missing-memory-space-in-tmp) because it is a heavy build taking more than 3.5GB.
 
 ```bash
 $ mkdir -v llvm/build/
@@ -178,74 +227,78 @@ cmake -D CMAKE_INSTALL_PREFIX=/usr           \
       -D CLANG_DEFAULT_PIE_ON_LINUX=ON       \
       -D CLANG_CONFIG_FILE_SYSTEM_DIR=/etc/clang \
       -W no-dev -G Ninja ..
-$ ninja
-```
-
-See [here](./README.Linux.issues.md#missing-dependencies-llvm-installation) if you have some cmake errors about missing dependencies after these two steps.
-
-Of course, we can specify several cores to ninja in order to speed up compilation with the following command `ninja -j($nproc)`.
-
-Finally install it and check the version.
-
-```bash
+$ ninja -j$(nproc)
 $ sudo ninja install
-$ llvm-config --version
-22.1.0
 ```
 
-By the way, if you pay attention to the option `-D LLVM_ENABLE_PROJECTS=clang` it asked cmake to build clang as well.
-Today llvm includes all its dependencies/subprojects inside its own source code to ease the building of it.
-
-Check the installed CLang version.
+Check if everything is installed properly by listing the installed Clang and LLVM.
 
 ```bash
-$ clang -v
-clang version 22.1.0
-Target: x86_64-unknown-linux-gnu
-Thread model: posix
-InstalledDir: /usr/bin
-System configuration file directory: /etc/clang
-Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/14
-Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/15
-Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/15
-Candidate multilib: .;@m64
-Selected multilib: .;@m64
+$ ls /usr/include/clang
+$ ls /usr/include/llvm
 ```
 
-## Fully compile Mozart2
+### TK, TCL and EMACS
 
+Install the remaining tools.
 ```bash
-$ whereis llvm
-llvm: /usr/include/llvm
+$ sudo apt update
+$ sudo apt install -y tcl-dev tk-dev
+$ sudo apt install -y emacs
 ```
 
-```bash
-$ mkdir build/
-$ cd build/
-```
+<!-- ============================================================= -->
 
 ## Compile Mozart2 with pre-generated files
 
-Here we describe how to make a full compilation of the Mozart project : all pre-generated sources used for templates and builtins are recompiled. You will need to do that if you develop new methods using templates or new OZ builtin modules.
+Once all tools are well deployed it is finally possible to fully compile the Mozart programming system. First of all we need to parse the cmake files and specifying some important options as the paths to clang and llvm.
 
 ```bash
 $ cmake -S . -B build/ -DMOZART_CACHED_BUILD=OFF -DClang_DIR=/usr/lib/cmake/clang/ -DLLVM_DIR=/usr/lib/cmake/llvm/ -DCMAKE_BUILD_TYPE=Release
 $ cd build/
-$ make -B gensources genboostsources && make
 ```
 
-An advice is to add all cores to compile faster and activate the verbose mode in order to see which commands fail to compile.
+Finally we compile the mozart virtual machine and generate all pre-generated C++ files. The Mozart virtual machine uses a **heavy meta-templating programming** where the code written by human tends to be as much as possible abstract and concrete implementations as specific operations applicated to each particular Mozart object are generated by the VM generator.
+
+When the virtual machine is compiled and pre-generated files are created, the compiler is compiled at his turn. First the Scala boot-compiler compiles the OZ compiler then this new compiler using the C++ VM will recompile itself.
+
+At the end of the process, just install the compiled Mozart system into your Linux OS.
 
 ```bash
-$ make -B gensources genboostsources VERBOSE=1 -j$(nproc) && make VERBOSE=1 -j$(nproc)
+$ make -B gensources genboostsources VERBOSE=1 -j$(nproc)
+$ make VERBOSE=1 -j$(nproc)
+$ sude make install
 ```
+
+<!-- ============================================================= -->
+
+## Setup vscode
+
+Paste the below configuration json from the root of mozart2 repository into `.vscode/settings.json`.
+
+```json
+{
+    "C_Cpp.default.compilerPath": "/usr/bin/g++-15",
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "/usr/local/include",
+        "/usr/include"
+    ]
+}
+```
+
+However you may adapt to your system if you use a different compiler, C++ standard (not recommended) or having installed the tools somewhere else.
+
+<!-- ============================================================= -->
 
 ## Sources
 
-- [Manage multiple gcc/g++ versions](https://linuxconfig.org/how-to-switch-between-multiple-gcc-and-g-compiler-versions-on-ubuntu-20-04-lts-focal-fossa)
+- [Install OpenJDK-8](https://openjdk.org/install/)
 - [Manage multiple java/javac versions](https://batsov.com/articles/2021/12/10/working-with-multiple-versions-of-java-on-ubuntu/)
-- [Install CMake 3.4.1](https://www.linuxfromscratch.org/blfs/view/systemd/general/cmake.html)
-- [Install libcurl](https://stackoverflow.com/questions/34914944/could-not-find-curl-missing-curl-library-curl-include-dir-on-cmake)
-- [Install libarchive](https://stackoverflow.com/questions/78343136/getting-libarchive-not-found-error-while-trying-to-publish-to-shinyapp)
-- [File plugin-api.h not found when building llvm](https://github.com/llvm/llvm-project/issues/64216)
-- [Install binutils](https://lindevs.com/install-binutils-on-ubuntu)
+- [Manage multiple gcc/g++ versions](https://linuxconfig.org/how-to-switch-between-multiple-gcc-and-g-compiler-versions-on-ubuntu-20-04-lts-focal-fossa)
+- [CMake releases](https://cmake.org/download/)
+- [Boost releases](https://www.boost.org/releases/1.88.0/)
+- [Building boost](https://www.boost.org/doc/user-guide/getting-started.html)
+- [CLang/LLVM 22.1.0 releases](https://github.com/llvm/llvm-project/releases/tag/llvmorg-22.1.0)
+- [CLang/LLVM 22.1.x build instructions](https://www.linuxfromscratch.org/blfs/view/systemd/general/llvm.html)
