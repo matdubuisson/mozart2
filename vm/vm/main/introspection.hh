@@ -298,7 +298,7 @@ RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRe
 template<class T>
 inline
 void doForEachNodeFromStaticArray(VM vm, Runnable* runnable, StaticArray<T> array,
-  size_t from, size_t to, Introspection::NodeBoolLambda validNode,
+  size_t from, size_t to, Introspection::NodeBoolLambda valid,
   Introspection::RunnableAndNodeLambda parse) {
   for (size_t i = from; i < to && i < array.size(); i++) {
     RichNode node = RichNode(array[i]);
@@ -306,14 +306,14 @@ void doForEachNodeFromStaticArray(VM vm, Runnable* runnable, StaticArray<T> arra
     if (node.isNullNode())
       continue;
 
-    if (validNode(vm, node))
+    if (valid(vm, node))
       parse(vm, runnable, node);
   }
 }
 
 inline
 void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-  size_t depth, size_t from, size_t to, NodeBoolLambda validNode, RunnableAndNodeLambda parse) {
+  size_t depth, size_t from, size_t to, NodeBoolLambda valid, RunnableAndNodeLambda parse) {
     
   if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
     assert(depth < thread->stack.size());
@@ -325,25 +325,25 @@ void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodes
         StaticArray<UnstableNode> xregs = thread->xregs._array;
         // assert(to <= xregs.size());
         doForEachNodeFromStaticArray(vm, runnable, xregs, from, to,
-          validNode, parse);
+          valid, parse);
         break;
       } case yRegister: {
         StaticArray<UnstableNode> yregs = entry.yregs;
         // assert(to <= yregs.size());
         doForEachNodeFromStaticArray(vm, runnable, yregs, from, to,
-          validNode, parse);
+          valid, parse);
         break;
       } case gRegister: {
         StaticArray<StableNode> gregs = entry.gregs;
         // assert(to <= gregs.size());
         doForEachNodeFromStaticArray(vm, runnable, gregs, from, to,
-          validNode, parse);
+          valid, parse);
         break;
       } case kRegister: {
         StaticArray<StableNode> kregs = entry.kregs;
         // assert(to <= kregs.size());
         doForEachNodeFromStaticArray(vm, runnable, kregs, from, to,
-          validNode, parse);
+          valid, parse);
         break;
       } default: assert(false);
     }
