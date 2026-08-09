@@ -9,13 +9,17 @@ The status of Mozart 2 is currently _alpha quality_. It is not ready for
 production, but it can be used for experimenting, testing, and obviously, for
 contributing.
 
+<!-- ============================================================= -->
+
 # Downloads
 
 Binary packages for recent releases are available on [GitHub](https://github.com/mozart/mozart2/releases).
 
 [SourceForge](http://sourceforge.net/projects/mozart-oz/files/) contains all the binary packages ever published, including previous releases and releases of Mozart 1.
 
-# Build Instructions
+<!-- ============================================================= -->
+
+# Build Instructions (Linux only)
 
 This main Readme is shamefully biased towards Linux. Side-along Readmes are
 available for [Mac OS](README.MacOS.md), [Windows](README.Windows.md), and [OpenBSD](README.OpenBSD.md).
@@ -29,18 +33,26 @@ Travis CI job. The files [.travis.yml(for Linux)](.travis.yml) and [appveyor(for
 Windows)](appveyor.yml) can be very helpfull guides to build Mozart2 on your system. You can
 find information about our [CI jobs](README.CI.md).
 
+## Issues
+
+In any case of unexpected issue during the whole build process take a look at [Linux issues](README.Linux.issues.md) if a solution is not already there. If not please report your found solution it might help others in the future or contact contributors.
+
+<!-- ============================================================= -->
+
 ## Prerequisites
 
 In order to build Mozart 2, you need the following tools on your computer:
 
 *   git and Subversion to grab the source code
-*   java >= 1.6.0
-*   gcc >= 4.7.1 on Windows, Linux and Mac OS < 10.8;
-*   cmake >= 2.8.6
-*   Boost >= 1.53.0 (with development files). We recommend the use of Boost
+*   java 1.8.0 (openjdk-8)
+*   gcc 15
+*   cmake >= 4.2.x
+*   Boost 1.88.0 (with development files). We recommend the use of Boost
 1.65 as there is some issues with recent version of Boost with cmake.
 *   Tcl/Tk 8.5 or 8.6 (with development files)
 *   emacs
+
+<!-- ============================================================= -->
 
 ### Boost
 
@@ -51,6 +63,8 @@ architecture id`(x64 for a 64 bits system) in your cmake command. You may also r
 generate Makefile twice, as the second time the cache is used to find Boost.
 Should cmake fail to find your Boost you can specify the localation with the
 option `-DBOOST_ROOT`.
+
+<!-- ============================================================= -->
 
 ## Clone the Mozart Repository
 
@@ -64,92 +78,293 @@ As the Mozart repository contains submodules, you should clone recursively:
     $ cd mozart2
     $ git submodule update --init
 
+<!-- ============================================================= -->
+
 ## Build Mozart
 
-Mozart 2 is built with cmake. The following steps will perform the build:
+### Installing build tools
 
-    $ mkdir build
-    $ cd build
-    $ cmake -DCMAKE_BUILD_TYPE=Release ..
-    $ make
+<!-- ============================================================= -->
 
-You may wish to add `-j n` to the `make` command line with `n` set to the
-number of CPUs to perform some of the build steps in parallel to reduce
-the build time.
+---
 
-Once built, you may run the following to install Mozart
+#### OpenJDK 8
 
-    $ make install
+The boot-compiler is written with an old Scala version running above the JVM of Java 8. In order to make it run, install openjdk-8 using apt or any other packages manager.
 
-To change the directory where Mozart 2 is installed add `-DCMAKE_INSTALL_PREFIX:PATH=/path/to/install` to the `cmake` command:
+```bash
+$ sudo apt update
+$ sudo apt install -y openjdk-8-jdk # Should migrate to openjdk-21-jdk soon
+```
 
-    $ cmake -DCMAKE_INSTALL_PREFIX:PATH=/tmp/oz2 . && make && make install
+Once it is done, ensure the system has taken the right version if several are co-existing.
 
-On distros like Arch Linux and Nixos, Boost static libraries have been removed.
-Please add `-DMOZART_BOOST_USE_STATIC_LIBS=OFF` to your cmake command.
+```bash
+$ sudo update-alternatives --config java
+There are 2 choices for the alternative java (providing /usr/bin/java).
 
-# Building the pre-generated sources
+  Selection    Path                                            Priority   Status
+------------------------------------------------------------
+* 0            /usr/lib/jvm/java-25-openjdk-amd64/bin/java      2511      auto mode
+  1            /usr/lib/jvm/java-25-openjdk-amd64/bin/java      2511      manual mode
+  2            /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java   1081      manual mode
 
-You will need LLVM and Clang installed to build Mozart 2 from the git repository. Some Linux distros don't seem to ship the required LLVM/Clang cmake support files so the steps below go through building a local version of LLVM and Clang for the Mozart 2 build system to use.
+Press <enter> to keep the current choice[*], or type selection number: 2
+update-alternatives: using /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java to provide /usr/bin/java (java) in manual mode
 
-The steps below assume you are in the directory above the mozart2 repository
-cloned by git (refer to previous section to see how to clone the repository).
+$ java -version
+openjdk version "1.8.0_492"
+OpenJDK Runtime Environment (build 1.8.0_492-8u492-ga~us2-0ubuntu1~26.04.1-b09)
+OpenJDK 64-Bit Server VM (build 25.492-b09, mixed mode)
+```
 
-## Building LLVM and Clang
+<!-- ============================================================= -->
 
-To build LLVM following the following steps:
+---
 
-    $ git clone --branch release_39 https://github.com/llvm-mirror/llvm
-    $ cd llvm/tools
-    $ git clone --branch release_39 https://github.com/llvm-mirror/clang
-    $ cd ..
-    $ mkdir build
-    $ cd build
-    $ cmake -DCMAKE_BUILD_TYPE=Release  \
-            -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/../../llvm-install \
-            ..
-    $ make
-    $ make install
-    $ cd ../..
-    $ export PATH=`pwd`/llvm-install/bin:$PATH
+#### Build-essential and gcc/g++ 15
 
-You may wish to add `-j n` to the `make` command line with `n` set to the
-number of CPUs to perform some of the build steps in parallel to reduce
-the build time.
+The Mozart programming system has been updated to C++20 so install GNU C compiles version 15 supporting well this standard.
 
-This will install to an `llvm-install` directory off the root directory created previously and add it to the front of the `PATH` so i t can be found in the Mozart 2 build.
+```bash
+$ sudo apt update
+$ sudo apt install -y build-essential gcc-15 g++-15
+```
 
-## Building the pre-generated targets
+Maybe there are several gcc/g++ versions on the system so alternatives to it can be added as shown below.
 
-You may want to move the previous pre-generated files located in
-mozart2/vm/vm/main/cached and in mozart2/vm/boostenv/main/cached
-to be sure they are not used in the new build.
-The following steps will perform the build of the pre-generated sources:
+```bash
+$ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14
+$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14
+$ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 15
+$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 15
+```
 
-    $ mkdir build
-    $ cd build
-    $ CXXFLAGS=-I`pwd`/../llvm-install/include cmake -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX:PATH=/path/to/install \
-            -DMOZART_CACHED_BUILD=OFF \
-            ../mozart2
-    $ make -B gensources genboostsources VERBOSE=1
+Then select the right alternative that is gcc/g++ 15.
 
-The generated sources are located in build/vm/boostenv/main/generated and in
-build/vm/vm/main/generated. You can check if they correspond with the previous
-ones and change them accordingly. You could then proceed with the build
-containing the pre-generated sources.
+```bash
+$ sudo update-alternatives --config gcc
+There are 2 choices for the alternative gcc (providing /usr/bin/gcc).
 
-Alternatively, you can complete the build by running the following :
+  Selection    Path             Priority   Status
+------------------------------------------------------------
+* 0            /usr/bin/gcc-15   15        auto mode
+  1            /usr/bin/gcc-14   14        manual mode
+  2            /usr/bin/gcc-15   15        manual mode
 
-    $ make
-    $ make install
+Press <enter> to keep the current choice[*], or type selection number: 0
+$ sudo update-alternatives --config g++
+There are 2 choices for the alternative g++ (providing /usr/bin/g++).
 
-Change `/path/to/install` to the location where Mozart 2 should be installed.
+  Selection    Path             Priority   Status
+------------------------------------------------------------
+* 0            /usr/bin/g++-15   15        auto mode
+  1            /usr/bin/g++-14   14        manual mode
+  2            /usr/bin/g++-15   15        manual mode
 
-On distros like Arch Linux and Nixos, Boost static libraries have been removed.
-Please add `-DMOZART_BOOST_USE_STATIC_LIBS=OFF` to your cmake command.
+Press <enter> to keep the current choice[*], or type selection number: 0
+```
 
-# CMake Options
+Finally check the right version is taken by the system.
+
+```bash
+$ gcc -v
+gcc (Ubuntu 15-20250404-0ubuntu1) 15.0.1 20250404 (experimental) [master r15-9193-g08e803aa9be]
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+$ g++ -v
+g++ (Ubuntu 15-20250404-0ubuntu1) 15.0.1 20250404 (experimental) [master r15-9193-g08e803aa9be]
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
+
+<!-- ============================================================= -->
+
+---
+
+#### CMake >= 4.2.x
+
+First go to the right place to do that and download the appropriate version from [CMake releases](https://cmake.org/download/) according to your linux distribution. After extract the archive and go inside.
+
+```bash
+$ cd /tmp/
+$ wget https://github.com/Kitware/CMake/releases/download/v4.4.2/cmake-4.4.2.tar.gz
+$ tar -xvf cmake-4.4.2.tar.gz 
+$ cd cmake-4.4.2/
+```
+
+Follow the instructions displayed by `cat README*` to compile CMake.
+
+CMake build chain relies on make so it needs to be installed.
+
+```bash
+$ sudo apt update
+$ sudo apt install -y make
+```
+
+Finally build CMake and install the project.
+
+```bash
+$ ./bootstrap # Or with -- -DCMAKE_USE_OPENSSL=OFF to disable openssl
+$ make
+$ sudo make install
+```
+
+Note if you see the following error `
+CMake Error at Utilities/cmcurl/CMakeLists.txt:1014 (message):
+  Could not find OpenSSL. Install an OpenSSL development package or
+  configure CMake with -DCMAKE_USE_OPENSSL=OFF to build without OpenSSL.` just run the first command as `./bootstrap -- -DCMAKE_USE_OPENSSL=OFF`.
+
+Once it is installed check the proper version has been chosed by the system.
+
+```bash
+$ cmake --version
+cmake version 4.4.2
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+```
+
+<!-- ============================================================= -->
+
+---
+
+#### Boost 1.88
+
+After this boost version, the sub-library libboost-system becomes header only (see [here](https://github.com/gnss-sdr/gnss-sdr/pull/990)) thus it makes the current CMakeLists files fail. It should be updated soon but for now we do not cross this version for newer ones.
+
+Anyway from the [Boost releases](https://www.boost.org/releases/1.88.0/) download the right archive and extract it.
+
+```bash
+$ cd /tmp/
+$ wget https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.gz
+$ tar -xvf boost_1_88_0.tar.gz
+$ cd boost_1_88_0/
+```
+
+From the tutorial [here](https://www.boost.org/doc/user-guide/getting-started.html) compile the boost project using the recommended b2 method.
+
+```bash
+$ ./bootstrap.sh --prefix=/usr/local/
+$ ./b2
+$ sudo ./b2 install
+```
+
+Finally check the installation : if there are libboost files with the right version it means everything went fine.
+
+```bash
+$ ls /usr/local/lib/ | grep libboost
+```
+
+You may need to add the following environment variable at the end of the file `~/.bashrc` in order to help the system to find easily boost header files.
+
+```bash
+$ export BOOST_ROOT=/usr/local
+$ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+$ export CPLUS_INCLUDE_PATH=/usr/local/include:$CPLUS_INCLUDE_PATH
+```
+
+Then reload it.
+
+```bash
+$ source ~/.bashrc
+```
+
+<!-- ============================================================= -->
+
+---
+
+#### CLang/LLVM 22.1.0
+
+From the [LLVM 22.1.0 releases](https://github.com/llvm/llvm-project/releases/tag/llvmorg-22.1.0) download the archive containing the source code and extract it.
+
+```bash
+$ cd /tmp/
+$ wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-22.1.0.tar.gz
+$ tar -xvf llvmorg-22.1.0.tar.gz
+$ cd llvm-project-llvmorg-22.1.0/
+```
+
+Install the ninja build tool that is used by LLVM to be built.
+
+```bash
+$ sudo apt update
+$ sudo apt install -y ninja-build
+$ sudo apt install -y binutils binutils-dev
+```
+
+Then build the project but before doing it take a loog at [`/tmp/` running out of memory](./README.Linux.issues.md#missing-memory-space-in-tmp) because it is a heavy build taking more than 3.5GB.
+
+```bash
+$ mkdir -v llvm/build/
+$ cd llvm/build/
+$ CC=gcc CXX=g++                               \
+cmake -D CMAKE_INSTALL_PREFIX=/usr           \
+      -D CMAKE_SKIP_INSTALL_RPATH=ON         \
+      -D LLVM_ENABLE_FFI=ON                  \
+      -D CMAKE_BUILD_TYPE=Release            \
+      -D LLVM_BUILD_LLVM_DYLIB=ON            \
+      -D LLVM_LINK_LLVM_DYLIB=ON             \
+      -D LLVM_ENABLE_RTTI=ON                 \
+      -D LLVM_TARGETS_TO_BUILD="host;AMDGPU" \
+      -D LLVM_ENABLE_PROJECTS=clang          \
+      -D LLVM_ENABLE_RUNTIMES=compiler-rt    \
+      -D LLVM_BINUTILS_INCDIR=/usr/include   \
+      -D LLVM_INCLUDE_BENCHMARKS=OFF         \
+      -D CLANG_DEFAULT_PIE_ON_LINUX=ON       \
+      -D CLANG_CONFIG_FILE_SYSTEM_DIR=/etc/clang \
+      -W no-dev -G Ninja ..
+$ ninja -j$(nproc)
+$ sudo ninja install
+```
+
+Check if everything is installed properly by listing the installed Clang and LLVM.
+
+```bash
+$ ls /usr/include/clang
+$ ls /usr/include/llvm
+```
+
+---
+
+#### TK, TCL and EMACS
+
+Install the remaining tools.
+```bash
+$ sudo apt update
+$ sudo apt install -y tcl-dev tk-dev
+$ sudo apt install -y emacs
+```
+
+<!-- ============================================================= -->
+
+### Compile Mozart2 with pre-generated files
+
+Once all tools are well deployed it is finally possible to fully compile the Mozart programming system. First of all we need to parse the cmake files and specifying some important options as the paths to clang and llvm.
+
+```bash
+$ cmake -S . -B build/ -DMOZART_CACHED_BUILD=OFF -DClang_DIR=/usr/lib/cmake/clang/ -DLLVM_DIR=/usr/lib/cmake/llvm/ -DCMAKE_BUILD_TYPE=Release
+$ cd build/
+```
+
+Finally we compile the mozart virtual machine and generate all pre-generated C++ files. The Mozart virtual machine uses a **heavy meta-templating programming** where the code written by human tends to be as much as possible abstract and concrete implementations as specific operations applicated to each particular Mozart object are generated by the VM generator.
+
+When the virtual machine is compiled and pre-generated files are created, the compiler is compiled at his turn. First the Scala boot-compiler compiles the OZ compiler then this new compiler using the C++ VM will recompile itself.
+
+At the end of the process, just install the compiled Mozart system into your Linux OS.
+
+```bash
+$ make -B gensources genboostsources VERBOSE=1 -j$(nproc)
+$ make VERBOSE=1 -j$(nproc)
+$ sude make install
+```
+
+<!-- ============================================================= -->
+
+---
+
+#### CMake Options
 
 Other cmake options can be given with the form `-DOPTION=Value`. The table below
 lists the options you can add.
@@ -219,3 +434,36 @@ lists the options you can add.
 
 There is a NixOS expression to install the Mozart2 binary:
 `nix-env -i mozart-binary`
+
+<!-- ============================================================= -->
+
+### Setup vscode
+
+Paste the below configuration json from the root of mozart2 repository into `.vscode/settings.json`.
+
+```json
+{
+    "C_Cpp.default.compilerPath": "/usr/bin/g++-15",
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "/usr/local/include",
+        "/usr/include"
+    ]
+}
+```
+
+However you may adapt to your system if you use a different compiler, C++ standard (not recommended) or having installed the tools somewhere else.
+
+<!-- ============================================================= -->
+
+### Sources
+
+- [Install OpenJDK-8](https://openjdk.org/install/)
+- [Manage multiple java/javac versions](https://batsov.com/articles/2021/12/10/working-with-multiple-versions-of-java-on-ubuntu/)
+- [Manage multiple gcc/g++ versions](https://linuxconfig.org/how-to-switch-between-multiple-gcc-and-g-compiler-versions-on-ubuntu-20-04-lts-focal-fossa)
+- [CMake releases](https://cmake.org/download/)
+- [Boost releases](https://www.boost.org/releases/1.88.0/)
+- [Building boost](https://www.boost.org/doc/user-guide/getting-started.html)
+- [CLang/LLVM 22.1.0 releases](https://github.com/llvm/llvm-project/releases/tag/llvmorg-22.1.0)
+- [CLang/LLVM 22.1.x build instructions](https://www.linuxfromscratch.org/blfs/view/systemd/general/llvm.html)
