@@ -1256,7 +1256,7 @@ public:
 
     RichNode& node = variableCandidates.node;
 
-    size_t id = 0;
+    size_t id = 0, kindId = 0, generationId = 0;
     bool isBound = false, isNeeded = false;
     std::string type = node.type()->getName();
     std::string representation = nodeToString(vm, node);
@@ -1265,12 +1265,16 @@ public:
 
     if (node.is<OptVar>()) {
       OptVar variable = Accessor<OptVar>::get(node.value());
-      id = SIZE_MAX;
+      id = variable.getId();
+      kindId = variable.getKindId();
+      generationId = variable.getGenerationId();
       isBound = false;
       isNeeded = variable.isNeeded(vm);
     } else if (node.is<Variable>()) {
       Variable variable = Accessor<Variable>::get(node.value());
       id = variable.getId();
+      kindId = variable.getKindId();
+      generationId = variable.getGenerationId();
       isBound = variable.isBound(vm);
       isNeeded = variable.isNeeded(vm);
       buildVariablePendingsList(vm, pendingsList, variable.getPendings(vm));
@@ -1282,6 +1286,8 @@ public:
     } else if (node.is<ReadOnlyVariable>()) {
       ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
       id = variable.getId();
+      kindId = variable.getKindId();
+      generationId = variable.getGenerationId();
       isBound = variable.isBound(vm);
       isNeeded = variable.isNeeded(vm);
       buildVariablePendingsList(vm, pendingsList, variable.getPendings(vm));
@@ -1305,17 +1311,21 @@ public:
       buildArity(vm,
         "variable",
         "candidates",
+        "generationId",
         "id",
         "isBound",
         "isNeeded",
+        "kindId",
         "pendings",
         "type",
         "value"
       ),
       candidatesList.get(vm),
+      build(vm, generationId),
       build(vm, id),
       build(vm, isBound),
       build(vm, isNeeded),
+      build(vm, kindId),
       pendingsList.get(vm),
       build(vm, type.c_str()),
       build(vm, representation.c_str())
@@ -1422,7 +1432,7 @@ public:
       builder.push_back(vm, build(vm, runnable->getId()));
     }
 
-    ozListPropagateKind(vm, node);
+    //ozListPropagateKind(vm, node);
 
     TypedRichNode<Cons> cons = node.as<Cons>();
 
@@ -1454,7 +1464,6 @@ public:
     if (!isNil) {
       ozListForEach(vm, idsList, [vm, &set](nativeint id) {
         set.insert(id);
-        std::cout << "Add: " << id << std::endl;
       }, "List of integer ids");
     }
 
@@ -1464,7 +1473,6 @@ public:
       Introspection::OwnedRichNode& ownedNode = iter->second;
 
       Cons& cons = ownedNode.node.as<Cons>().getSelf();
-      std::cout << "Match: " << cons.getId() << " and " << cons.getKindId() << std::endl;
 
       if (isNil
         || set.find(cons.getId()) != set.end()
