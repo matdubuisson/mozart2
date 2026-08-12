@@ -30,7 +30,7 @@ set(MOZART_CACHED_BUILD ON CACHE STRING "Use pre-generated sources")
 log("Mozart generator flags: ${MOZART_GENERATOR_FLAGS}")
 log("Mozart cached build: ${MOZART_CACHED_BUILD}")
 
-add_compile_options(-std=c++17)
+add_compile_options(-std=c++20)
 
 add_subdirectory_and_log(generator)
 
