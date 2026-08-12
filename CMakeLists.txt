@@ -70,7 +70,7 @@ log("Mozart build directory: ${MOZART_BUILD_DIR}")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(DEFAULT_MOZART_GENERATOR_FLAGS
-      "--std=c++17"
+      "--std=c++20"
       "-Wno-invalid-noreturn"
       "-Wno-return-type"
       "-Wno-braced-scalar-init" # Silence warning for macro ATOMIC_FLAG_INIT in atomic_base.h
