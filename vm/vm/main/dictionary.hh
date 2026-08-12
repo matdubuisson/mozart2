@@ -102,7 +102,7 @@ void NodeDictionary::removeAll(VM vm) {
   if (empty())
     return;
 
-  postOrderWalk([=] (Node* node) {
+  postOrderWalk([=, this] (Node* node) {
     // Do NOT free node itself, as this destroys the walk algorithm
     if (node->left != nullptr)
       freeNode(vm, node->left);

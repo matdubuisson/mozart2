@@ -80,9 +80,9 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
   // One garbage collector and one space cloner dedicated to this VM
   gc(this, environment.getSecondMemoryManagerRef()),
   sc(this),
-  _preemptRequestedNot(ATOMIC_FLAG_INIT),
-  _exitRunRequestedNot(ATOMIC_FLAG_INIT),
-  _gcRequestedNot(ATOMIC_FLAG_INIT),
+  _preemptRequestedNot{},
+  _exitRunRequestedNot{},
+  _gcRequestedNot{},
   _referenceTime(0) {
 
   // One memory manager dedicated to this VM

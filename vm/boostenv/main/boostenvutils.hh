@@ -95,7 +95,7 @@ void BaseSocketConnection<T, P>::readHandler(
   const ProtectedNode& tailNode, const ProtectedNode& statusNode) {
 
   pointer self = this->shared_from_this();
-  env.postVMEvent(vm, [=] (BoostVM& boostVM) {
+  env.postVMEvent(vm, [=, this] (BoostVM& boostVM) {
     if (!error) {
       VM vm = boostVM.vm;
 

@@ -45,11 +45,11 @@ void TCPConnection::startAsyncConnect(std::string host, std::string service,
                                       const ProtectedNode& statusNode) {
   pointer self = shared_from_this();
   
-  auto resolveHandler = [=] (const boost::system::error_code& error,
+  auto resolveHandler = [=, this] (const boost::system::error_code& error,
                              protocol::resolver::results_type endpoints) {
 
     if (!error) {
-      auto connectHandler = [=] (const boost::system::error_code& error,
+      auto connectHandler = [=, this] (const boost::system::error_code& error,
                                  const protocol::endpoint selected_endpoint) {
         if (!error) {
           env.postVMEvent(vm, [=] (BoostVM& boostVM) {
@@ -88,7 +88,7 @@ TCPAcceptor::TCPAcceptor(BoostEnvironment& env, VMIdentifier vm,
 void TCPAcceptor::startAsyncAccept(const ProtectedNode& connectionNode) {
   TCPConnection::pointer connection = TCPConnection::create(env, vm);
 
-  auto handler = [=] (const boost::system::error_code& error) {
+  auto handler = [=, this] (const boost::system::error_code& error) {
     if (!error) {
       env.postVMEvent(vm, [=] (BoostVM& boostVM) {
         boostVM.bindAndReleaseAsyncIOFeedbackNode(

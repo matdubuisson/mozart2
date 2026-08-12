@@ -150,6 +150,7 @@ public:
       i++;
     }
     assert(false);
+    return *begin();
   }
 
   void push_back(MM mm, const T& item) {

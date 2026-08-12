@@ -476,7 +476,10 @@ void updateVariableCandidatesMap(Runnable* runnable, RichNode node, size_t varia
 static inline
 void updateVariableCandidatesMap(Runnable* runnable, RichNode node,
   Introspection::VariableCandidatesMap& map) {
-  if (node.is<Variable>()) {
+  if (node.is<OptVar>()) {
+    OptVar variable = Accessor<OptVar>::get(node.value());
+    updateVariableCandidatesMap(runnable, node, variable.getId(), map);
+  } else if (node.is<Variable>()) {
     Variable variable = Accessor<Variable>::get(node.value());
     updateVariableCandidatesMap(runnable, node, variable.getId(), map);
   } else if (node.is<ReadOnlyVariable>()) {
@@ -492,9 +495,12 @@ Introspection::VariableCandidates Introspection::getVariable(VM vm, size_t varia
   VariableCandidates variable(RichNode(nullptr));
   doForEachNode(vm, allRunnables,
     [this](VM vm, RichNode node) { return this->isVariableNode(vm, node); },
-    [this, &variable, variableId](VM vm, Runnable* runnable, RichNode node) {
+    [&variable, variableId](VM vm, Runnable* runnable, RichNode node) {
       bool found = false;
       if (node.is<Variable>()) {
+        OptVar variable = Accessor<OptVar>::get(node.value());
+        found = variable.getId() == variableId;
+      } else if (node.is<Variable>()) {
         Variable variable = Accessor<Variable>::get(node.value());
         found = variable.getId() == variableId;
       } else if (node.is<ReadOnlyVariable>()) {

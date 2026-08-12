@@ -398,7 +398,7 @@ private:
 
     for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
       StructureInfo<S> info = *iter;
-      Runnable* author = info.author;
+      // Runnable* author = info.author;
       S* structure = info.structure;
 
       std::string type;
@@ -519,6 +519,7 @@ public:
 
 
 public:
+
   class Track: public Builtin<Track> {
   public:
     Track(): Builtin("track") {}
@@ -526,7 +527,7 @@ public:
     static void call(VM vm, In event, In announce, In announcerId, In idsList) {
       VirtualMachineEventManager& eventManager = vm->getEventManager();
       
-      using Event = VirtualMachineEventManager::Event;
+      // using Event = VirtualMachineEventManager::Event;
       using RunnableAnnounce = VirtualMachineEventManager::RunnableAnnounce;
       using VariableAnnounce = VirtualMachineEventManager::VariableAnnounce;
       using StructureAnnounce = VirtualMachineEventManager::StructureAnnounce;

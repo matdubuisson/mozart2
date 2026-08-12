@@ -39,11 +39,84 @@ Runnable* VirtualMachineEventManager::getCurrentThread(VM vm) {
   return vm->getCurrentThread();
 }
 
+bool VirtualMachineEventManager::contains(IdsVector& idsVector, size_t id) {
+  return id != SIZE_MAX && count(idsVector.begin(), idsVector.end(), id) > 0;
+}
+
 template<class S>
 size_t VirtualMachineEventManager::getStructureId(StructureInfo<S> structure) {
   if (structure.node.template is<S>())
     return structure.node.template as<S>().getId();
   else return SIZE_MAX;
+}
+
+bool VirtualMachineEventManager::matchTracking(VM vm, RunnableTracking& tracking,
+  RunnableInfo info, RunnableAnnounce announce) {
+
+  if (tracking.announce != announce)
+    return false;
+  else if (tracking.announcerThreadId != SIZE_MAX
+    && tracking.announcerThreadId != info.author->getId())
+    return false;
+  else if (tracking.idsVector.empty())
+    return true;
+  else
+    return contains(tracking.idsVector, info.runnable->getId());
+}
+
+template<class V>
+bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking,
+  VariableInfo<V> info, VariableAnnounce announce) {
+
+  IdsVector& ids = tracking.idsVector;
+
+  if (tracking.announce != announce)
+    return false;
+  else if (tracking.announcerThreadId != SIZE_MAX
+    && tracking.announcerThreadId != info.author->getId())
+    return false;
+  else if (ids.empty())
+    return true;
+  else if (contains(ids, info.variable->getId()))
+    return true;
+  else return false;
+}
+
+template<class V>
+bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking,
+  BoundVariableInfo<V> info, VariableAnnounce announce) {
+
+  if (matchTracking<V>(vm, tracking,
+    static_cast<VariableInfo<V>>(info), announce))
+    return true;
+  else return false;
+}
+
+template<class V>
+bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking,
+  WaitedVariableInfo<V> info, VariableAnnounce announce) {
+
+  if (matchTracking<V>(vm, tracking,
+    static_cast<VariableInfo<V>>(info), announce))
+    return true;
+  else return false;
+}
+
+template<class S>
+inline
+bool VirtualMachineEventManager::matchTracking(VM vm, StructureTracking tracking,
+  StructureInfo<S> info, StructureAnnounce announce) {
+
+  if (tracking.announce != announce)
+    return false;
+  else if (tracking.announcerThreadId != SIZE_MAX
+    && tracking.announcerThreadId != info.author->getId())
+    return false;
+  else if (tracking.idsVector.empty())
+    return true;
+  else
+    return contains(tracking.idsVector, info.structure->getId())
+      || contains(tracking.idsVector, info.structure->getKindId());
 }
 
 }

@@ -159,7 +159,7 @@ private:
   void announceVariable(VM vm, VariablesVectors<V>& vector, V* variable, VariableAnnounce announce) {
     VariableInfo<V> info = VariableInfo(vm, variable);
 
-    detectTriggeredVariableTracking(vm, info, announce);
+    detectTriggeredVariableTracking<V, VariableInfo<V>>(vm, info, announce);
 
     switch (announce) {
       case VariableAnnounce::Created:
@@ -178,14 +178,14 @@ private:
   template<typename V>
   void announceBoundVariable(VM vm, VariablesVectors<V>& vector, V* variable, RichNode self, RichNode src) {
     BoundVariableInfo<V> info = BoundVariableInfo(vm, variable, self, src);
-    detectTriggeredVariableTracking(vm, info, VariableAnnounce::Bound);
+    detectTriggeredVariableTracking<V, BoundVariableInfo<V>>(vm, info, VariableAnnounce::Bound);
     vector.bounds.push_back(info);
   }
 
   template<typename V>
   void announceWaitedVariable(VM vm, VariablesVectors<V>& vector, V* variable, RichNode waiter) {
     WaitedVariableInfo<V> info = WaitedVariableInfo(vm, variable, waiter);
-    detectTriggeredVariableTracking(vm, info, VariableAnnounce::Waited);
+    detectTriggeredVariableTracking<V, WaitedVariableInfo<V>>(vm, info, VariableAnnounce::Waited);
     vector.waiteds.push_back(info);
   }
 
@@ -531,9 +531,7 @@ public:
 
 private:
   inline
-  bool contains(IdsVector& idsVector, size_t id) {
-    return id != SIZE_MAX && count(idsVector.begin(), idsVector.end(), id) > 0;
-  }
+  bool contains(IdsVector& idsVector, size_t id);
 
   template<class S>
   inline
@@ -555,51 +553,28 @@ public:
 private:
   inline
   bool matchTracking(VM vm, RunnableTracking& tracking,
-    RunnableInfo info, RunnableAnnounce announce) {
-
-    if (tracking.announce != announce)
-      return false;
-    else if (tracking.announcerThreadId != SIZE_MAX
-      && tracking.announcerThreadId != info.author->getId())
-      return false;
-    else if (tracking.idsVector.empty())
-      return true;
-    else
-      return contains(tracking.idsVector, info.runnable->getId());
-  }
+    RunnableInfo info, RunnableAnnounce announce);
 
   template<class V>
   inline
   bool matchTracking(VM vm, VariableTracking& tracking,
-    VariableInfo<V> info, VariableAnnounce announce) {
+    VariableInfo<V> info, VariableAnnounce announce);
 
-    if (tracking.announce != announce)
-      return false;
-    else if (tracking.announcerThreadId != SIZE_MAX
-      && tracking.announcerThreadId != info.author->getId())
-      return false;
-    else if (tracking.idsVector.empty())
-      return true;
-    else
-      return contains(tracking.idsVector, info.variable->getId());
-  }
+  template<class V>
+  inline
+  bool matchTracking(VM vm, VariableTracking& tracking,
+    BoundVariableInfo<V> info, VariableAnnounce announce);
+
+  template<class V>
+  inline
+  bool matchTracking(VM vm, VariableTracking& tracking,
+    WaitedVariableInfo<V> info, VariableAnnounce announce);
 
   template<class S>
   inline
   bool matchTracking(VM vm, StructureTracking tracking,
-    StructureInfo<S> info, StructureAnnounce announce) {
+    StructureInfo<S> info, StructureAnnounce announce);
 
-    if (tracking.announce != announce)
-      return false;
-    else if (tracking.announcerThreadId != SIZE_MAX
-      && tracking.announcerThreadId != info.author->getId())
-      return false;
-    else if (tracking.idsVector.empty())
-      return true;
-    else
-      return contains(tracking.idsVector, info.structure->getId())
-        || contains(tracking.idsVector, info.structure->getKindId());
-  }
 private:
   inline
   void detectTriggeredRunnableTracking(VM vm, RunnableInfo info, RunnableAnnounce announce) {
@@ -638,9 +613,9 @@ private:
   }
 
 private:
-  template<class V>
+  template<class V, class VInfo>
   inline
-  void detectTriggeredVariableTracking(VM vm, VariableInfo<V> info, VariableAnnounce announce) {
+  void detectTriggeredVariableTracking(VM vm, VInfo info, VariableAnnounce announce) {
     for (auto iter = variableTrackingVector.begin();
       iter != variableTrackingVector.end(); ++iter) {
       VariableTracking tracking = *iter;
@@ -669,7 +644,7 @@ private:
   void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking,
     WaitedVariablesVector<V>& vector, VariableAnnounce announce) {
     for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
-      WaitedVariableInfo info = *iter;
+      WaitedVariableInfo<V> info = *iter;
       if (matchTracking(vm, tracking, info, announce)) {
         trackingTriggered = true;
         break;
@@ -682,7 +657,7 @@ private:
   void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking,
     BoundVariablesVector<V>& vector, VariableAnnounce announce) {
     for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
-      BoundVariableInfo info = *iter;
+      BoundVariableInfo<V> info = *iter;
       if (matchTracking(vm, tracking, info, announce)) {
         trackingTriggered = true;
         break;
