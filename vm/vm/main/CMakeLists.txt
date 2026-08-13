@@ -95,9 +95,13 @@ endif()
 
 # Build the library
 include_directories(${GENERATED_SOURCES_DIR})
+
 add_library(mozartvm store.cc identifiable.cc emulate.cc memmanager.cc gcollect.cc
   unify.cc sclone.cc vm.cc coredatatypes.cc coders.cc properties.cc
   coremodules.cc unpickler.cc serializer.cc pickler.cc introspection.cc)
+
+add_subdirectory_and_log(modules)
+
 if(NOT MOZART_CACHED_BUILD)
     add_dependencies(mozartvm gensources)
 endif()
