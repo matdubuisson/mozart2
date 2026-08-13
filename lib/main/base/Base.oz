@@ -570,7 +570,7 @@ export
    'IsByteString'       : IsByteString
 
    %% Introspection
-   'Introspection'      : Introspection   
+   % 'Introspection'      : Introspection   
 
    %% Will be removed by the compiler
    'ByNeedDot'          : ByNeedDot

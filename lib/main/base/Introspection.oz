@@ -1,6 +1,6 @@
 %%%
 %%% Authors:
-%%%   Mattéo Dubuisson (matteo.dubuisson.mail@gmail.com)
+%%%   Mattéo Dubuisson (matteo.dubuisson@gmail.com)
 %%%
 %%% Copyright:
 %%%   Mattéo Dubuisson, 2026
@@ -20,11 +20,11 @@
 %%% WARRANTIES.
 %%%
 
-local
-    Hello = Boot_Introspection.hello
-in
-    Introspection = introspection(
-        hello: Hello
-        hello2: Hello
-    )
-end
+% local
+%     Hello = Boot_Introspection.hello
+% in
+%     Introspection = introspection(
+%         hello: Hello
+%         hello2: Hello
+%     )
+% end
