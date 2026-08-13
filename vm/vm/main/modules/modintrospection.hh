@@ -25,8 +25,8 @@
 #ifndef MOZART_MODINTROSPECTION_H
 #define MOZART_MODINTROSPECTION_H
 
-#include "../mozartcore.hh"
-#include "../introspection.hh"
+#include "mozartcore-module.hh"
+//#include "../introspection.hh"
 
 #include <unordered_set>
 #include <iostream>
@@ -40,29 +40,6 @@ namespace builtins {
 class ModIntrospection: public Module {
 public:
   ModIntrospection(): Module("Introspection") {}
-
-  class Hello: public Builtin<Hello> {
-  public:
-    Hello(): Builtin("hello") {}
-
-    static void call(VM vm) {
-      std::cout << "Hello from introspection module !!" << std::endl;
-    }
-  };
-
-  class Value: public Builtin<Value> {
-  public:
-    Value(): Builtin("value") {}
-
-    static void call(VM vm, In inValue, Out outValue) {
-      outValue = buildRecord(vm,
-        buildArity(vm, "test", "a", "b", "c"),
-        build(vm, 1),
-        build(vm, 2),
-        build(vm, 3)
-      );
-    }
-  };
   
   static inline
   std::string nodeToString(VM vm, RichNode node) {
@@ -118,83 +95,23 @@ public:
   public:
     GetNextScheduledThread(): Builtin("getNextScheduledThread") {}
 
-    static void call(VM vm, In boolean, Out result) {
-      bool includeSystemThreads = getArgument<bool>(vm, boolean);
-
-      if (vm->getThreadPool().empty(includeSystemThreads)) {
-        result = build(vm, "none");
-      } else {
-        result = ReifiedThread::build(vm,
-          vm->getIntrospection().getNextScheduledThread(vm, includeSystemThreads));
-      }
-    }
+    static void call(VM vm, In boolean, Out result);
   };
 
   using Operation = Introspection::Operation;
   using OperationArgument = Introspection::OperationArgument;
 
-  static inline
-  UnstableNode buildOperationArgumentRecord(VM vm, OperationArgument argument) {
-    using AT = Introspection::ArgumentType;
+  static
+  UnstableNode buildOperationArgumentRecord(VM vm, OperationArgument argument);
 
-    std::string type;
-
-    switch (argument.type) {
-      case AT::I: type = "Int"; break;
-      case AT::X: type = "X"; break;
-      case AT::Y: type = "Y"; break;
-      case AT::G: type = "G"; break;
-      case AT::K: type = "K"; break;
-      default: assert(false);
-    }
-
-    return buildRecord(vm,
-      buildArity(
-        vm,
-        "operationArgument",
-        "image",
-        "index",
-        "type"
-      ),
-      build(vm, argument.image.c_str()),
-      build(vm, argument.index),
-      build(vm, type.c_str())
-    );
-  }
-
-  static inline
-  UnstableNode buildOperationRecord(VM vm, Operation operation) {
-    OzListBuilder builder(vm);
-
-    for (OperationArgument opArgument : operation.arguments) {
-      builder.push_back(vm, buildOperationArgumentRecord(vm, opArgument));
-    }
-
-    return buildRecord(vm,
-      buildArity(vm,
-        "operation",
-        "arguments",
-        "name",
-        "opCode"
-      ),
-      builder.get(vm),
-      build(vm, operation.name.c_str()),
-      build(vm, operation.opCode)
-    );
-  }
+  static
+  UnstableNode buildOperationRecord(VM vm, Operation operation);
 
   class GetNextOperation: public Builtin<GetNextOperation> {
   public:
     GetNextOperation(): Builtin("getNextOperation") {}
 
-    static void call(VM vm, In includeSystemThreadsNode, Out result) {
-      bool includeSystemThreads = getArgument<bool>(vm, includeSystemThreadsNode);
-
-      Operation operation = vm->getIntrospection()
-        .getNextExecutedOperation(vm, includeSystemThreads);
-
-      result = buildOperationRecord(vm, operation);
-    }
+    static void call(VM vm, In includeSystemThreadsNode, Out result);
   };
 
   /* ========== Threads ========== */
@@ -205,14 +122,7 @@ public:
   public:
     GetThreadIds(): Builtin("getThreadIds") {}
 
-    static void call(VM vm, In fromNode, In toNode, Out result) {
-      size_t from = getArgument<size_t>(vm, fromNode);
-      size_t to = getArgument<size_t>(vm, toNode);
-      result = buildThreadAggregatesList(vm, from, to,
-        [](VM vm, OzListBuilder& builder, Runnable* runnable) {
-        builder.push_back(vm, build(vm, runnable->getId()));
-      });
-    }
+    static void call(VM vm, In fromNode, In toNode, Out result);
   };
 
 
@@ -220,29 +130,14 @@ public:
   public:
     GetThread(): Builtin("getThread") {}
 
-    static void call(VM vm, In threadId, Out result) {
-      size_t id = getArgument<size_t>(vm, threadId);
-      Runnable* runnable = vm->getIntrospection().getThread(vm, id);
-
-      if (runnable)
-        result = ReifiedThread::build(vm, runnable);
-      else
-        result = build(vm, "none");
-    }
+    static void call(VM vm, In threadId, Out result);
   };
 
   class GetThreads: public Builtin<GetThreads> {
   public:
     GetThreads(): Builtin("getThreads") {}
 
-    static void call(VM vm, In fromNode, In toNode, Out result) {
-      size_t from = getArgument<size_t>(vm, fromNode);
-      size_t to = getArgument<size_t>(vm, toNode);
-      result = buildThreadAggregatesList(vm, from, to,
-        [](VM vm, OzListBuilder& builder, Runnable* runnable) {
-        builder.push_back(vm, ReifiedThread::build(vm, runnable));
-      });
-    }
+    static void call(VM vm, In fromNode, In toNode, Out result);
   };
 
   // Thread counters
@@ -279,271 +174,88 @@ public:
 
   // Thread aggregates
 
-  static inline
+  static
   UnstableNode buildThreadAggregatesList(VM vm, size_t from, size_t to,
-    std::function<void(VM vm, OzListBuilder& builder, Runnable* runnable)> lambda) {
-    OzListBuilder builder(vm);
+    std::function<void(VM vm, OzListBuilder& builder, Runnable* runnable)> lambda);
 
-    RunnableList& runnables = vm->getIntrospection().getThreads(vm);
-    size_t i = 0;
-    for (RunnableList::iterator iter = runnables.begin();
-      iter != runnables.end() && i < to; iter++, i++) {
-      if (i < from) continue;
-
-      Runnable* runnable = static_cast<Runnable*>(*iter);
-      lambda(vm, builder, runnable);
-    }
-
-    return builder.get(vm);
-  }
-
-  static inline
+  static
   UnstableNode buildThreadRecordsList(VM vm, size_t from, size_t to,
-      std::function<UnstableNode(VM vm, Runnable* runnable)> recordBuilder) {
-    return buildThreadAggregatesList(vm, from, to,
-      [recordBuilder](VM vm, OzListBuilder& builder, Runnable* runnable) {
-        builder.push_back(vm, recordBuilder(vm, runnable));
-      }
-    );
-  }
+      std::function<UnstableNode(VM vm, Runnable* runnable)> recordBuilder);
 
   // Thread state aggregate
 
-  static inline
-  UnstableNode buildThreadStateRecord(VM vm, Runnable* runnable) {
-    UnstableNode id = build(vm, runnable->getId());
-    UnstableNode kindId = build(vm, runnable->getKindId());
-    UnstableNode generationId = build(vm, runnable->getGenerationId());
-    UnstableNode isRunnable = build(vm, runnable->isRunnable());
-    UnstableNode isTerminated = build(vm, runnable->isTerminated());
-    UnstableNode isDead = build(vm, runnable->isDead());
-    UnstableNode isPreempted = build(vm, runnable->isPreempted());
-    UnstableNode isPreemptible = build(vm, runnable->isPreemptible());
-
-    UnstableNode type;
-    UnstableNode priority;
-
-    if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-      type = build(vm, "thread");
-      switch (thread->getPriority()) {
-        case tpLow: priority = build(vm, "low"); break;
-        case tpMiddle: priority = build(vm, "medium"); break;
-        case tpHi: priority = build(vm, "high"); break;
-        case tpSystem: priority = build(vm, "system"); break;
-        default: assert(false);
-      }
-    } else {
-      type = build(vm, "runnable");
-      priority = build(vm, "none");
-    }
-
-    return buildRecord(vm,
-      buildArity(vm,
-        "state",
-        "dead",
-        "generationId",
-        "id",
-        "kindId",
-        "preempted",
-        "preemptible",
-        "priority",
-        "runnable",
-        "terminated",
-        "type"
-      ),
-      isDead,
-      generationId,
-      id,
-      kindId,
-      isPreempted,
-      isPreemptible,
-      priority,
-      isRunnable,
-      isTerminated,
-      type
-    );
-  }
+  static
+  UnstableNode buildThreadStateRecord(VM vm, Runnable* runnable);
 
   class GetThreadState: public Builtin<GetThreadState> {
   public:
     GetThreadState(): Builtin("getThreadState") {}
 
-    static void call(VM vm, In threadNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-      result = buildThreadStateRecord(vm, runnable);
-    }
+    static void call(VM vm, In threadNode, Out result);
   };
 
   class GetAllThreadStates: public Builtin<GetAllThreadStates> {
   public:
     GetAllThreadStates(): Builtin("getAllThreadStates") {}
 
-    static void call(VM vm, In fromNode, In toNode, Out result) {
-      size_t from = getArgument<size_t>(vm, fromNode);
-      size_t to = getArgument<size_t>(vm, toNode);
-      result = buildThreadRecordsList(vm, from, to,
-        buildThreadStateRecord);
-    }
+    static void call(VM vm, In fromNode, In toNode, Out result);
   };
 
   // Thread statistics aggregate
 
-  static inline
-  UnstableNode buildThreadStatisticsRecord(VM vm, Runnable* runnable) {
-    Runnable::Statistics runnableStatistics = runnable->Runnable::getStatistics();
-
-    size_t operationsCount = 0, bindsCount = 0;
-    if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-      Thread::Statistics threadStatistics = thread->getStatistics();
-      operationsCount = threadStatistics.operationsCount;
-      bindsCount = threadStatistics.bindsCount;
-    }
-
-    return buildRecord(vm,
-      buildArity(vm,
-        "statistics",
-        "bindsCount",
-        "id",
-        "operationsCount",
-        "resumesCount",
-        "runsCount",
-        "suspendsCount",
-        "suspendsOnVarCount"
-      ),
-      build(vm, bindsCount),
-      build(vm, runnable->getId()),
-      build(vm, operationsCount),
-      build(vm, runnableStatistics.resumesCount),
-      build(vm, runnableStatistics.runsCount),
-      build(vm, runnableStatistics.suspendsCount),
-      build(vm, runnableStatistics.suspendsOnVarCount)
-    );
-  }
+  static
+  UnstableNode buildThreadStatisticsRecord(VM vm, Runnable* runnable);
 
   class GetThreadStatistics: public Builtin<GetThreadStatistics> {
   public:
     GetThreadStatistics(): Builtin("getThreadStatistics") {}
 
-    static void call(VM vm, In threadNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-      result = buildThreadStatisticsRecord(vm, runnable);
-    }
+    static void call(VM vm, In threadNode, Out result);
   };
 
   class GetAllThreadStatistics: public Builtin<GetAllThreadStatistics> {
   public:
     GetAllThreadStatistics(): Builtin("getAllThreadStatistics") {}
 
-    static void call(VM vm, In fromNode, In toNode, Out result) {
-      size_t from = getArgument<size_t>(vm, fromNode);
-      size_t to = getArgument<size_t>(vm, toNode);
-      result = buildThreadRecordsList(vm, from, to,
-        buildThreadStatisticsRecord);
-    }
+    static void call(VM vm, In fromNode, In toNode, Out result);
   };
 
   // Thread nodes aggregate
 
-  static inline
-  UnstableNode buildThreadNodesCountsRecord(VM vm, Runnable* runnable) {
-    Introspection::NodesCounts properties =
-      vm->getIntrospection().getNodesCounts(vm, runnable);
-    return buildRecord(vm,
-      buildArity(vm,
-        "nodes",
-        "gNodesCount",
-        "id",
-        "kNodesCount",
-        "nodesCount",
-        "stableNodesCount",
-        "stackDepth",
-        "structuralNodesCount",
-        "tokenNodesCount",
-        "unstableNodesCount",
-        "valueNodesCount",
-        "variableNodesCount",
-        "xNodesCount",
-        "yNodesCount"
-      ),
-      build(vm, properties.gNodesCount),
-      build(vm, runnable->getId()),
-      build(vm, properties.kNodesCount),
-      build(vm, properties.nodesCount),
-      build(vm, properties.stableNodesCount),
-      build(vm, properties.stackDepth),
-      build(vm, properties.structuralNodesCount),
-      build(vm, properties.tokenNodesCount),
-      build(vm, properties.unstableNodesCount),
-      build(vm, properties.valueNodesCount),
-      build(vm, properties.variableNodesCount),
-      build(vm, properties.xNodesCount),
-      build(vm, properties.yNodesCount)
-    );
-  }
+  static
+  UnstableNode buildThreadNodesCountsRecord(VM vm, Runnable* runnable);
 
   class GetThreadNodesCounts: public Builtin<GetThreadNodesCounts> {
   public:
     GetThreadNodesCounts(): Builtin("getThreadNodesCounts") {}
 
-    static void call(VM vm, In threadNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-      result = buildThreadNodesCountsRecord(vm, runnable);
-    }
+    static void call(VM vm, In threadNode, Out result);
   };
 
   class GetAllThreadNodesCounts: public Builtin<GetAllThreadNodesCounts> {
   public:
     GetAllThreadNodesCounts(): Builtin("getAllThreadNodesCounts") {}
 
-    static void call(VM vm, In fromNode, In toNode, Out result) {
-      size_t from = getArgument<size_t>(vm, fromNode);
-      size_t to = getArgument<size_t>(vm, toNode);
-      result = buildThreadRecordsList(vm, from, to,
-        buildThreadNodesCountsRecord);
-    }
+    static void call(VM vm, In fromNode, In toNode, Out result);
   };
 
   // Thread status aggregate
 
-  static inline
-  UnstableNode buildThreadStatusRecord(VM vm, Runnable* runnable) {
-    std::string type;
-    if (dynamic_cast<Thread*>(runnable)) type = "thread";
-    else type = "runnable";
-
-    return buildRecord(vm,
-      buildArity(vm,
-        "state",
-        "nodes",
-        "state",
-        "statistics"
-      ),
-      buildThreadNodesCountsRecord(vm, runnable),
-      buildThreadStateRecord(vm, runnable),
-      buildThreadStatisticsRecord(vm, runnable)
-    );
-  }
+  static
+  UnstableNode buildThreadStatusRecord(VM vm, Runnable* runnable);
 
   class GetThreadStatus: public Builtin<GetThreadStatus> {
   public:
     GetThreadStatus(): Builtin("getThreadStatus") {}
 
-    static void call(VM vm, In threadNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-      result = buildThreadStatusRecord(vm, runnable);
-    }
+    static void call(VM vm, In threadNode, Out result);
   };
 
   class GetAllThreadStatus: public Builtin<GetAllThreadStatus> {
   public:
     GetAllThreadStatus(): Builtin("getAllThreadStatus") {}
 
-    static void call(VM vm, In fromNode, In toNode, Out result) {
-      size_t from = getArgument<size_t>(vm, fromNode);
-      size_t to = getArgument<size_t>(vm, toNode);
-      result = buildThreadRecordsList(vm, from, to,
-        buildThreadStatusRecord);
-    }
+    static void call(VM vm, In fromNode, In toNode, Out result);
   };
 
   /* ========== Nodes ========== */
@@ -568,54 +280,20 @@ public:
       case NodesRegister::yRegister: return "Y";
       case NodesRegister::gRegister: return "G";
       case NodesRegister::kRegister: return "K";
-      default: assert(false);
+      default: assert(false); return "";
     }
   }
 
   // Nodes counters
 
-  static inline
-  UnstableNode buildNodesCountsRecord(VM vm, Introspection::NodesCounts& properties) {
-    return buildRecord(vm,
-      buildArity(vm,
-        "nodes",
-        "gNodesCount",
-        "kNodesCount",
-        "nodesCount",
-        "stableNodesCount",
-        "stackDepth",
-        "structuralNodesCount",
-        "tokenNodesCount",
-        "unstableNodesCount",
-        "valueNodesCount",
-        "variableNodesCount",
-        "xNodesCount",
-        "yNodesCount"
-      ),
-      build(vm, properties.gNodesCount),
-      build(vm, properties.kNodesCount),
-      build(vm, properties.nodesCount),
-      build(vm, properties.stableNodesCount),
-      build(vm, properties.stackDepth),
-      build(vm, properties.structuralNodesCount),
-      build(vm, properties.tokenNodesCount),
-      build(vm, properties.unstableNodesCount),
-      build(vm, properties.valueNodesCount),
-      build(vm, properties.variableNodesCount),
-      build(vm, properties.xNodesCount),
-      build(vm, properties.yNodesCount)
-    );
-  }
+  static
+  UnstableNode buildNodesCountsRecord(VM vm, Introspection::NodesCounts& properties);
   
   class GetNodesCounts: public Builtin<GetNodesCounts> {
   public:
     GetNodesCounts(): Builtin("getNodesCounts") {}
 
-    static void call(VM vm, Out result) {
-      Introspection::NodesCounts properties =
-        vm->getIntrospection().getNodesCounts(vm);
-      result = buildNodesCountsRecord(vm, properties);
-    }
+    static void call(VM vm, Out result);
   };
 
   class GetVariableNodesCount: public Builtin<GetVariableNodesCount> {
@@ -872,26 +550,9 @@ public:
 
   // Register types sizes
 
-  static inline
+  static
   UnstableNode getThreadNodesRegisterSize(VM vm, In threadNode, In depthNode,
-    NodesRegister nodesRegister) {
-    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-    size_t depth = getArgument<size_t>(vm, depthNode);
-    Introspection& introspection = vm->getIntrospection();
-
-    size_t count;
-    switch (nodesRegister) {
-      case NodesRegister::yRegister:
-        count = introspection.getYNodesRegisterSize(vm, runnable, depth); break;
-      case NodesRegister::gRegister:
-        count = introspection.getGNodesRegisterSize(vm, runnable, depth); break;
-      case NodesRegister::kRegister:
-        count = introspection.getKNodesRegisterSize(vm, runnable, depth); break;
-      default: assert(false);
-    }
-
-    return build(vm, count);
-  }
+    NodesRegister nodesRegister);
 
   class GetThreadXNodesRegisterSize: public Builtin<GetThreadXNodesRegisterSize> {
   public:
@@ -936,79 +597,15 @@ public:
 
   // Nodes getters
 
-  static inline
-  UnstableNode buildNodeRecord(VM vm, RichNode node) {
-    Type type = node.type();
+  static
+  UnstableNode buildNodeRecord(VM vm, RichNode node);
 
-    return buildRecord(vm,
-      buildArity(vm,
-        "node",
-        "bindingPriority",
-        "copyable",
-        "feature",
-        "id",
-        "name",
-        "structuralBehavior",
-        "transient",
-        "uuid",
-        "value"
-      ),
-      build(vm, type->getBindingPriority()),
-      build(vm, type->isCopyable()),
-      build(vm, type->isFeature()),
-      build(vm, node.getId()),
-      build(vm, type->getName().c_str()),
-      build(vm,
-        nodeStructuralBehaviorToString(
-          type->getStructuralBehavior()
-        ).c_str()
-      ),
-      build(vm, type->isTransient()),
-      build(vm, type->getUUID()),
-      build(vm, nodeToString(vm, node).c_str())
-    );
-  }
+  static
+  UnstableNode getThreadXNode(VM vm, In threadNode, In indexNode);
 
-  static inline
-  UnstableNode getThreadXNode(VM vm, In threadNode, In indexNode) {
-    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-    size_t index = getArgument<size_t>(vm, indexNode);
-    Introspection& introspection = vm->getIntrospection();
-
-    assert(index < introspection.getXNodesRegisterSize(vm, runnable));
-    RichNode node = introspection.getXNode(vm, runnable, index);
-    return buildNodeRecord(vm, node);
-  }
-
-  static inline
+  static
   UnstableNode getThreadNode(VM vm, In threadNode, In depthNode,
-    In indexNode, NodesRegister nodesRegister) {
-    
-    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-    size_t depth = getArgument<size_t>(vm, depthNode);
-    size_t index = getArgument<size_t>(vm, indexNode);
-    Introspection& introspection = vm->getIntrospection();
-
-    assert(depth < introspection.getStackDepth(vm, runnable));
-    RichNode node;
-    switch (nodesRegister) {
-      case NodesRegister::yRegister: {
-        assert(index < introspection.getYNodesRegisterSize(vm, runnable, depth));
-        node = introspection.getYNode(vm, runnable, depth, index);
-        break;
-      } case NodesRegister::gRegister: {
-        assert(index < introspection.getGNodesRegisterSize(vm, runnable, depth));
-        node = introspection.getGNode(vm, runnable, depth, index);
-        break;
-      } case NodesRegister::kRegister: {
-        assert(index < introspection.getKNodesRegisterSize(vm, runnable, depth));
-        node = introspection.getKNode(vm, runnable, depth, index);
-        break;
-      } default: assert(false);
-    }
-
-    return buildNodeRecord(vm, node);
-  }
+    In indexNode, NodesRegister nodesRegister);
 
   class GetThreadXNode: public Builtin<GetThreadXNode> {
   public:
@@ -1048,73 +645,12 @@ public:
 
   // Nodes lists getters
 
-  static inline
-  UnstableNode getThreadXNodes(VM vm, In threadNode, In fromNode, In toNode) {
-    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-    size_t from = getArgument<size_t>(vm, fromNode);
-    size_t to = getArgument<size_t>(vm, toNode);
-    Introspection& introspection = vm->getIntrospection();
+  static
+  UnstableNode getThreadXNodes(VM vm, In threadNode, In fromNode, In toNode);
 
-    assert(from < to);
-    // assert(to < introspection.getXNodesRegisterSize(vm, runnable));
-
-    OzListBuilder builder(vm);
-    introspection.doForEachXNode(vm, runnable, from, to,
-      Introspection::allNodes,
-      [&builder](VM vm, Runnable* runnable, RichNode node) {
-        builder.push_back(vm, buildNodeRecord(vm, node));
-      }
-    );
-    return builder.get(vm);
-  }
-
-  static inline
+  static
   UnstableNode getThreadNodes(VM vm, In threadNode, In depthNode, In fromNode, In toNode,
-    NodesRegister nodesRegister) {
-    Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-    size_t depth = getArgument<size_t>(vm, depthNode);
-    size_t from = getArgument<size_t>(vm, fromNode);
-    size_t to = getArgument<size_t>(vm, toNode);
-    Introspection& introspection = vm->getIntrospection();
-
-    assert(depth < introspection.getStackDepth(vm, runnable));
-    assert(from < to);
-
-    OzListBuilder builder(vm);
-
-    switch (nodesRegister) {
-      case NodesRegister::yRegister: {
-        // assert(to < introspection.getYNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachYNode(vm, runnable, depth, from, to,
-          Introspection::allNodes,
-          [&builder](VM vm, Runnable* runnable, RichNode node) {
-            builder.push_back(vm, buildNodeRecord(vm, node));
-          }
-        );
-        break;
-      } case NodesRegister::gRegister: {
-        // assert(to < introspection.getGNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachGNode(vm, runnable, depth, from, to,
-          Introspection::allNodes,
-          [&builder](VM vm, Runnable* runnable, RichNode node) {
-            builder.push_back(vm, buildNodeRecord(vm, node));
-          }
-        );
-        break;
-      } case NodesRegister::kRegister: {
-        // assert(to < introspection.getKNodesRegisterSize(vm, runnable, depth));
-        introspection.doForEachKNode(vm, runnable, depth, from, to,
-          Introspection::allNodes,
-          [&builder](VM vm, Runnable* runnable, RichNode node) {
-            builder.push_back(vm, buildNodeRecord(vm, node));
-          }
-        );
-        break;
-      } default: assert(false);
-    }
-
-    return builder.get(vm);
-  }
+    NodesRegister nodesRegister);
 
   class GetThreadXNodes: public Builtin<GetThreadXNodes> {
   public:
@@ -1156,49 +692,7 @@ public:
   public:
     GetNodes(): Builtin("getNodes") {}
 
-    static void call(VM vm, In nodeFamily, In fromNode, In toNode, Out result) {
-      using namespace patternmatching;
-
-      Introspection& introspection = vm->getIntrospection();
-      Introspection::NodeBoolLambda filter;
-      if (matches(vm, nodeFamily, "variable")) {
-        filter = [&introspection](VM vm, RichNode node) {
-          return introspection.isVariableNode(vm, node);
-        };
-      } else if (matches(vm, nodeFamily, "token")) {
-        filter = [&introspection](VM vm, RichNode node) {
-          return introspection.isTokenNode(vm, node);
-        };
-      } else if (matches(vm, nodeFamily, "structural")) {
-        filter = [&introspection](VM vm, RichNode node) {
-          return introspection.isStructuralNode(vm, node);
-        };
-      } else if (matches(vm, nodeFamily, "value")) {
-        filter = [&introspection](VM vm, RichNode node) {
-          return introspection.isValueNode(vm, node);
-        };
-      } else {
-        filter = Introspection::allNodes;
-      }
-
-      size_t from = getArgument<size_t>(vm, fromNode);
-      size_t to = getArgument<size_t>(vm, toNode);
-      size_t i = 0;
-
-      OzListBuilder builder(vm);
-      vm->getIntrospection().doForEachNode(vm,
-        Introspection::allRunnables,
-        filter,
-        [&builder, from, to, &i](VM vm, Runnable* _, RichNode node) {
-          if (i >= from && i < to) { // TODO Ugly make it better
-            builder.push_back(vm, buildNodeRecord(vm, node));
-          }
-          i++;
-        }
-      );
-
-      result = builder.get(vm);
-    }
+    static void call(VM vm, In nodeFamily, In fromNode, In toNode, Out result);
   };
 
   /* ========== Variables stats ========== */
@@ -1211,7 +705,8 @@ public:
 
     static void call(VM vm, Out result) {
       Introspection introspection;
-      result = build(vm, vm->getIntrospection().getBoundVariablesCount(vm));
+      result = build(vm,
+        vm->getIntrospection().getBoundVariablesCount(vm));
     }
   };
 
@@ -1220,7 +715,8 @@ public:
     GetUnBoundVariablesCount(): Builtin("getUnBoundVariablesCount") {}
 
     static void call(VM vm, Out result) {
-      result = build(vm, vm->getIntrospection().getUnBoundVariablesCount(vm));
+      result = build(vm,
+        vm->getIntrospection().getUnBoundVariablesCount(vm));
     }
   };
 
@@ -1229,7 +725,8 @@ public:
     GetVariablesCount(): Builtin("getVariablesCount") {}
 
     static void call(VM vm, Out result) {
-      result = build(vm, vm->getIntrospection().getVariablesCount(vm));
+      result = build(vm,
+        vm->getIntrospection().getVariablesCount(vm));
     }
   };
 
@@ -1237,273 +734,71 @@ public:
 
   using Pendings = VMAllocatedList<StableNode*>;
 
-  static inline
-  void buildVariablePendingsList(VM vm, OzListBuilder& builder,
-    Pendings& pendings) {
-    for (Pendings::iterator iter = pendings.begin(); iter != pendings.end(); ++iter) {
-      RichNode node = RichNode(*static_cast<StableNode*>(*iter));
-      if (node.is<ReifiedThread>()) {
-        Runnable* runnable = getArgument<Runnable*>(vm, node);
-        builder.push_back(vm, build(vm, runnable->getId()));
-      }
-    }
-  }
+  static
+  void buildVariablePendingsList(VM vm, OzListBuilder& builder, Pendings& pendings);
 
-  static inline
-  UnstableNode buildVariableRecord(VM vm, Introspection::VariableCandidates& variableCandidates) {
-    if (variableCandidates.isNull())
-      return build(vm, "none");
+  static
+  UnstableNode buildVariableRecord(VM vm, Introspection::VariableCandidates& variableCandidates);
 
-    RichNode& node = variableCandidates.node;
-
-    size_t id = 0, kindId = 0, generationId = 0;
-    bool isBound = false, isNeeded = false;
-    std::string type = node.type()->getName();
-    std::string representation = nodeToString(vm, node);
-
-    OzListBuilder pendingsList(vm);
-
-    if (node.is<OptVar>()) {
-      OptVar variable = Accessor<OptVar>::get(node.value());
-      id = variable.getId();
-      kindId = variable.getKindId();
-      generationId = variable.getGenerationId();
-      isBound = false;
-      isNeeded = variable.isNeeded(vm);
-    } else if (node.is<Variable>()) {
-      Variable variable = Accessor<Variable>::get(node.value());
-      id = variable.getId();
-      kindId = variable.getKindId();
-      generationId = variable.getGenerationId();
-      isBound = variable.isBound(vm);
-      isNeeded = variable.isNeeded(vm);
-      buildVariablePendingsList(vm, pendingsList, variable.getPendings(vm));
-    } else if (node.is<ReadOnly>()) {
-      ReadOnly variable = Accessor<ReadOnly>::get(node.value());
-      id = SIZE_MAX;
-      isBound = true;
-      isNeeded = variable.isNeeded(vm);
-    } else if (node.is<ReadOnlyVariable>()) {
-      ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-      id = variable.getId();
-      kindId = variable.getKindId();
-      generationId = variable.getGenerationId();
-      isBound = variable.isBound(vm);
-      isNeeded = variable.isNeeded(vm);
-      buildVariablePendingsList(vm, pendingsList, variable.getPendings(vm));
-    } else if (node.is<FailedValue>()) {
-      FailedValue variable = Accessor<FailedValue>::get(node.value());
-      id = SIZE_MAX;
-      isBound = true;
-      isNeeded = variable.isNeeded(vm);
-    } else {
-      assert(false);
-    }
-
-    Introspection::CandidatesList& candidates = variableCandidates.candidates;
-    OzListBuilder candidatesList(vm);
-
-    for (size_t candidateThreadId : candidates) {
-      candidatesList.push_back(vm, build(vm, candidateThreadId));
-    }
-
-    return buildRecord(vm,
-      buildArity(vm,
-        "variable",
-        "candidates",
-        "generationId",
-        "id",
-        "isBound",
-        "isNeeded",
-        "kindId",
-        "pendings",
-        "type",
-        "value"
-      ),
-      candidatesList.get(vm),
-      build(vm, generationId),
-      build(vm, id),
-      build(vm, isBound),
-      build(vm, isNeeded),
-      build(vm, kindId),
-      pendingsList.get(vm),
-      build(vm, type.c_str()),
-      build(vm, representation.c_str())
-    );
-  }
-
-  static inline
-  UnstableNode buildVariableRecordsList(VM vm, Introspection::VariableCandidatesMap& map) {
-    OzListBuilder builder(vm);
-
-    for (auto iter = map.begin(); iter != map.end(); ++iter) {
-      builder.push_back(vm, buildVariableRecord(vm, iter->second));
-    }
-
-    return builder.get(vm);
-  }
+  static
+  UnstableNode buildVariableRecordsList(VM vm, Introspection::VariableCandidatesMap& map);
 
   class GetVariable: public Builtin<GetVariable> {
   public:
     GetVariable(): Builtin("getVariable") {}
 
-    static void call(VM vm, In variableIdNode, Out result) {
-      size_t variableId = getArgument<size_t>(vm, variableIdNode);
-      Introspection::VariableCandidates variable = vm->getIntrospection().getVariable(vm, variableId);
-      result = buildVariableRecord(vm, variable);
-    }
+    static void call(VM vm, In variableIdNode, Out result);
   };
 
   class GetThreadVariables: public Builtin<GetThreadVariables> {
   public:
     GetThreadVariables(): Builtin("getThreadVariables") {}
 
-    static void call(VM vm, In runnableNode, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
-      Introspection::VariableCandidatesMap map = vm->getIntrospection().getVariableCandidatesMap(vm, runnable);
-      result = buildVariableRecordsList(vm, map);
-    }
+    static void call(VM vm, In runnableNode, Out result);
   };
 
   class GetAllVariables: public Builtin<GetAllVariables> {
   public:
     GetAllVariables(): Builtin("getAllVariables") {}
 
-    static void call(VM vm, Out result) {
-      Introspection::VariableCandidatesMap map = vm->getIntrospection().getVariableCandidatesMap(vm);
-      result = buildVariableRecordsList(vm, map);
-    }
+    static void call(VM vm, Out result);
   };
 
   /* ========== Reachability graph ========== */
 
-  static inline
-  UnstableNode buildReachabilityMapRecord(VM vm, Introspection::IdToIdsMap& map) {
-    // for (Introspection::IdToIdsMap::iterator iter = map.begin();
-    //   iter != map.end(); ++iter) {
-    //   size_t fromId = iter->first;
-    //   Introspection::IdsVector vector = iter->second;
-    //   char numbers[vector.size()][21];
+  static
+  UnstableNode buildReachabilityMapRecord(VM vm, Introspection::IdToIdsMap& map);
 
-    //   size_t i = 0;
-    //   for (Introspection::IdsVector::iterator iter2 = vector.begin();
-    //     iter2 != vector.end(); ++iter2) {
-    //     numbers[i++] = std::to_string(*iter2).c_str();
-        
-    //   }
-    // }
-    return build(vm, "none");
-  }
-
-  static inline
-  UnstableNode buildReachabilityGraphRecord(VM vm, Introspection::ReachabilityGraph& graph) {
-    return buildRecord(vm,
-      buildArity(vm,
-        "graph",
-        "threadToVariables",
-        "variableToThreads"
-      ),
-      buildReachabilityMapRecord(vm, graph.threadToVariables),
-      buildReachabilityMapRecord(vm, graph.variableToThreads)
-    );
-  }
+  static
+  UnstableNode buildReachabilityGraphRecord(VM vm, Introspection::ReachabilityGraph& graph);
 
   class GetReachabilityGraph: public Builtin<GetReachabilityGraph> {
   public:
     GetReachabilityGraph(): Builtin("getReachabilityGraph") {}
 
-    static void call(VM vm, Out result) {
-      Introspection::ReachabilityGraph graph = vm->getIntrospection()
-        .computeReachabilityGraph(vm);
-      result = buildReachabilityGraphRecord(vm, graph);
-    }
+    static void call(VM vm, Out result);
   };
 
   /* ========== Structures list ========== */
 
-  static inline
-  UnstableNode buildListNodeRecord(VM vm, Introspection::OwnedRichNode& ownedNode) {
-    Introspection::RunnableVector runnables = ownedNode.runnables;
-    RichNode node = ownedNode.node;
+  static
+  UnstableNode buildListNodeRecord(VM vm, Introspection::OwnedRichNode& ownedNode);
 
-    OzListBuilder builder(vm);
-    for (auto iter = runnables.begin(); iter != runnables.end(); ++iter) {
-      Runnable* runnable = *iter;
-      builder.push_back(vm, build(vm, runnable->getId()));
-    }
-
-    //ozListPropagateKind(vm, node);
-
-    TypedRichNode<Cons> cons = node.as<Cons>();
-
-    return buildRecord(vm,
-      buildArity(vm,
-        "list",
-        "generationId",
-        "hash",
-        "id",
-        "kindId",
-        "list",
-        "owners"
-      ),
-      build(vm, cons.getGenerationId()),
-      build(vm, ozListHash(vm, node)),
-      build(vm, cons.getId()),
-      build(vm, cons.getKindId()),
-      Reference::build(vm, node.getStableRef(vm)),
-      builder.get(vm)
-    );
-  }
-
-  static inline
-  UnstableNode buildListNodesListRecord(VM vm, RichNode idsList, Introspection::NodesMap& map) {
-    std::unordered_set<size_t> set;
-
-    bool isNil = ozListIsNil(vm, idsList);
-
-    if (!isNil) {
-      ozListForEach(vm, idsList, [vm, &set](nativeint id) {
-        set.insert(id);
-      }, "List of integer ids");
-    }
-
-    OzListBuilder builder(vm);
-    for (auto iter = map.begin(); iter != map.end(); ++iter) {
-      size_t nodeId = iter->first;
-      Introspection::OwnedRichNode& ownedNode = iter->second;
-
-      Cons& cons = ownedNode.node.as<Cons>().getSelf();
-
-      if (isNil
-        || set.find(cons.getId()) != set.end()
-        || set.find(cons.getKindId()) != set.end()
-      ) {
-        builder.push_back(vm, buildListNodeRecord(vm, ownedNode));
-      }
-    }
-    return builder.get(vm);
-  }
+  static
+  UnstableNode buildListNodesListRecord(VM vm, RichNode idsList, Introspection::NodesMap& map);
 
   class GetThreadLists: public Builtin<GetThreadLists> {
   public:
     GetThreadLists(): Builtin("getThreadLists") {}
 
-    static void call(VM vm, In runnableNode, In idsList, Out result) {
-      Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
-      Introspection::NodesMap map = vm->getIntrospection()
-        .getLists(vm, runnable);
-      result = buildListNodesListRecord(vm, idsList, map);
-    }
+    static void call(VM vm, In runnableNode, In idsList, Out result);
   };
 
   class GetLists: public Builtin<GetLists> {
   public:
     GetLists(): Builtin("getLists") {}
 
-    static void call(VM vm, In idsList, Out result) {
-      Introspection::NodesMap map = vm->getIntrospection().getLists(vm);
-      result = buildListNodesListRecord(vm, idsList, map);
-    }
+    static void call(VM vm, In idsList, Out result);
   };
 };
 

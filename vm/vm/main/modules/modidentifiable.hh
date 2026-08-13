@@ -45,46 +45,14 @@ public:
   public:
     GetId(): Builtin("getId") {}
 
-    static void call(VM vm, In object, Out result) {
-      size_t id = 0;
-      
-      if (object.is<ReifiedThread>())
-        id = object.as<ReifiedThread>().value()->getId();
-      else if (object.is<OptVar>())
-        id = object.as<OptVar>().getId();
-      else if (object.is<Variable>())
-        id = object.as<Variable>().getId();
-      else if (object.is<ReadOnlyVariable>())
-        id = object.as<ReadOnlyVariable>().getId();
-      else if (object.is<Cons>())
-        id = object.as<Cons>().getId();
-      
-      result = build(vm, id);
-    }
+    static void call(VM vm, In object, Out result);
   };
 
   class SetId: public Builtin<SetId> {
   public:
     SetId(): Builtin("setId") {}
 
-    static void call(VM vm, In object, In idNode) {
-      size_t id = getArgument<size_t>(vm, idNode);
-
-      if (object.is<ReifiedThread>()) {
-        object.as<ReifiedThread>().value()->setId(id);
-        vm->getEventManager().announceRunnable(vm,
-          getArgument<Runnable*>(vm, object),
-          VirtualMachineEventManager::RunnableAnnounce::Updated
-        );
-      } else if (object.is<OptVar>())
-        object.as<OptVar>().setId(id);
-      else if (object.is<Variable>())
-        object.as<Variable>().setId(id);
-      else if (object.is<ReadOnlyVariable>())
-        object.as<ReadOnlyVariable>().setId(id);
-      else if (object.is<Cons>())
-        object.as<Cons>().setId(id);
-    }
+    static void call(VM vm, In object, In idNode);
   };
 };
 
