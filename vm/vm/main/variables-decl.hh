@@ -172,7 +172,7 @@ private:
 #include "Variable-implem-decl.hh"
 #endif
 
-class Variable: public AdvancedIdentifiable<Variable>,
+class Variable: public AdvancedIdentifiable<Variable>, public Self<Variable>,
   public DataType<Variable>, public VariableBase<Variable>,
   Transient, WithVariableBehavior<90> {
 public:
@@ -265,7 +265,7 @@ public:
 #include "ReadOnlyVariable-implem-decl.hh"
 #endif
 
-class ReadOnlyVariable: public AdvancedIdentifiable<ReadOnlyVariable>,
+class ReadOnlyVariable: public AdvancedIdentifiable<ReadOnlyVariable>, public Self<ReadOnlyVariable>,
   public DataType<ReadOnlyVariable>,
   public VariableBase<ReadOnlyVariable>,
   Transient, WithVariableBehavior<80> {
@@ -353,15 +353,29 @@ public:
 #include "OptVar-implem-decl.hh"
 #endif
 
-class OptVar: public AdvancedIdentifiable<OptVar>,
+// Remettre comme avant et essayer de lier les cons directement aux vars
+class OptVar: public AdvancedIdentifiable<OptVar>, public Self<OptVar>,
   public DataType<OptVar>, public WithHome,
-  Transient, StoredAs<SpaceRef>, WithVariableBehavior<100> {
+  Transient,
+  // StoredAs<SpaceRef>,
+  WithVariableBehavior<100> {
 public:
   /**
    * Instantiates a new OPT variable from a space reference
    * @param home The home space reference of the variable
    */
   explicit OptVar(SpaceRef home): WithHome(home) {}
+
+  OptVar(VM vm): WithHome(vm) {
+    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
+  }
+
+  OptVar(VM vm, Space* home): WithHome(home) {
+    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
+  }
+
+  inline
+  OptVar(VM vm, GR gr, OptVar& from);
 
   /**
    * Attributes to the provided referenced space reference VM's current space
