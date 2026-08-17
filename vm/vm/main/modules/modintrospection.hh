@@ -26,7 +26,6 @@
 #define MOZART_MODINTROSPECTION_H
 
 #include "mozartcore-module.hh"
-//#include "../introspection.hh"
 
 #include <unordered_set>
 #include <iostream>
