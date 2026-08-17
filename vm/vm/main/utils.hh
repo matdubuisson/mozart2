@@ -138,6 +138,177 @@ void requireFeature(VM vm, RichNode feature) {
     PotentialFeature(feature).makeFeature(vm);
 }
 
+//////////////////////////
+// Types classification //
+//////////////////////////
+
+static inline
+void printNode(VM vm, RichNode node) {
+  auto& config = vm->getPropertyRegistry().config;
+  std::basic_stringstream<char> buffer;
+  buffer << repr(vm, node, config.printDepth, config.printWidth);
+  std::cout << "Node: " << buffer.str() << std::endl;
+}
+
+template<class Object>
+constexpr bool isRunnable() {
+  return std::is_same_v<Object, Runnable>
+    || std::is_same_v<Object, Thread>
+    || std::is_same_v<Object, ReifiedThread>;
+}
+
+bool isRunnable(const Node& node) {
+  return node.type() == ReifiedThread::type();
+}
+
+bool isRunnable(const StableNode& node) {
+  return isRunnable(static_cast<const Node&>(node));
+}
+
+bool isRunnable(const UnstableNode& node) {
+  return isRunnable(static_cast<const Node&>(node));
+}
+
+bool isRunnable(RichNode node) {
+  return node.is<ReifiedThread>();
+}
+
+template<class Object>
+constexpr bool isVariable() {
+  return std::is_same_v<Object, OptVar>
+    || std::is_same_v<Object, Variable>
+    || std::is_same_v<Object, ReadOnlyVariable>;
+}
+
+bool isVariable(const Node& node) {
+  Type type = node.type();
+  return type == OptVar::type()
+    || type == Variable::type()
+    || type == ReadOnlyVariable::type();
+}
+
+bool isVariable(const StableNode& node) {
+  return isVariable(static_cast<const Node&>(node));
+}
+
+bool isVariable(const UnstableNode& node) {
+  return isVariable(static_cast<const Node&>(node));
+}
+
+bool isVariable(RichNode node) {
+  return node.is<OptVar>()
+    || node.is<Variable>()
+    || node.is<ReadOnlyVariable>();
+}
+
+template<class Object>
+constexpr bool isStructure() {
+  return std::is_same_v<Object, Cons>;
+}
+
+bool isStructure(const Node& node) {
+  Type type = node.type();
+  return type == Cons::type();
+}
+
+bool isStructure(const StableNode& node) {
+  return isStructure(static_cast<const Node&>(node));
+}
+
+bool isStructure(const UnstableNode& node) {
+  return isStructure(static_cast<const Node&>(node));
+}
+
+bool isStructure(RichNode node) {
+  return node.is<Cons>();
+}
+
+template<class Object>
+constexpr bool isIdentifiable() {
+  return std::is_same_v<Object, Runnable>
+    || isVariable<Object>()
+    || isStructure<Object>();
+}
+
+bool isIdentifiable(const Node& node) {
+  return node.type() == ReifiedThread::type()
+    || isVariable(node)
+    || isStructure(node);
+}
+
+bool isIdentifiable(const StableNode& node) {
+  return isIdentifiable(static_cast<const Node&>(node));
+}
+
+bool isIdentifiable(const UnstableNode& node) {
+  return isIdentifiable(static_cast<const Node&>(node));
+}
+
+bool isIdentifiable(RichNode node) {
+  return node.is<ReifiedThread>()
+    || isVariable(node)
+    || isStructure(node);
+}
+
+/////////////////////////////////////
+// Ids transmission and succession //
+/////////////////////////////////////
+
+template<class SrcType, class DstType>
+void transmitIds(VM vm, SrcType& srcObject, RichNode dst) {
+  DstType& dstObject = dst.as<DstType>().getSelf();
+  transmitIds<SrcType, DstType>(vm, srcObject, dstObject);
+}
+
+template<class SrcType>
+void transmitIds(VM vm, SrcType& srcObject, StableNode& dst) {
+  transmitIds(vm, srcObject, RichNode(dst));
+}
+
+template<class SrcType>
+void transmitIds(VM vm, SrcType& srcObject, UnstableNode& dst) {
+  transmitIds(vm, srcObject, RichNode(dst));
+}
+
+template<class SrcType>
+void transmitIds(VM vm, RichNode src, RichNode dst) {
+  SrcType& srcObject = src.as<SrcType>().getSelf();
+
+  transmitIds<SrcType>(vm, srcObject, dst);
+}
+
+void transmitIds(VM vm, StableNode& src, StableNode& dst) {
+  transmitIds(vm, RichNode(src), RichNode(dst));
+}
+
+void transmitIds(VM vm, UnstableNode& src, UnstableNode& dst) {
+  transmitIds(vm, RichNode(src), RichNode(dst));
+}
+
+void transmitIds(VM vm, StableNode& src, UnstableNode& dst) {
+  transmitIds(vm, RichNode(src), RichNode(dst));
+}
+
+void transmitIds(VM vm, UnstableNode& src, StableNode& dst) {
+  transmitIds(vm, RichNode(src), RichNode(dst));
+}
+
+void transmitIds(VM vm, RichNode src, StableNode& dst) {
+  transmitIds(vm, src, RichNode(dst));
+}
+
+void transmitIds(VM vm, StableNode& src, RichNode dst) {
+  transmitIds(vm, RichNode(src), dst);
+}
+
+void transmitIds(VM vm, RichNode src, UnstableNode& dst) {
+  transmitIds(vm, src, RichNode(dst));
+}
+
+void transmitIds(VM vm, UnstableNode& src, RichNode dst) {
+  transmitIds(vm, RichNode(src), dst);
+}
+
 //////////////////////////////////
 // Working with Oz lists in C++ //
 //////////////////////////////////
@@ -295,13 +466,11 @@ size_t ozListHash(VM vm, RichNode list) {
 void ozListPropagateKind(VM vm, RichNode list) {
   // if (!leader.isKindLeader()) return;
 
-  // std::cout << "Propagate : " << leader.getKindId() << std::endl;
-
   RichNode previous = list;
   RichNode current = getNext(vm, list);
 
   while (current.is<Cons>()) {
-    current.as<Cons>().followIdentity(previous.as<Cons>().getSelf());
+    current.as<Cons>().followIdentity(previous.as<Cons>().getSelf(), true);
     previous = current;
     // std::cout << "\t=> " << current.as<Cons>().getKindId() << std::endl;
     current = getNext(vm, current);

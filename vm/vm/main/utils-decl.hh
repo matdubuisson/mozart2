@@ -84,6 +84,137 @@ T* getPointerArgument(VM vm, RichNode argValue);
 inline
 void requireFeature(VM vm, RichNode feature);
 
+//////////////////////////
+// Types classification //
+//////////////////////////
+
+// About runnables
+
+template<class Object>
+inline
+constexpr bool isRunnable();
+
+inline
+bool isRunnable(const Node& node);
+
+inline
+bool isRunnable(const StableNode& node);
+
+inline
+bool isRunnable(const UnstableNode& node);
+
+inline
+bool isRunnable(RichNode node);
+
+// About variables
+
+template<class Object>
+inline
+constexpr bool isVariable();
+
+inline
+bool isVariable(const Node& node);
+
+inline
+bool isVariable(const StableNode& node);
+
+inline
+bool isVariable(const UnstableNode& node);
+
+inline
+bool isVariable(RichNode node);
+
+// About structures
+
+template<class Object>
+inline
+constexpr bool isStructure();
+
+inline
+bool isStructure(const Node& node);
+
+inline
+bool isStructure(const StableNode& node);
+
+inline
+bool isStructure(const UnstableNode& node);
+
+inline
+bool isStructure(RichNode node);
+
+// About identities
+
+template<class Object>
+inline
+constexpr bool isIdentifiable();
+
+inline
+bool isIdentifiable(const Node& node);
+
+inline
+bool isIdentifiable(const StableNode& node);
+
+inline
+bool isIdentifiable(const UnstableNode& node);
+
+inline
+bool isIdentifiable(RichNode node);
+
+/////////////////////////////////////
+// Ids transmission and succession //
+/////////////////////////////////////
+
+template<class SrcType, class DstType>
+// inline
+void transmitIds(VM vm, SrcType& src, DstType& dst);
+
+template<class SrcType, class DstType>
+// inline
+void transmitIds(VM vm, SrcType& srcObject, RichNode dst);
+
+template<class SrcType>
+// inline
+void transmitIds(VM vm, SrcType& srcObject, RichNode dst);
+
+template<class SrcType>
+inline
+void transmitIds(VM vm, SrcType& srcObject, StableNode& dst);
+
+template<class SrcType>
+inline
+void transmitIds(VM vm, SrcType& srcObject, UnstableNode& dst);
+
+template<class SrcType>
+inline
+void transmitIds(VM vm, RichNode src, RichNode dst);
+
+// inline
+void transmitIds(VM vm, RichNode src, RichNode dst);
+
+inline
+void transmitIds(VM vm, StableNode& src, StableNode& dst);
+
+inline
+void transmitIds(VM vm, UnstableNode& src, UnstableNode& dst);
+
+inline
+void transmitIds(VM vm, StableNode& src, UnstableNode& dst);
+
+inline
+void transmitIds(VM vm, UnstableNode& src, StableNode& dst);
+
+inline
+void transmitIds(VM vm, RichNode src, StableNode& dst);
+
+inline
+void transmitIds(VM vm, StableNode& src, RichNode dst);
+
+inline
+void transmitIds(VM vm, RichNode src, UnstableNode& dst);
+
+inline
+void transmitIds(VM vm, UnstableNode& src, RichNode dst);
+
 //////////////////////////////////
 // Working with Oz lists in C++ //
 //////////////////////////////////
@@ -156,6 +287,8 @@ size_t ozListHash(VM vm, RichNode list);
 
 inline
 void ozListPropagateKind(VM vm, RichNode list);
+
+void ozListWatch(VM vm, RichNode list);
 
 //////////////////////////////////////
 // Virtual strings and byte strings //
