@@ -78,7 +78,7 @@ private:
 
 public:
   /** Gets the type of the node */
-  Type type() {
+  Type type() const {
     return data.type;
   }
 
