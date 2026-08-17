@@ -236,6 +236,8 @@ Cons::Cons(VM vm, Head&& head, Tail&& tail) {
   _elements[0].init(vm, std::forward<Head>(head));
   _elements[1].init(vm, std::forward<Tail>(tail));
 
+  if constexpr (isIdentifiable<Tail>())
+    transmitIds(vm, *this, tail);
   vm->getEventManager().announceStructure<Cons>(vm, this,
     VirtualMachineEventManager::StructureAnnounce::Created);
 }
