@@ -34,8 +34,6 @@ void ModIdentifiable::GetId::call(VM vm, In object, Out result) {
   
   if (object.is<ReifiedThread>())
     id = object.as<ReifiedThread>().value()->getId();
-  else if (object.is<OptVar>())
-    id = object.as<OptVar>().getId();
   else if (object.is<Variable>())
     id = object.as<Variable>().getId();
   else if (object.is<ReadOnlyVariable>())
@@ -56,9 +54,6 @@ void ModIdentifiable::SetId::call(VM vm, In object, In idNode) {
       getArgument<Runnable*>(vm, object),
       VirtualMachineEventManager::RunnableAnnounce::Updated
     );
-  } else if (object.is<OptVar>()) {
-    std::cout << "This is a opt variable" << std::endl;
-    object.as<OptVar>().setId(id);
   } else if (object.is<Variable>()) {
     std::cout << "This is a variable" << std::endl;
     object.as<Variable>().setId(id);
@@ -68,6 +63,8 @@ void ModIdentifiable::SetId::call(VM vm, In object, In idNode) {
   } else if (object.is<Cons>()) {
     std::cout << "This is a cons" << std::endl;
     object.as<Cons>().setId(id);
+  } else {
+    std::cout << "Not found: " << object.type()->getName().c_str() << std::endl;
   }
 }
 

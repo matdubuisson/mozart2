@@ -48,7 +48,7 @@ UnstableNode ModIntrospection::buildVariableRecord(VM vm, Introspection::Variabl
 
   RichNode& node = variableCandidates.node;
 
-  size_t id = 0, kindId = 0, generationId = 0;
+  size_t id = SIZE_MAX, kindId = SIZE_MAX, generationId = SIZE_MAX;
   bool isBound = false, isNeeded = false;
   std::string type = node.type()->getName();
   std::string representation = nodeToString(vm, node);
@@ -57,9 +57,6 @@ UnstableNode ModIntrospection::buildVariableRecord(VM vm, Introspection::Variabl
 
   if (node.is<OptVar>()) {
     OptVar variable = Accessor<OptVar>::get(node.value());
-    id = variable.getId();
-    kindId = variable.getKindId();
-    generationId = variable.getGenerationId();
     isBound = false;
     isNeeded = variable.isNeeded(vm);
   } else if (node.is<Variable>()) {
@@ -72,7 +69,6 @@ UnstableNode ModIntrospection::buildVariableRecord(VM vm, Introspection::Variabl
     buildVariablePendingsList(vm, pendingsList, variable.getPendings(vm));
   } else if (node.is<ReadOnly>()) {
     ReadOnly variable = Accessor<ReadOnly>::get(node.value());
-    id = SIZE_MAX;
     isBound = true;
     isNeeded = variable.isNeeded(vm);
   } else if (node.is<ReadOnlyVariable>()) {
@@ -85,7 +81,6 @@ UnstableNode ModIntrospection::buildVariableRecord(VM vm, Introspection::Variabl
     buildVariablePendingsList(vm, pendingsList, variable.getPendings(vm));
   } else if (node.is<FailedValue>()) {
     FailedValue variable = Accessor<FailedValue>::get(node.value());
-    id = SIZE_MAX;
     isBound = true;
     isNeeded = variable.isNeeded(vm);
   } else {

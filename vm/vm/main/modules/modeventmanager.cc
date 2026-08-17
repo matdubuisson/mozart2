@@ -117,12 +117,7 @@ UnstableNode ModEventManager::buildRunnablesJournalRecord(VM vm, VirtualMachineE
 
 template<typename V>
 void ModEventManager::fillInfo(VM vm, V* variable, size_t& id, std::string& type, bool& isNeeded, bool& isBound, bool& isWaited) {
-  if constexpr (std::is_same_v<V, OptVar>) {
-    OptVar* v = static_cast<OptVar*>(variable);
-    id = v->getId();
-    type = "optVariable";
-    isNeeded = isBound = isWaited = false;
-  } else if constexpr (std::is_same_v<V, Variable>) {
+  if constexpr (std::is_same_v<V, Variable>) {
     Variable* v = static_cast<Variable*>(variable);
     id = v->getId();
     type = "variable";
@@ -201,9 +196,6 @@ UnstableNode ModEventManager::buildWaiterStateRecord(VM vm, RichNode waiter) {
   } else if (waiter.is<ReifiedThread>()) {
     Runnable* runnable = getArgument<Runnable*>(vm, waiter);
     return buildThreadStateRecord(vm, runnable);
-  } else if (waiter.is<OptVar>()) {
-    OptVar v = Accessor<OptVar>::get(waiter.value());
-    return buildVariableStateRecord<OptVar>(vm, &v);
   } else if (waiter.is<Variable>()) {
     Variable v = Accessor<Variable>::get(waiter.value());
     return buildVariableStateRecord<Variable>(vm, &v);
@@ -288,9 +280,7 @@ UnstableNode ModEventManager::buildWaitedVariablesList(VM vm,
 template<typename V>
 UnstableNode ModEventManager::buildVariablesSubJournalRecord(VM vm, VirtualMachineEventManager& journal) {
   std::string recordName;
-  if constexpr (std::is_same_v<V, OptVar>) {
-    recordName = "optVariablesJournal";
-  } else if constexpr (std::is_same_v<V, Variable>) {
+  if constexpr (std::is_same_v<V, Variable>) {
     recordName = "variablesJournal";
   } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
     recordName = "readOnlyVariablesJournal";
@@ -317,11 +307,9 @@ UnstableNode ModEventManager::buildVariablesJournalRecord(VM vm, VirtualMachineE
   return buildRecord(vm,
     buildArity(vm,
       "variablesJournal",
-      "optVariables",
       "readOnlyVariables",
       "variables"
     ),
-    buildVariablesSubJournalRecord<OptVar>(vm, journal),
     buildVariablesSubJournalRecord<ReadOnlyVariable>(vm, journal),
     buildVariablesSubJournalRecord<Variable>(vm, journal)
   );

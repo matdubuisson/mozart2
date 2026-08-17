@@ -86,6 +86,10 @@ template<class V>
 bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking,
   BoundVariableInfo<V> info, VariableAnnounce announce) {
 
+  if (info.author->getId() == 123456 || info.author->getId() == 654321) {
+    std::cout << "TARGET BIND: " << info.src.type()->getName().c_str() << std::endl;
+  }
+
   if (matchTracking<V>(vm, tracking,
     static_cast<VariableInfo<V>>(info), announce))
     return true;
@@ -103,7 +107,6 @@ bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking
 }
 
 template<class S>
-inline
 bool VirtualMachineEventManager::matchTracking(VM vm, StructureTracking tracking,
   StructureInfo<S> info, StructureAnnounce announce) {
 

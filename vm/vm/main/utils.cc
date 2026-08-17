@@ -48,26 +48,26 @@ void transmitIds(VM vm, SrcType& src, DstType& dst) {
 
   Runnable* currentThread = vm->getCurrentThread();
 
-  if (currentThread != nullptr && currentThread->getPriority() != tpSystem
-    && srcId.getId() == 222222) {
-    if constexpr (isVariable<SrcType>() && isVariable<DstType>()) {
-      std::cout << "VtoV => " << std::endl;
-      printId<SrcType>(srcId);
-      printId<DstType>(dstId);
-    } else if constexpr (isStructure<SrcType>() && isVariable<DstType>()) {
-      std::cout << "StoV => " << std::endl;
-      printId<SrcType>(srcId);
-      printId<DstType>(dstId);
-    } else if constexpr (isVariable<SrcType>() && isStructure<DstType>()) {
-      std::cout << "VtoS => " << std::endl;
-      printId<SrcType>(srcId);
-      printId<DstType>(dstId);
-    } else if constexpr (isStructure<SrcType>() && isStructure<DstType>()) {
-      std::cout << "StoS => " << std::endl;
-      printId<SrcType>(srcId);
-      printId<DstType>(dstId);
-    }
-  }
+  // if (currentThread != nullptr && currentThread->getPriority() != tpSystem
+  //   && srcId.getId() == 222222) {
+  //   if constexpr (isVariable<SrcType>() && isVariable<DstType>()) {
+  //     std::cout << "VtoV => " << std::endl;
+  //     printId<SrcType>(srcId);
+  //     printId<DstType>(dstId);
+  //   } else if constexpr (isStructure<SrcType>() && isVariable<DstType>()) {
+  //     std::cout << "StoV => " << std::endl;
+  //     printId<SrcType>(srcId);
+  //     printId<DstType>(dstId);
+  //   } else if constexpr (isVariable<SrcType>() && isStructure<DstType>()) {
+  //     std::cout << "VtoS => " << std::endl;
+  //     printId<SrcType>(srcId);
+  //     printId<DstType>(dstId);
+  //   } else if constexpr (isStructure<SrcType>() && isStructure<DstType>()) {
+  //     std::cout << "StoS => " << std::endl;
+  //     printId<SrcType>(srcId);
+  //     printId<DstType>(dstId);
+  //   }
+  // }
 
   if constexpr (isVariable<DstType>()) {
     dstId.followIdentity(srcId, false);
@@ -78,9 +78,7 @@ void transmitIds(VM vm, SrcType& src, DstType& dst) {
 
 template<class SrcType>
 void transmitIds(VM vm, SrcType& srcObject, RichNode dst) {
-  if (dst.is<OptVar>()) {
-    transmitIds<SrcType, OptVar>(vm, srcObject, dst);
-  } else if (dst.is<Variable>()) {
+  if (dst.is<Variable>()) {
     transmitIds<SrcType, Variable>(vm, srcObject, dst);
   } else if (dst.is<ReadOnlyVariable>()) {
     transmitIds<SrcType, ReadOnlyVariable>(vm, srcObject, dst);
@@ -92,9 +90,7 @@ void transmitIds(VM vm, SrcType& srcObject, RichNode dst) {
 }
 
 void transmitIds(VM vm, RichNode src, RichNode dst) {
-  if (src.is<OptVar>()) {
-    transmitIds<OptVar>(vm, src, dst);
-  } else if (src.is<Variable>()) {
+  if (src.is<Variable>()) {
     transmitIds<Variable>(vm, src, dst);
   } else if (src.is<ReadOnlyVariable>()) {
     transmitIds<ReadOnlyVariable>(vm, src, dst);

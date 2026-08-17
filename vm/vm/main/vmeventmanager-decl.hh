@@ -225,9 +225,7 @@ public:
 
   template<class V>
   void announceVariable(VM vm, V* variable, VariableAnnounce announce) {
-    if constexpr (std::is_same_v<V, OptVar>) {
-      announceVariable(vm, aggregatedOptVariables, variable, announce);
-    } else if constexpr (std::is_same_v<V, Variable>) {
+    if constexpr (std::is_same_v<V, Variable>) {
       announceVariable(vm, aggregatedVariables, variable, announce);
     } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
       announceVariable(vm, aggregatedReadOnlyVariables, variable, announce);
@@ -236,9 +234,7 @@ public:
 
   template<class V>
   void announceBoundVariable(VM vm, V* variable, RichNode self, RichNode src) {
-    if constexpr (std::is_same_v<V, OptVar>) {
-      announceBoundVariable(vm, aggregatedOptVariables, variable, self, src);
-    } else if constexpr (std::is_same_v<V, Variable>) {
+    if constexpr (std::is_same_v<V, Variable>) {
       announceBoundVariable(vm, aggregatedVariables, variable, self, src);
     } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
       announceBoundVariable(vm, aggregatedReadOnlyVariables, variable, self, src);
@@ -247,9 +243,7 @@ public:
 
   template<class V>
   void announceWaitedVariable(VM vm, V* variable, RichNode waiter) {
-    if constexpr (std::is_same_v<V, OptVar>) {
-      announceWaitedVariable(vm, aggregatedOptVariables, variable, waiter);
-    } else if constexpr (std::is_same_v<V, Variable>) {
+    if constexpr (std::is_same_v<V, Variable>) {
       announceWaitedVariable(vm, aggregatedVariables, variable, waiter);
     } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
       announceWaitedVariable(vm, aggregatedReadOnlyVariables, variable, waiter);
@@ -280,9 +274,7 @@ private:
 public:
   template<typename V>
   VariablesVector<V>& getVariables(VariableAnnounce announce) {
-    if constexpr (std::is_same_v<V, OptVar>) {
-      return getVariables(aggregatedOptVariables, announce);
-    } else if constexpr (std::is_same_v<V, Variable>) {
+    if constexpr (std::is_same_v<V, Variable>) {
       return getVariables(aggregatedVariables, announce);
     } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
       return getVariables(aggregatedReadOnlyVariables, announce);
@@ -291,9 +283,7 @@ public:
 
   template<typename V>
   BoundVariablesVector<V>& getBoundVariables() {
-    if constexpr (std::is_same_v<V, OptVar>) {
-      return getBoundVariables(aggregatedOptVariables);
-    } else if constexpr (std::is_same_v<V, Variable>) {
+    if constexpr (std::is_same_v<V, Variable>) {
       return getBoundVariables(aggregatedVariables);
     } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
       return getBoundVariables(aggregatedReadOnlyVariables);
@@ -302,9 +292,7 @@ public:
 
   template<typename V>
   WaitedVariablesVector<V>& getWaitedVariables() {
-    if constexpr (std::is_same_v<V, OptVar>) {
-      return getWaitedVariables(aggregatedOptVariables);
-    } else if constexpr (std::is_same_v<V, Variable>) {
+    if constexpr (std::is_same_v<V, Variable>) {
       return getWaitedVariables(aggregatedVariables);
     } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
       return getWaitedVariables(aggregatedReadOnlyVariables);
@@ -322,8 +310,7 @@ public:
   }
 
   bool empty(VariableAnnounce announce) {
-    return empty<OptVar>(announce)
-      && empty<Variable>(announce)
+    return empty<Variable>(announce)
       && empty<ReadOnlyVariable>(announce);
   }
 
@@ -441,7 +428,6 @@ public:
     updatedRunnables.clear();
     collectedRunnables.clear();
 
-    aggregatedOptVariables.clear();
     aggregatedVariables.clear();
     aggregatedReadOnlyVariables.clear();
 
@@ -479,7 +465,6 @@ public:
 
   enum class VariableType {
     All,
-    OptVar,
     Variable,
     ReadOnlyVariable
   };
@@ -679,9 +664,7 @@ private:
   template<class V>
   inline
   void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking) {
-    if constexpr (std::is_same_v<V, OptVar>) {
-      detectTriggeredVariableTracking(vm, tracking, aggregatedOptVariables);
-    } else if constexpr (std::is_same_v<V, Variable>) {
+    if constexpr (std::is_same_v<V, Variable>) {
       detectTriggeredVariableTracking(vm, tracking, aggregatedVariables);
     } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
       detectTriggeredVariableTracking(vm, tracking, aggregatedReadOnlyVariables);
@@ -692,9 +675,6 @@ private:
   inline
   void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking) {
     switch (tracking.type) {
-      case VariableType::OptVar:
-        detectTriggeredVariableTracking<OptVar>(vm, tracking);
-        break;
       case VariableType::Variable:
         detectTriggeredVariableTracking<Variable>(vm, tracking);
         break;
@@ -702,7 +682,6 @@ private:
         detectTriggeredVariableTracking<ReadOnlyVariable>(vm, tracking);
         break;
       case VariableType::All:
-        detectTriggeredVariableTracking<OptVar>(vm, tracking);
         detectTriggeredVariableTracking<Variable>(vm, tracking);
         detectTriggeredVariableTracking<ReadOnlyVariable>(vm, tracking);
         break;
@@ -773,7 +752,6 @@ private:
   RunnablesVector updatedRunnables;
   RunnablesVector collectedRunnables;
 
-  VariablesVectors<OptVar> aggregatedOptVariables;
   VariablesVectors<Variable> aggregatedVariables;
   VariablesVectors<ReadOnlyVariable> aggregatedReadOnlyVariables;
 
