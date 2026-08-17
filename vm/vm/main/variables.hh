@@ -196,41 +196,28 @@ void ReadOnlyVariable::bindReadOnly(RichNode self, VM vm, RichNode src) {
 
 #include "OptVar-implem.hh"
 
-OptVar::OptVar(VM vm, GR gr, OptVar& from):
-  AdvancedIdentifiable<OptVar>(from), WithHome(vm, gr, from) {}
-
 void OptVar::create(SpaceRef& self, VM vm, GR gr, OptVar from) {
   gr->copySpace(self, from.home());
 }
 
 void OptVar::addToSuspendList(RichNode self, VM vm, RichNode variable) {
-  UnstableNode newVariable = Variable::build(vm);
-  self.become(vm, newVariable);
+  self.become(vm, Variable::build(vm));
   DataflowVariable(self).addToSuspendList(vm, variable);
-  transmitIds<OptVar>(vm, *this, newVariable);
-  vm->getEventManager().announceWaitedVariable(vm, this, variable);
 }
 
 void OptVar::markNeeded(RichNode self, VM vm) {
-  UnstableNode newVariable = Variable::build(vm);
-  self.become(vm, newVariable);
+  self.become(vm, Variable::build(vm));
   DataflowVariable(self).markNeeded(vm);
-  transmitIds<OptVar>(vm, *this, newVariable);
-  vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Needed);
 }
 
 void OptVar::bind(RichNode self, VM vm, UnstableNode&& src) {
   makeBackupForSpeculativeBindingIfNeeded(self, vm);
   self.become(vm, std::move(src));
-  transmitIds<OptVar>(vm, *this, self);
-  vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
 void OptVar::bind(RichNode self, VM vm, RichNode src) {
   makeBackupForSpeculativeBindingIfNeeded(self, vm);
   self.become(vm, src);
-  transmitIds<OptVar>(vm, *this, self);
-  vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
 void OptVar::makeBackupForSpeculativeBindingIfNeeded(RichNode self, VM vm) {

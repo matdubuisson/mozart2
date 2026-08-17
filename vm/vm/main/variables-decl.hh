@@ -353,128 +353,48 @@ public:
 #include "OptVar-implem-decl.hh"
 #endif
 
-// Remettre comme avant et essayer de lier les cons directement aux vars
-class OptVar: public AdvancedIdentifiable<OptVar>, public Self<OptVar>,
-  public DataType<OptVar>, public WithHome,
-  Transient,
-  // StoredAs<SpaceRef>,
-  WithVariableBehavior<100> {
+class OptVar: public DataType<OptVar>, public WithHome,
+  Transient, StoredAs<SpaceRef>, WithVariableBehavior<100> {
 public:
-  /**
-   * Instantiates a new OPT variable from a space reference
-   * @param home The home space reference of the variable
-   */
   explicit OptVar(SpaceRef home): WithHome(home) {}
 
-  OptVar(VM vm): WithHome(vm) {
-    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
-  }
-
-  OptVar(VM vm, Space* home): WithHome(home) {
-    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
-  }
-
-  inline
-  OptVar(VM vm, GR gr, OptVar& from);
-
-  /**
-   * Attributes to the provided referenced space reference VM's current space
-   * @param self The variable to create
-   * @param vm The virtual machine
-   */
   static void create(SpaceRef& self, VM vm) {
     self = vm->getCurrentSpace();
   }
 
-  /**
-   * Attributes to the provided referenced space reference VM's current space
-   * @param self The variable to create
-   * @param vm The virtual machine
-   * @param home The home space pointer to reference
-   */
   static void create(SpaceRef& self, VM vm, Space* home) {
     self = home;
   }
 
-  /**
-   * Using the provided graph replicator, makes a copy of the provided variable's space
-   * and references it into the provided referenced space reference
-   * @param self The variable to create
-   * @param vm The virtual machine
-   * @param gr The graph replicator used to copy from's home space
-   * @param from The variable to copy the space from
-   */
   inline
   static void create(SpaceRef& self, VM vm, GR gr, OptVar from);
 
 public:
   // DataflowVariable interface
 
-  /**
-   * Makes the provided rich node becoming an unbound variable then adds the provided
-   * variable to the suspension list
-   * @param self The rich node to become a variable
-   * @param vm The virtual machine
-   * @param variable The variable to add to the suspend list
-   */
   inline
   void addToSuspendList(RichNode self, VM vm, RichNode variable);
 
-  /**
-   * Tells if the variable is needed
-   * @param vm The virtual machine
-   * @returns If the variable is needed
-   */
   bool isNeeded(VM vm) {
     return false;
   }
 
-  /**
-   * Marks the provided variable as needed
-   * @param self The rich node to become a variable
-   * @param vm The virtual machine
-   */
   inline
   void markNeeded(RichNode self, VM vm);
 
-  /**
-   * Binds the provided variable using the provided raw value (rvalue)
-   * @param self The variable to bind
-   * @param vm The virtual machine
-   * @param src The raw value to bind with
-   */
   inline
   void bind(RichNode self, VM vm, UnstableNode&& src);
 
-  /**
-   * Binds the provided variable using the provided source variable
-   * @param self The variable to bind
-   * @param vm The virtual machine
-   * @param src The source variable to bind with
-   */
   inline
   void bind(RichNode self, VM vm, RichNode src);
 
 private:
-  /**
-   * Makes a backup of the provided variable for speculative binding only iif
-   * the VM's current space is not on top level
-   * @param self The variable to make a backup for
-   * @param vm The virtual machine
-   */
   inline
   void makeBackupForSpeculativeBindingIfNeeded(RichNode self, VM vm);
 
 public:
   // Miscellaneous
 
-  /**
-   * Prints the representation of the variable to the provided stream
-   * @param vm The virtual machine
-   * @param out The output stream
-   * @param depth The depth of the representation
-   * @param width The width of the representation
-   */
   void printReprToStream(VM vm, std::ostream& out, int depth, int width) {
     out << "_<optimized>";
   }
