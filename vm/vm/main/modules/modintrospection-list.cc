@@ -40,6 +40,8 @@ UnstableNode ModIntrospection::buildListNodeRecord(VM vm, Introspection::OwnedRi
   }
 
   //ozListPropagateKind(vm, node);
+  //std::cout << "Cons: " << node.as<Cons>().getId() << std::endl;
+  //ozListWatch(vm, node);
 
   TypedRichNode<Cons> cons = node.as<Cons>();
 
