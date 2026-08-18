@@ -236,8 +236,13 @@ Cons::Cons(VM vm, Head&& head, Tail&& tail) {
   _elements[0].init(vm, std::forward<Head>(head));
   _elements[1].init(vm, std::forward<Tail>(tail));
 
-  if constexpr (isIdentifiable<Tail>())
+  if constexpr (std::is_same_v<std::remove_cvref_t<Tail>, unit_t>) {
+    
+  } else if (isIdentifiable(tail)) {
     transmitIds(vm, *this, tail);
+  } else if (tail.type() == OptVar::type()) {
+  }
+
   vm->getEventManager().announceStructure<Cons>(vm, this,
     VirtualMachineEventManager::StructureAnnounce::Created);
 }
@@ -281,7 +286,8 @@ UnstableNode Cons::arityList(VM vm) {
 }
 
 UnstableNode Cons::clone(VM vm) {
-  return buildCons(vm, OptVar::build(vm), OptVar::build(vm));
+  // return buildCons(vm, OptVar::build(vm), OptVar::build(vm));
+  return buildCons(vm, OptVar::build(vm), Variable::build(vm));
 }
 
 UnstableNode Cons::waitOr(VM vm) {

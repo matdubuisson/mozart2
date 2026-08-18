@@ -46,29 +46,6 @@ void transmitIds(VM vm, SrcType& src, DstType& dst) {
   AdvancedIdentifiable<SrcType>& srcId = src.getAdvancedIdentity();
   AdvancedIdentifiable<DstType>& dstId = dst.getAdvancedIdentity();
 
-  Runnable* currentThread = vm->getCurrentThread();
-
-  // if (currentThread != nullptr && currentThread->getPriority() != tpSystem
-  //   && srcId.getId() == 222222) {
-  //   if constexpr (isVariable<SrcType>() && isVariable<DstType>()) {
-  //     std::cout << "VtoV => " << std::endl;
-  //     printId<SrcType>(srcId);
-  //     printId<DstType>(dstId);
-  //   } else if constexpr (isStructure<SrcType>() && isVariable<DstType>()) {
-  //     std::cout << "StoV => " << std::endl;
-  //     printId<SrcType>(srcId);
-  //     printId<DstType>(dstId);
-  //   } else if constexpr (isVariable<SrcType>() && isStructure<DstType>()) {
-  //     std::cout << "VtoS => " << std::endl;
-  //     printId<SrcType>(srcId);
-  //     printId<DstType>(dstId);
-  //   } else if constexpr (isStructure<SrcType>() && isStructure<DstType>()) {
-  //     std::cout << "StoS => " << std::endl;
-  //     printId<SrcType>(srcId);
-  //     printId<DstType>(dstId);
-  //   }
-  // }
-
   if constexpr (isVariable<DstType>()) {
     dstId.followIdentity(srcId, false);
   } else if constexpr (isStructure<DstType>()) {

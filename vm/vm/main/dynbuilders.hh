@@ -57,7 +57,8 @@ UnstableNode makeTuple(VM vm, RichNode label, size_t width) {
   if (width == 0) {
     return { vm, label };
   } else if ((width == 2) && internal::isPipeAtom(vm, label)) {
-    return buildCons(vm, OptVar::build(vm), OptVar::build(vm));
+    //return buildCons(vm, OptVar::build(vm), OptVar::build(vm));
+    return buildCons(vm, OptVar::build(vm), Variable::build(vm));
   } else {
     auto result = Tuple::build(vm, width, label);
     auto elements = RichNode(result).as<Tuple>().getElementsArray();
