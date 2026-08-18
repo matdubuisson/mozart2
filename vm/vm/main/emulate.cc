@@ -474,12 +474,14 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
         // Variable allocation
 
         case OpCreateVarX: {
-          XPC(1) = OptVar::build(vm);
+          // XPC(1) = OptVar::build(vm);
+          XPC(1) = Variable::build(vm);
           advancePC(1); break;
         }
 
         case OpCreateVarY: {
-          YPC(1) = OptVar::build(vm);
+          // YPC(1) = OptVar::build(vm);
+          YPC(1) = Variable::build(vm);
           advancePC(1); break;
         }
 
@@ -935,6 +937,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
             }
           } // switch (where)
 
+          RichNode structure;
           StaticArray<StableNode> array;
           size_t length = IntPC(2);
 
@@ -973,6 +976,8 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
               }
             }
 
+            structure = RichNode(createdStruct);
+
             /* In some situations, we can short-circuit unification and switch
              * to store mode. */
             if (isStoreMode) {
@@ -993,8 +998,10 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
                * contains meaningful values (i.e., OptVar's). And we cannot
                * switch to store mode.
                */
-              for (size_t i = 0; i < length; i++)
-                array[i].init(vm, OptVar::build(vm));
+              for (size_t index = 0; index < length; index++) {
+                // array[i].init(vm, OptVar::build(vm));
+                initArrayI(vm, structure, array, index);
+              }
 
               _statistics.bindsCount++;
               DataflowVariable(readDest).bind(vm, createdStruct);
@@ -1009,6 +1016,8 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
              * Note that this part of the code has some overlapping with the
              * structural equality tests of Cons, Tuple and Record.
              */
+
+            structure = readDest;
 
             switch (what) {
               case OpCreateStructAbstraction: {
@@ -1070,42 +1079,54 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
 
               switch (subOpCode) {
                 case SubOpArrayFillX: {
-                  array[index].init(vm, XPC(1));
+                  // array[index].init(vm, XPC(1));
+                  initArrayI(vm, structure, array, index, XPC(1));
                   advancePC(1);
                   break;
                 }
                 case SubOpArrayFillY: {
-                  array[index].init(vm, YPC(1));
+                  // array[index].init(vm, YPC(1));
+                  initArrayI(vm, structure, array, index, YPC(1));
                   advancePC(1);
                   break;
                 }
                 case SubOpArrayFillG: {
-                  array[index].init(vm, GPC(1));
+                  // array[index].init(vm, GPC(1));
+                  initArrayI(vm, structure, array, index, GPC(1));
                   advancePC(1);
                   break;
                 }
                 case SubOpArrayFillK: {
-                  array[index].init(vm, KPC(1));
+                  // array[index].init(vm, KPC(1));
+                  initArrayI(vm, structure, array, index, KPC(1));
                   advancePC(1);
                   break;
                 }
 
                 case SubOpArrayFillNewVarX: {
-                  array[index].init(vm, OptVar::build(vm));
+                  // array[index].init(vm, OptVar::build(vm));
+                  // array[index].init(vm, Variable::build(vm));
+                  initArrayI(vm, structure, array, index);
                   XPC(1) = Reference::build(vm, &array[index]);
                   advancePC(1);
                   break;
                 }
                 case SubOpArrayFillNewVarY: {
-                  array[index].init(vm, OptVar::build(vm));
+                  // array[index].init(vm, OptVar::build(vm));
+                  // array[index].init(vm, Variable::build(vm));
+                  initArrayI(vm, structure, array, index);
                   YPC(1) = Reference::build(vm, &array[index]);
                   advancePC(1);
                   break;
                 }
 
                 case SubOpArrayFillNewVars: {
-                  for (size_t count = IntPC(1); count > 0; count--)
-                    array[index++].init(vm, OptVar::build(vm));
+                  for (size_t count = IntPC(1); count > 0; count--) {
+                    // array[index].init(vm, OptVar::build(vm));
+                    // array[index].init(vm, Variable::build(vm));
+                    initArrayI(vm, structure, array, index);
+                    index++;
+                  }
                   index--;
                   advancePC(1);
                   break;
@@ -1419,8 +1440,9 @@ void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,
     args = RichNode(message).as<Tuple>().getElementsArray();
   }
 
-  for (size_t i = 0; i < width; i++)
+  for (size_t i = 0; i < width; i++) {
     args[i].init(vm, (*xregs)[i]);
+  }
 
   (*xregs)[0] = std::move(message);
   call(target, 1, isTailCall,
