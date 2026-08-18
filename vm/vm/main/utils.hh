@@ -175,15 +175,13 @@ bool isRunnable(RichNode node) {
 
 template<class Object>
 constexpr bool isVariable() {
-  return std::is_same_v<Object, OptVar>
-    || std::is_same_v<Object, Variable>
+  return std::is_same_v<Object, Variable>
     || std::is_same_v<Object, ReadOnlyVariable>;
 }
 
 bool isVariable(const Node& node) {
   Type type = node.type();
-  return type == OptVar::type()
-    || type == Variable::type()
+  return type == Variable::type()
     || type == ReadOnlyVariable::type();
 }
 
@@ -196,8 +194,7 @@ bool isVariable(const UnstableNode& node) {
 }
 
 bool isVariable(RichNode node) {
-  return node.is<OptVar>()
-    || node.is<Variable>()
+  return node.is<Variable>()
     || node.is<ReadOnlyVariable>();
 }
 
@@ -307,6 +304,25 @@ void transmitIds(VM vm, RichNode src, UnstableNode& dst) {
 
 void transmitIds(VM vm, UnstableNode& src, RichNode dst) {
   transmitIds(vm, RichNode(src), dst);
+}
+
+void initArrayI(VM vm, RichNode structure,
+  StaticArray<StableNode>& array, size_t index) {
+  UnstableNode variable = Variable::build(vm);
+  array[index].init(vm, variable);
+  transmitIds(vm, structure, variable);
+}
+
+void initArrayI(VM vm, RichNode structure,
+  StaticArray<StableNode>& array, size_t index, StableNode& value) {
+  array[index].init(vm, value);
+  transmitIds(vm, structure, value);
+}
+
+void initArrayI(VM vm, RichNode structure,
+  StaticArray<StableNode>& array, size_t index, UnstableNode& value) {
+  array[index].init(vm, value);
+  transmitIds(vm, structure, value);
 }
 
 //////////////////////////////////
