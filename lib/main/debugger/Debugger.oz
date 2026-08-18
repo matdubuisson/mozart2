@@ -251,7 +251,7 @@ define
       local
         % PingPong :
         % Lists = {Boot_Introspection.getLists [100000] $}
-        Lists = {Boot_Introspection.getLists nil $}
+        Lists = {Boot_Introspection.getLists [11111111 22222222 33333333 44444444 55555555] $}
       in
         if Lists \= nil then
           {MaskedDisplayCSV
