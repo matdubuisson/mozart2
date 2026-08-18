@@ -59,6 +59,11 @@ void ModIdentifiable::SetId::call(VM vm, In object, In idNode) {
     object.as<ReadOnlyVariable>().setId(id);
   } else if (object.is<Cons>()) {
     object.as<Cons>().setId(id);
+  } else if (object.is<OptVar>()) {
+    UnstableNode variable = Variable::build(vm);
+    RichNode richVariable = RichNode(variable);
+    richVariable.as<Variable>().setId(id);
+    DataflowVariable(object).bind(vm, richVariable);
   } else {
     std::cout << "Not found: " << object.type()->getName().c_str() << std::endl;
   }
