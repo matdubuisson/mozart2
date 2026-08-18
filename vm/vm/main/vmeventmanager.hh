@@ -56,6 +56,7 @@ bool VirtualMachineEventManager::matchTracking(VM vm, RunnableTracking& tracking
   if (tracking.announce != announce)
     return false;
   else if (tracking.announcerThreadId != SIZE_MAX
+    && info.author != nullptr
     && tracking.announcerThreadId != info.author->getId())
     return false;
   else if (tracking.idsVector.empty())
@@ -73,11 +74,14 @@ bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking
   if (tracking.announce != announce)
     return false;
   else if (tracking.announcerThreadId != SIZE_MAX
+    && info.author != nullptr
     && tracking.announcerThreadId != info.author->getId())
     return false;
   else if (ids.empty())
     return true;
   else if (contains(ids, info.variable->getId()))
+    return true;
+  else if (contains(ids, info.variable->getKindId()))
     return true;
   else return false;
 }
@@ -109,6 +113,7 @@ bool VirtualMachineEventManager::matchTracking(VM vm, StructureTracking tracking
   if (tracking.announce != announce)
     return false;
   else if (tracking.announcerThreadId != SIZE_MAX
+    && info.author != nullptr
     && tracking.announcerThreadId != info.author->getId())
     return false;
   else if (tracking.idsVector.empty())

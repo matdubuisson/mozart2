@@ -178,6 +178,7 @@ private:
   template<typename V>
   void announceBoundVariable(VM vm, VariablesVectors<V>& vector, V* variable, RichNode self, RichNode src) {
     BoundVariableInfo<V> info = BoundVariableInfo(vm, variable, self, src);
+
     detectTriggeredVariableTracking<V, BoundVariableInfo<V>>(vm, info, VariableAnnounce::Bound);
     vector.bounds.push_back(info);
   }
@@ -364,8 +365,6 @@ public:
   void announceStructure(VM vm, S* structure, StructureAnnounce announce) { 
     StructureInfo<S> info = StructureInfo<S>(vm, structure);
     detectTriggeredStructureTracking<S>(vm, info, announce);
-
-    // std::cout << "New struct: " << structure->getId() << std::endl;
 
     if constexpr (std::is_same_v<S, Abstraction>) {
       announceStructure<S>(vm, abstractionStructuresVectors, info, announce);
