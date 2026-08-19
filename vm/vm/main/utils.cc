@@ -46,10 +46,18 @@ void transmitIds(VM vm, SrcType& src, DstType& dst) {
   AdvancedIdentity<SrcType>& srcId = src.getAdvancedIdentity();
   AdvancedIdentity<DstType>& dstId = dst.getAdvancedIdentity();
 
-  if constexpr (isVariable<DstType>()) {
-    dstId.followIdentity(srcId, false);
-  } else if constexpr (isStructure<DstType>()) {
+  /**
+   * @brief 
+   * V to V : copy
+   * V to C : follow
+   * C to V : copy
+   * C to C : follow
+   */
+
+  if constexpr (isStructure<DstType>()) {
     dstId.followIdentity(srcId, true);
+  } else {
+    dstId.followIdentity(srcId, false);
   }
 }
 

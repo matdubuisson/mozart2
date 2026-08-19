@@ -248,62 +248,62 @@ private:
   size_t _kindId, _generationId;
 };
 
-class AdvancedIdentityTransmitter {
-public:
-  AdvancedIdentityTransmitter() {}
+// class AdvancedIdentityTransmitter {
+// public:
+//   AdvancedIdentityTransmitter() {}
 
-public:
-  /**
-   * @brief Follow the identify of an other advanced identity template
-   * 
-   * @tparam OtherIdentified The class defining the identity template
-   * @param other Another instance of a different identity template
-   */
-  template<class OtherIdentified>
-  void followIdentity(const AdvancedIdentity<OtherIdentified>& other) {
-    _kindId = other._kindId;
-    _generationId = other._generationId;
-  }
+// public:
+//   /**
+//    * @brief Follow the identify of an other advanced identity template
+//    * 
+//    * @tparam OtherIdentified The class defining the identity template
+//    * @param other Another instance of a different identity template
+//    */
+//   template<class OtherIdentified>
+//   void followIdentity(const AdvancedIdentity<OtherIdentified>& other) {
+//     _kindId = other._kindId;
+//     _generationId = other._generationId;
+//   }
 
-  /**
-   * @brief Follow the identify of an other advanced identity template
-   * 
-   * @tparam OtherIdentified The class defining the identity template
-   * @param other A pointer on another instance of a different identity template
-   */
-  template<class OtherIdentified>
-  void followIdentity(const AdvancedIdentity<OtherIdentified>* other) {
-    assert(other != nullptr);
-    followIdentity<OtherIdentified>(*other);
-  }
+//   /**
+//    * @brief Follow the identify of an other advanced identity template
+//    * 
+//    * @tparam OtherIdentified The class defining the identity template
+//    * @param other A pointer on another instance of a different identity template
+//    */
+//   template<class OtherIdentified>
+//   void followIdentity(const AdvancedIdentity<OtherIdentified>* other) {
+//     assert(other != nullptr);
+//     followIdentity<OtherIdentified>(*other);
+//   }
 
-    /**
-   * @brief Follow the identify of an other advanced identity template
-   * 
-   * @tparam OtherIdentified The class defining the identity template
-   * @param other Another instance of a different identity template
-   */
-  template<class OtherIdentified>
-  void transmitIdentity(const AdvancedIdentity<OtherIdentified>& other) {
-    other._kindId = _kindId;
-    other._generationId = _generationId + 1;
-  }
+//     /**
+//    * @brief Follow the identify of an other advanced identity template
+//    * 
+//    * @tparam OtherIdentified The class defining the identity template
+//    * @param other Another instance of a different identity template
+//    */
+//   template<class OtherIdentified>
+//   void transmitIdentity(const AdvancedIdentity<OtherIdentified>& other) {
+//     other._kindId = _kindId;
+//     other._generationId = _generationId + 1;
+//   }
 
-  /**
-   * @brief Follow the identify of an other advanced identity template
-   * 
-   * @tparam OtherIdentified The class defining the identity template
-   * @param other A pointer on another instance of a different identity template
-   */
-  template<class OtherIdentified>
-  void transmitIdentity(const AdvancedIdentity<OtherIdentified>* other) {
-    assert(other != nullptr);
-    transmitIdentity<OtherIdentified>(*other);
-  }
+//   /**
+//    * @brief Follow the identify of an other advanced identity template
+//    * 
+//    * @tparam OtherIdentified The class defining the identity template
+//    * @param other A pointer on another instance of a different identity template
+//    */
+//   template<class OtherIdentified>
+//   void transmitIdentity(const AdvancedIdentity<OtherIdentified>* other) {
+//     assert(other != nullptr);
+//     transmitIdentity<OtherIdentified>(*other);
+//   }
 
-private:
-  size_t _kindId, _generationId;
-};
+// private:
+//   size_t _kindId, _generationId;
+// };
 
 }
 

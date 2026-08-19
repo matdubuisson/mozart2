@@ -479,20 +479,6 @@ size_t ozListHash(VM vm, RichNode list) {
   return hash;
 }
 
-void ozListPropagateKind(VM vm, RichNode list) {
-  // if (!leader.isKindLeader()) return;
-
-  RichNode previous = list;
-  RichNode current = getNext(vm, list);
-
-  while (current.is<Cons>()) {
-    current.as<Cons>().followIdentity(previous.as<Cons>().getSelf(), true);
-    previous = current;
-    // std::cout << "\t=> " << current.as<Cons>().getKindId() << std::endl;
-    current = getNext(vm, current);
-  }
-}
-
 //////////////////////////////////////
 // Virtual strings and byte strings //
 //////////////////////////////////////

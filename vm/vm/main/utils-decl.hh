@@ -297,9 +297,6 @@ size_t ozListLength(VM vm, RichNode list);
 inline
 size_t ozListHash(VM vm, RichNode list);
 
-inline
-void ozListPropagateKind(VM vm, RichNode list);
-
 void ozListWatch(VM vm, RichNode list);
 
 //////////////////////////////////////
