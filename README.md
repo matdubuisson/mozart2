@@ -345,7 +345,6 @@ Once all tools are well deployed it is finally possible to fully compile the Moz
 
 ```bash
 $ cmake -S . -B build/ -DMOZART_CACHED_BUILD=OFF -DClang_DIR=/usr/lib/cmake/clang/ -DLLVM_DIR=/usr/lib/cmake/llvm/ -DCMAKE_BUILD_TYPE=Release
-$ cd build/
 ```
 
 If clang complains about an uncertainty of which gcc version to use try the following command. However adapt gcc instal directory to the right version path.
@@ -369,9 +368,18 @@ When the virtual machine is compiled and pre-generated files are created, the co
 At the end of the process, just install the compiled Mozart system into your Linux OS.
 
 ```bash
+$ cd build/
 $ make -B gensources genboostsources VERBOSE=1 -j$(nproc)
 $ make VERBOSE=1 -j$(nproc)
 $ sude make install
+```
+
+Or alternatively thanks to new cmake version you can do the following commands.
+
+```bash
+$ cmake --build build/ --target gensources genboostsources --parallel $(nproc) --verbose
+$ cmake --build build/ --parallel $(nproc) --verbose
+$ sudo cmake --install build/
 ```
 
 <!-- ============================================================= -->
