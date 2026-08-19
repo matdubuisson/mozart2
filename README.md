@@ -70,13 +70,13 @@ option `-DBOOST_ROOT`.
 
 As the Mozart repository contains submodules, you should clone recursively:
 
-    $ git clone --recursive https://github.com/mozart/mozart2
+    git clone --recursive https://github.com/mozart/mozart2
 
     You can also fetch the submodules separately using:
 
-    $ git clone https://github.com/mozart/mozart2
-    $ cd mozart2
-    $ git submodule update --init
+    git clone https://github.com/mozart/mozart2
+    cd mozart2
+    git submodule update --init
 
 <!-- ============================================================= -->
 
@@ -93,14 +93,14 @@ As the Mozart repository contains submodules, you should clone recursively:
 The boot-compiler is written with an old Scala version running above the JVM of Java 8. In order to make it run, install openjdk-8 using apt or any other packages manager.
 
 ```bash
-$ sudo apt update
-$ sudo apt install -y openjdk-8-jdk # Should migrate to openjdk-21-jdk soon
+sudo apt update
+sudo apt install -y openjdk-8-jdk # Should migrate to openjdk-21-jdk soon
 ```
 
 Once it is done, ensure the system has taken the right version if several are co-existing.
 
 ```bash
-$ sudo update-alternatives --config java
+sudo update-alternatives --config java
 There are 2 choices for the alternative java (providing /usr/bin/java).
 
   Selection    Path                                            Priority   Status
@@ -112,7 +112,7 @@ There are 2 choices for the alternative java (providing /usr/bin/java).
 Press <enter> to keep the current choice[*], or type selection number: 2
 update-alternatives: using /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java to provide /usr/bin/java (java) in manual mode
 
-$ java -version
+java -version
 openjdk version "1.8.0_492"
 OpenJDK Runtime Environment (build 1.8.0_492-8u492-ga~us2-0ubuntu1~26.04.1-b09)
 OpenJDK 64-Bit Server VM (build 25.492-b09, mixed mode)
@@ -127,23 +127,23 @@ OpenJDK 64-Bit Server VM (build 25.492-b09, mixed mode)
 The Mozart programming system has been updated to C++20 so install GNU C compiles version 15 supporting well this standard.
 
 ```bash
-$ sudo apt update
-$ sudo apt install -y build-essential gcc-15 g++-15
+sudo apt update
+sudo apt install -y build-essential gcc-15 g++-15
 ```
 
 Maybe there are several gcc/g++ versions on the system so alternatives to it can be added as shown below.
 
 ```bash
-$ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14
-$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14
-$ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 15
-$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 15
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 15
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 15
 ```
 
 Then select the right alternative that is gcc/g++ 15.
 
 ```bash
-$ sudo update-alternatives --config gcc
+sudo update-alternatives --config gcc
 There are 2 choices for the alternative gcc (providing /usr/bin/gcc).
 
   Selection    Path             Priority   Status
@@ -153,7 +153,7 @@ There are 2 choices for the alternative gcc (providing /usr/bin/gcc).
   2            /usr/bin/gcc-15   15        manual mode
 
 Press <enter> to keep the current choice[*], or type selection number: 0
-$ sudo update-alternatives --config g++
+sudo update-alternatives --config g++
 There are 2 choices for the alternative g++ (providing /usr/bin/g++).
 
   Selection    Path             Priority   Status
@@ -168,12 +168,12 @@ Press <enter> to keep the current choice[*], or type selection number: 0
 Finally check the right version is taken by the system.
 
 ```bash
-$ gcc -v
+gcc -v
 gcc (Ubuntu 15-20250404-0ubuntu1) 15.0.1 20250404 (experimental) [master r15-9193-g08e803aa9be]
 Copyright (C) 2025 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-$ g++ -v
+g++ -v
 g++ (Ubuntu 15-20250404-0ubuntu1) 15.0.1 20250404 (experimental) [master r15-9193-g08e803aa9be]
 Copyright (C) 2025 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
@@ -189,10 +189,10 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 First go to the right place to do that and download the appropriate version from [CMake releases](https://cmake.org/download/) according to your linux distribution. After extract the archive and go inside.
 
 ```bash
-$ cd /tmp/
-$ wget https://github.com/Kitware/CMake/releases/download/v4.4.2/cmake-4.4.2.tar.gz
-$ tar -xvf cmake-4.4.2.tar.gz 
-$ cd cmake-4.4.2/
+cd /tmp/
+wget https://github.com/Kitware/CMake/releases/download/v4.4.2/cmake-4.4.2.tar.gz
+tar -xvf cmake-4.4.2.tar.gz 
+cd cmake-4.4.2/
 ```
 
 Follow the instructions displayed by `cat README*` to compile CMake.
@@ -200,16 +200,16 @@ Follow the instructions displayed by `cat README*` to compile CMake.
 CMake build chain relies on make so it needs to be installed.
 
 ```bash
-$ sudo apt update
-$ sudo apt install -y make
+sudo apt update
+sudo apt install -y make
 ```
 
 Finally build CMake and install the project.
 
 ```bash
-$ ./bootstrap # Or with -- -DCMAKE_USE_OPENSSL=OFF to disable openssl
-$ make
-$ sudo make install
+./bootstrap # Or with -- -DCMAKE_USE_OPENSSL=OFF to disable openssl
+make
+sudo make install
 ```
 
 Note if you see the following error `
@@ -220,7 +220,7 @@ CMake Error at Utilities/cmcurl/CMakeLists.txt:1014 (message):
 Once it is installed check the proper version has been chosed by the system.
 
 ```bash
-$ cmake --version
+cmake --version
 cmake version 4.4.2
 
 CMake suite maintained and supported by Kitware (kitware.com/cmake).
@@ -237,38 +237,38 @@ After this boost version, the sub-library libboost-system becomes header only (s
 Anyway from the [Boost releases](https://www.boost.org/releases/1.88.0/) download the right archive and extract it.
 
 ```bash
-$ cd /tmp/
-$ wget https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.gz
-$ tar -xvf boost_1_88_0.tar.gz
-$ cd boost_1_88_0/
+cd /tmp/
+wget https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.gz
+tar -xvf boost_1_88_0.tar.gz
+cd boost_1_88_0/
 ```
 
 From the tutorial [here](https://www.boost.org/doc/user-guide/getting-started.html) compile the boost project using the recommended b2 method.
 
 ```bash
-$ ./bootstrap.sh --prefix=/usr/local/
-$ ./b2
-$ sudo ./b2 install
+./bootstrap.sh --prefix=/usr/local/
+./b2
+sudo ./b2 install
 ```
 
 Finally check the installation : if there are libboost files with the right version it means everything went fine.
 
 ```bash
-$ ls /usr/local/lib/ | grep libboost
+ls /usr/local/lib/ | grep libboost
 ```
 
 You may need to add the following environment variable at the end of the file `~/.bashrc` in order to help the system to find easily boost header files.
 
 ```bash
-$ export BOOST_ROOT=/usr/local
-$ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-$ export CPLUS_INCLUDE_PATH=/usr/local/include:$CPLUS_INCLUDE_PATH
+export BOOST_ROOT=/usr/local
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+export CPLUS_INCLUDE_PATH=/usr/local/include:$CPLUS_INCLUDE_PATH
 ```
 
 Then reload it.
 
 ```bash
-$ source ~/.bashrc
+source ~/.bashrc
 ```
 
 <!-- ============================================================= -->
@@ -280,26 +280,26 @@ $ source ~/.bashrc
 From the [LLVM 22.1.0 releases](https://github.com/llvm/llvm-project/releases/tag/llvmorg-22.1.0) download the archive containing the source code and extract it.
 
 ```bash
-$ cd /tmp/
-$ wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-22.1.0.tar.gz
-$ tar -xvf llvmorg-22.1.0.tar.gz
-$ cd llvm-project-llvmorg-22.1.0/
+cd /tmp/
+wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-22.1.0.tar.gz
+tar -xvf llvmorg-22.1.0.tar.gz
+cd llvm-project-llvmorg-22.1.0/
 ```
 
 Install the ninja build tool that is used by LLVM to be built.
 
 ```bash
-$ sudo apt update
-$ sudo apt install -y ninja-build
-$ sudo apt install -y binutils binutils-dev
+sudo apt update
+sudo apt install -y ninja-build
+sudo apt install -y binutils binutils-dev
 ```
 
 Then build the project but before doing it take a loog at [`/tmp/` running out of memory](./README.Linux.issues.md#missing-memory-space-in-tmp) because it is a heavy build taking more than 3.5GB.
 
 ```bash
-$ mkdir -v llvm/build/
-$ cd llvm/build/
-$ CC=gcc CXX=g++                               \
+mkdir -v llvm/build/
+cd llvm/build/
+CC=gcc CXX=g++                               \
 cmake -D CMAKE_INSTALL_PREFIX=/usr           \
       -D CMAKE_SKIP_INSTALL_RPATH=ON         \
       -D LLVM_ENABLE_FFI=ON                  \
@@ -315,15 +315,15 @@ cmake -D CMAKE_INSTALL_PREFIX=/usr           \
       -D CLANG_DEFAULT_PIE_ON_LINUX=ON       \
       -D CLANG_CONFIG_FILE_SYSTEM_DIR=/etc/clang \
       -W no-dev -G Ninja ..
-$ ninja -j$(nproc)
-$ sudo ninja install
+ninja -j$(nproc)
+sudo ninja install
 ```
 
 Check if everything is installed properly by listing the installed Clang and LLVM.
 
 ```bash
-$ ls /usr/include/clang
-$ ls /usr/include/llvm
+ls /usr/include/clang
+ls /usr/include/llvm
 ```
 
 ---
@@ -332,9 +332,9 @@ $ ls /usr/include/llvm
 
 Install the remaining tools.
 ```bash
-$ sudo apt update
-$ sudo apt install -y tcl-dev tk-dev
-$ sudo apt install -y emacs
+sudo apt update
+sudo apt install -y tcl-dev tk-dev
+sudo apt install -y emacs
 ```
 
 <!-- ============================================================= -->
@@ -344,13 +344,13 @@ $ sudo apt install -y emacs
 Once all tools are well deployed it is finally possible to fully compile the Mozart programming system. First of all we need to parse the cmake files and specifying some important options as the paths to clang and llvm.
 
 ```bash
-$ cmake -S . -B build/ -DMOZART_CACHED_BUILD=OFF -DClang_DIR=/usr/lib/cmake/clang/ -DLLVM_DIR=/usr/lib/cmake/llvm/ -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build/ -DMOZART_CACHED_BUILD=OFF -DClang_DIR=/usr/lib/cmake/clang/ -DLLVM_DIR=/usr/lib/cmake/llvm/ -DCMAKE_BUILD_TYPE=Release
 ```
 
 If clang complains about an uncertainty of which gcc version to use try the following command. However adapt gcc instal directory to the right version path.
 
 ```bash
-$ cmake -S . -B build/ \
+cmake -S . -B build/ \
   -DMOZART_CACHED_BUILD=OFF \
   -DClang_DIR=/usr/lib/cmake/clang/ \
   -DLLVM_DIR=/usr/lib/cmake/llvm/ \
@@ -368,18 +368,18 @@ When the virtual machine is compiled and pre-generated files are created, the co
 At the end of the process, just install the compiled Mozart system into your Linux OS.
 
 ```bash
-$ cd build/
-$ make -B gensources genboostsources VERBOSE=1 -j$(nproc)
-$ make VERBOSE=1 -j$(nproc)
-$ sude make install
+cd build/
+make -B gensources genboostsources VERBOSE=1 -j$(nproc)
+make VERBOSE=1 -j$(nproc)
+sude make install
 ```
 
 Or alternatively thanks to new cmake version you can do the following commands.
 
 ```bash
-$ cmake --build build/ --target gensources genboostsources --parallel $(nproc) --verbose
-$ cmake --build build/ --parallel $(nproc) --verbose
-$ sudo cmake --install build/
+cmake --build build/ --target gensources genboostsources --parallel $(nproc) --verbose
+cmake --build build/ --parallel $(nproc) --verbose
+sudo cmake --install build/
 ```
 
 <!-- ============================================================= -->
