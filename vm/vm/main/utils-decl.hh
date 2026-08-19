@@ -146,19 +146,19 @@ bool isStructure(RichNode node);
 
 template<class Object>
 inline
-constexpr bool isIdentifiable();
+constexpr bool isIdentity();
 
 inline
-bool isIdentifiable(const Node& node);
+bool isIdentity(const Node& node);
 
 inline
-bool isIdentifiable(const StableNode& node);
+bool isIdentity(const StableNode& node);
 
 inline
-bool isIdentifiable(const UnstableNode& node);
+bool isIdentity(const UnstableNode& node);
 
 inline
-bool isIdentifiable(RichNode node);
+bool isIdentity(RichNode node);
 
 /////////////////////////////////////
 // Ids transmission and succession //

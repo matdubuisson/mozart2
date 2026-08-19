@@ -45,7 +45,7 @@
 #include "modules/modgnode.hh"
 #include "modules/modliteral.hh"
 #include "modules/modname.hh"
-#include "modules/modidentifiable.hh"
+#include "modules/modidentity.hh"
 #include "modules/modnumber.hh"
 #include "modules/modobject.hh"
 #include "modules/modpickle.hh"

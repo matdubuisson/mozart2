@@ -96,7 +96,7 @@ endif()
 # Build the library
 include_directories(${GENERATED_SOURCES_DIR})
 
-add_library(mozartvm store.cc identifiable.cc utils.cc
+add_library(mozartvm store.cc identity.cc utils.cc
   emulate.cc memmanager.cc gcollect.cc
   unify.cc sclone.cc vm.cc coredatatypes.cc coders.cc properties.cc
   coremodules.cc unpickler.cc serializer.cc pickler.cc introspection.cc)

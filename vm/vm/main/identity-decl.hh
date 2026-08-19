@@ -22,8 +22,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_IDENTIFIABLE_DECL_H
-#define MOZART_IDENTIFIABLE_DECL_H
+#ifndef MOZART_IDENTITY_DECL_H
+#define MOZART_IDENTITY_DECL_H
 
 #include <cstdint>
 #include <cstddef>
@@ -45,42 +45,42 @@ namespace mozart {
  * A dedicated static counter is created for this class
  */
 template<class Identified>
-class Identifiable {
+class Identity {
 private:
   // C++20 automatically generating a static counter to the template without specifying it in advance
   inline static size_t _idsCounter = 0;
 
 public:
   /** @brief Create a new identifiant with an unique id */
-  Identifiable() : _id(_idsCounter++) {}
+  Identity() : _id(_idsCounter++) {}
 
   /**
    * @brief Create an identifiant as a copy of another
    * 
-   * @param other The identifiable from which inheriting the id
+   * @param other The identity from which inheriting the id
    */
-  Identifiable(const Identifiable& other) : _id(other._id) {}
+  Identity(const Identity& other) : _id(other._id) {}
 
 public:
   /**
-   * @brief Copy the identity from an other type of identifiable
+   * @brief Copy the identity from an other type of identity
    * 
    * @tparam OtherIdentified The class defining the identiable template
    * @param other Another instance of a different identifable template
    */
   template<class OtherIdentified>
-  void copyIdentity(const Identifiable<OtherIdentified>& other) {
+  void copyIdentity(const Identity<OtherIdentified>& other) {
     _id = other.getId();
   }
 
   /**
-   * @brief Copy the identity from an other type of identifiable
+   * @brief Copy the identity from an other type of identity
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other A pointer on another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other A pointer on another instance of a different identity template
    */
   template<class OtherIdentified>
-  void copyIdentity(const Identifiable<OtherIdentified>* other) {
+  void copyIdentity(const Identity<OtherIdentified>* other) {
     assert(other != nullptr);
     copyIdentity<OtherIdentified>(*other);
   }
@@ -107,11 +107,11 @@ public:
 
 public:
   /**
-   * @brief Get the identity like a cast from the class source Identified to Identifiable<Identified>&
+   * @brief Get the identity like a cast from the class source Identified to Identity<Identified>&
    * 
-   * @return Identifiable<Identified>& 
+   * @return Identity<Identified>& 
    */
-  Identifiable<Identified>& getIdentity() {
+  Identity<Identified>& getIdentity() {
     return *this;
   }
 
@@ -119,7 +119,7 @@ protected:
   size_t _id;
 };
 
-class AdvancedIdentifiableTransmitter;
+class AdvancedIdentityTransmitter;
 
 /**
  * @brief An advanced identifiant adding kind id and generation id
@@ -128,58 +128,58 @@ class AdvancedIdentifiableTransmitter;
  * @tparam Identified is the class of the identified object
  */
 template<class Identified>
-class AdvancedIdentifiable: public Identifiable<Identified> {
+class AdvancedIdentity: public Identity<Identified> {
 public:
   /** @brief Create an new advanced identity with an unique id */
-  AdvancedIdentifiable(): Identifiable<Identified>(),
+  AdvancedIdentity(): Identity<Identified>(),
     _kindId(SIZE_MAX), _generationId(0) {}
 
   /**
-   * @brief Construct a new Advanced Identifiable object
+   * @brief Construct a new Advanced Identity object
    * 
    * @param other The identity from which inheriting the new ids
    */
-  AdvancedIdentifiable(const AdvancedIdentifiable& other): Identifiable<Identified>(other),
+  AdvancedIdentity(const AdvancedIdentity& other): Identity<Identified>(other),
     _kindId(other._kindId), _generationId(other._generationId) {}
 
 public:
   // Helps C++ to know which copyIdentity to use
-  using Identifiable<Identified>::copyIdentity;
+  using Identity<Identified>::copyIdentity;
 
   /**
-   * @brief Copy the identify from an other advanced identifiable template
+   * @brief Copy the identify from an other advanced identity template
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other Another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other Another instance of a different identity template
    */
   template<class OtherIdentified>
-  void copyIdentity(const AdvancedIdentifiable<OtherIdentified>& other) {
-    Identifiable<Identified>::copyIdentity(other);
+  void copyIdentity(const AdvancedIdentity<OtherIdentified>& other) {
+    Identity<Identified>::copyIdentity(other);
 
     _kindId = other.getKindId();
     _generationId = other.getGenerationId();
   }
 
   /**
-   * @brief Copy the identify from an other advanced identifiable template
+   * @brief Copy the identify from an other advanced identity template
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other A pointer on another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other A pointer on another instance of a different identity template
    */
   template<class OtherIdentified>
-  void copyIdentity(const AdvancedIdentifiable<OtherIdentified>* other) {
+  void copyIdentity(const AdvancedIdentity<OtherIdentified>* other) {
     assert(other != nullptr);
     copyIdentity<OtherIdentified>(*other);
   }
 
   /**
-   * @brief Follow the identify of an other advanced identifiable template
+   * @brief Follow the identify of an other advanced identity template
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other Another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other Another instance of a different identity template
    */
   template<class OtherIdentified>
-  void followIdentity(const AdvancedIdentifiable<OtherIdentified>& other, bool newGeneration = true) {
+  void followIdentity(const AdvancedIdentity<OtherIdentified>& other, bool newGeneration = true) {
     _kindId = other.getKindId();
 
     if (newGeneration)
@@ -189,13 +189,13 @@ public:
   }
 
   /**
-   * @brief Follow the identify of an other advanced identifiable template
+   * @brief Follow the identify of an other advanced identity template
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other A pointer on another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other A pointer on another instance of a different identity template
    */
   template<class OtherIdentified>
-  void followIdentity(const AdvancedIdentifiable<OtherIdentified>* other, bool newGeneration = true) {
+  void followIdentity(const AdvancedIdentity<OtherIdentified>* other, bool newGeneration = true) {
     assert(other != nullptr);
     followIdentity<OtherIdentified>(*other, newGeneration);
   }
@@ -209,7 +209,7 @@ public:
    */
   size_t getKindId() const {
     return _kindId == SIZE_MAX ?
-      Identifiable<Identified>::getId() : _kindId;
+      Identity<Identified>::getId() : _kindId;
   }
 
   /**
@@ -234,69 +234,69 @@ public:
 
 public:
   /**
-   * @brief Get the identity like a cast from the class source AdvancedIdentifiable to AdvancedIdentifiable<Identified>&
+   * @brief Get the identity like a cast from the class source AdvancedIdentity to AdvancedIdentity<Identified>&
    * 
-   * @return AdvancedIdentifiable<Identified>& 
+   * @return AdvancedIdentity<Identified>& 
    */
-  AdvancedIdentifiable<Identified>& getAdvancedIdentity() {
+  AdvancedIdentity<Identified>& getAdvancedIdentity() {
     return *this;
   }
 
 private:
-  friend class AdvancedIdentifiableTransmitter;
+  friend class AdvancedIdentityTransmitter;
 
   size_t _kindId, _generationId;
 };
 
-class AdvancedIdentifiableTransmitter {
+class AdvancedIdentityTransmitter {
 public:
-  AdvancedIdentifiableTransmitter() {}
+  AdvancedIdentityTransmitter() {}
 
 public:
   /**
-   * @brief Follow the identify of an other advanced identifiable template
+   * @brief Follow the identify of an other advanced identity template
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other Another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other Another instance of a different identity template
    */
   template<class OtherIdentified>
-  void followIdentity(const AdvancedIdentifiable<OtherIdentified>& other) {
+  void followIdentity(const AdvancedIdentity<OtherIdentified>& other) {
     _kindId = other._kindId;
     _generationId = other._generationId;
   }
 
   /**
-   * @brief Follow the identify of an other advanced identifiable template
+   * @brief Follow the identify of an other advanced identity template
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other A pointer on another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other A pointer on another instance of a different identity template
    */
   template<class OtherIdentified>
-  void followIdentity(const AdvancedIdentifiable<OtherIdentified>* other) {
+  void followIdentity(const AdvancedIdentity<OtherIdentified>* other) {
     assert(other != nullptr);
     followIdentity<OtherIdentified>(*other);
   }
 
     /**
-   * @brief Follow the identify of an other advanced identifiable template
+   * @brief Follow the identify of an other advanced identity template
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other Another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other Another instance of a different identity template
    */
   template<class OtherIdentified>
-  void transmitIdentity(const AdvancedIdentifiable<OtherIdentified>& other) {
+  void transmitIdentity(const AdvancedIdentity<OtherIdentified>& other) {
     other._kindId = _kindId;
     other._generationId = _generationId + 1;
   }
 
   /**
-   * @brief Follow the identify of an other advanced identifiable template
+   * @brief Follow the identify of an other advanced identity template
    * 
-   * @tparam OtherIdentified The class defining the identifiable template
-   * @param other A pointer on another instance of a different identifiable template
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other A pointer on another instance of a different identity template
    */
   template<class OtherIdentified>
-  void transmitIdentity(const AdvancedIdentifiable<OtherIdentified>* other) {
+  void transmitIdentity(const AdvancedIdentity<OtherIdentified>* other) {
     assert(other != nullptr);
     transmitIdentity<OtherIdentified>(*other);
   }

@@ -112,7 +112,7 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
 }
 
 Runnable::Runnable(GR gr, Runnable& from) :
-  AdvancedIdentifiable<Runnable>(from),
+  AdvancedIdentity<Runnable>(from),
   vm(gr->vm),
   _intermediateState(vm, gr, from._intermediateState),
   _replicate(nullptr) {

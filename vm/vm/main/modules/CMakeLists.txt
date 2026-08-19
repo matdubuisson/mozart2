@@ -1,7 +1,7 @@
 set(MODULE_SOURCES
   modeventmanager.cc
 
-  modidentifiable.cc
+  modidentity.cc
 
   modintrospection-vm.cc
   modintrospection-runnable.cc

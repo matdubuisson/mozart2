@@ -238,7 +238,7 @@ Cons::Cons(VM vm, Head&& head, Tail&& tail) {
 
   if constexpr (std::is_same_v<std::remove_cvref_t<Tail>, unit_t>) {
     
-  } else if (isIdentifiable(tail)) {
+  } else if (isIdentity(tail)) {
     transmitIds(vm, *this, tail);
   } else if (tail.type() == OptVar::type()) {
   }
@@ -255,7 +255,7 @@ Cons::Cons(VM vm) {
     VirtualMachineEventManager::StructureAnnounce::Created);
 }
 
-Cons::Cons(VM vm, GR gr, Cons& from) : AdvancedIdentifiable<Cons>(from) {
+Cons::Cons(VM vm, GR gr, Cons& from) : AdvancedIdentity<Cons>(from) {
   gr->copyStableNode(_elements[0], from._elements[0]);
   gr->copyStableNode(_elements[1], from._elements[1]);
 }

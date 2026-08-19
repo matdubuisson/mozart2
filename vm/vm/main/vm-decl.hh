@@ -30,7 +30,7 @@
 #include <atomic>
 
 #include "core-forward-decl.hh"
-#include "identifiable-decl.hh"
+#include "identity-decl.hh"
 
 #include "memmanager.hh"
 

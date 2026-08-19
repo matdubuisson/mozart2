@@ -22,44 +22,14 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZART_MODIDENTIFIABLE_H
-#define MOZART_MODIDENTIFIABLE_H
+#ifndef MOZART_IDENTITY_H
+#define MOZART_IDENTITY_H
 
-#include "../mozartcore.hh"
-
-#ifndef MOZART_GENERATOR
+#include "identity-decl.hh"
+#include "mozartcore.hh"
 
 namespace mozart {
 
-namespace builtins {
-
-/////////////////////////
-// Identifiable module //
-/////////////////////////
-
-class ModIdentifiable: public Module {
-public:
-  ModIdentifiable(): Module("Identifiable") {}
-
-  class GetId: public Builtin<GetId> {
-  public:
-    GetId(): Builtin("getId") {}
-
-    static void call(VM vm, In object, Out result);
-  };
-
-  class SetId: public Builtin<SetId> {
-  public:
-    SetId(): Builtin("setId") {}
-
-    static void call(VM vm, In object, In idNode);
-  };
-};
-
 }
-
-}
-
-#endif
 
 #endif

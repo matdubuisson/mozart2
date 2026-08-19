@@ -22,18 +22,18 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "identifiable-decl.hh"
+#include "identity-decl.hh"
 #include "mozart.hh"
 
 namespace mozart {
 
 // template<class Identified>
-// size_t Identifiable<Identified>::_idsCounter = 0;
+// size_t Identity<Identified>::_idsCounter = 0;
 
 // template<class Identified>
-// size_t AdvancedIdentifiable<Identified>::_kindIdsCounter = 0;
+// size_t AdvancedIdentity<Identified>::_kindIdsCounter = 0;
 
 // template<class Identified>
-// size_t AdvancedIdentifiable<Identified>::_generationIdsCounter = 0;
+// size_t AdvancedIdentity<Identified>::_generationIdsCounter = 0;
 
 }

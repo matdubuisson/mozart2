@@ -221,27 +221,27 @@ bool isStructure(RichNode node) {
 }
 
 template<class Object>
-constexpr bool isIdentifiable() {
+constexpr bool isIdentity() {
   return std::is_same_v<Object, Runnable>
     || isVariable<Object>()
     || isStructure<Object>();
 }
 
-bool isIdentifiable(const Node& node) {
+bool isIdentity(const Node& node) {
   return node.type() == ReifiedThread::type()
     || isVariable(node)
     || isStructure(node);
 }
 
-bool isIdentifiable(const StableNode& node) {
-  return isIdentifiable(static_cast<const Node&>(node));
+bool isIdentity(const StableNode& node) {
+  return isIdentity(static_cast<const Node&>(node));
 }
 
-bool isIdentifiable(const UnstableNode& node) {
-  return isIdentifiable(static_cast<const Node&>(node));
+bool isIdentity(const UnstableNode& node) {
+  return isIdentity(static_cast<const Node&>(node));
 }
 
-bool isIdentifiable(RichNode node) {
+bool isIdentity(RichNode node) {
   return node.is<ReifiedThread>()
     || isVariable(node)
     || isStructure(node);

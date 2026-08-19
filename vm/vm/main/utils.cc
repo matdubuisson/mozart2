@@ -30,21 +30,21 @@ namespace mozart {
 
 template<class Object>
 static inline
-void printId(AdvancedIdentifiable<Object>& identifiable) {
+void printId(AdvancedIdentity<Object>& identity) {
   std::cout << "\t- ("
-    << identifiable.getId()
-    << ", " << identifiable.getKindId()
-    << ", " << identifiable.getGenerationId()
+    << identity.getId()
+    << ", " << identity.getKindId()
+    << ", " << identity.getGenerationId()
     << ")" << std::endl;
 }
 
 template<class SrcType, class DstType>
 void transmitIds(VM vm, SrcType& src, DstType& dst) {
-  if constexpr (!isIdentifiable<SrcType>()
-    || !isIdentifiable<DstType>()) return;
+  if constexpr (!isIdentity<SrcType>()
+    || !isIdentity<DstType>()) return;
 
-  AdvancedIdentifiable<SrcType>& srcId = src.getAdvancedIdentity();
-  AdvancedIdentifiable<DstType>& dstId = dst.getAdvancedIdentity();
+  AdvancedIdentity<SrcType>& srcId = src.getAdvancedIdentity();
+  AdvancedIdentity<DstType>& dstId = dst.getAdvancedIdentity();
 
   if constexpr (isVariable<DstType>()) {
     dstId.followIdentity(srcId, false);

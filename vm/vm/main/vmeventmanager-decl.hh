@@ -28,7 +28,7 @@
 #include <cstdlib>
 
 #include "core-forward-decl.hh"
-#include "identifiable-decl.hh"
+#include "identity-decl.hh"
 
 #include "runnable-decl.hh"
 #include "store-decl.hh"

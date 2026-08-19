@@ -23,13 +23,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include "../mozart.hh"
-#include "modidentifiable.hh"
+#include "modidentity.hh"
 
 namespace mozart {
 
 namespace builtins {
 
-void ModIdentifiable::GetId::call(VM vm, In object, Out result) {
+void ModIdentity::GetId::call(VM vm, In object, Out result) {
   size_t id = 0;
   
   if (object.is<ReifiedThread>())
@@ -44,7 +44,7 @@ void ModIdentifiable::GetId::call(VM vm, In object, Out result) {
   result = build(vm, id);
 }
 
-void ModIdentifiable::SetId::call(VM vm, In object, In idNode) {
+void ModIdentity::SetId::call(VM vm, In object, In idNode) {
   size_t id = getArgument<size_t>(vm, idNode);
 
   if (object.is<ReifiedThread>()) {

@@ -28,7 +28,7 @@
 #include "core-forward-decl.hh"
 #include "store-decl.hh"
 #include "vmallocatedlist-decl.hh"
-#include "identifiable-decl.hh"
+#include "identity-decl.hh"
 
 #include <cassert>
 
@@ -146,7 +146,7 @@ private:
 // Runnable //
 //////////////
 
-class Runnable : public AdvancedIdentifiable<Runnable> {
+class Runnable : public AdvancedIdentity<Runnable> {
 public:
   struct Statistics {
     size_t runsCount = 0;

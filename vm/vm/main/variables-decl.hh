@@ -172,7 +172,7 @@ private:
 #include "Variable-implem-decl.hh"
 #endif
 
-class Variable: public AdvancedIdentifiable<Variable>, public Self<Variable>,
+class Variable: public AdvancedIdentity<Variable>, public Self<Variable>,
   public DataType<Variable>, public VariableBase<Variable>,
   Transient, WithVariableBehavior<90> {
 public:
@@ -265,7 +265,7 @@ public:
 #include "ReadOnlyVariable-implem-decl.hh"
 #endif
 
-class ReadOnlyVariable: public AdvancedIdentifiable<ReadOnlyVariable>, public Self<ReadOnlyVariable>,
+class ReadOnlyVariable: public AdvancedIdentity<ReadOnlyVariable>, public Self<ReadOnlyVariable>,
   public DataType<ReadOnlyVariable>,
   public VariableBase<ReadOnlyVariable>,
   Transient, WithVariableBehavior<80> {
