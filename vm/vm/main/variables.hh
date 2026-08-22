@@ -150,7 +150,7 @@ void VariableBase<This>::wakeUpPendingsSubSpace(VM vm, Space* currentSpace) {
 #include "Variable-implem.hh"
 
 Variable::Variable(VM vm, GR gr, Variable& from):
-  AdvancedIdentity<Variable>(from), VariableBase(vm, gr, from) {
+  AdvancedIdentity(from), VariableBase(vm, gr, from) {
 }
 
 void Variable::wakeUp(RichNode self, VM vm) {
@@ -175,7 +175,7 @@ void Variable::bind(RichNode self, VM vm, RichNode src) {
 #include "ReadOnlyVariable-implem.hh"
 
 ReadOnlyVariable::ReadOnlyVariable(VM vm, GR gr, ReadOnlyVariable& from):
-  AdvancedIdentity<ReadOnlyVariable>(from), VariableBase(vm, gr, from) {
+  AdvancedIdentity(from), VariableBase(vm, gr, from) {
 }
 
 void ReadOnlyVariable::bind(RichNode self, VM vm, RichNode src) {

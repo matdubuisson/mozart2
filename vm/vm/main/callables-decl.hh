@@ -159,7 +159,7 @@ private:
 /**
  * Abstraction value, i.e., user-defined procedure
  */
-class Abstraction: public Identity<Abstraction>,
+class Abstraction: public Identity,
   public DataType<Abstraction>, public WithHome,
   StoredWithArrayOf<StableNode> {
 public:

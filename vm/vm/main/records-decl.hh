@@ -90,7 +90,7 @@ protected:
 /**
  * Tuple (specialization of Record)
  */
-class Tuple: public AdvancedIdentity<Tuple>, public Self<Tuple>,
+class Tuple: public AdvancedIdentity, public Self<Tuple>,
   public DataType<Tuple>, public BaseRecord<Tuple>,
   public IntegerDottableHelper<Tuple>,
   StoredWithArrayOf<StableNode>, WithStructuralBehavior {
@@ -181,7 +181,7 @@ private:
 /**
  * Cons (specialization of Tuple with label '|' and width 2)
  */
-class Cons: public AdvancedIdentity<Cons>, public Self<Cons>,
+class Cons: public AdvancedIdentity, public Self<Cons>,
   public DataType<Cons>, public IntegerDottableHelper<Cons>,
   WithStructuralBehavior {
 public:
@@ -364,7 +364,7 @@ private:
 /**
  * Record
  */
-class Record: public AdvancedIdentity<Record>, public Self<Record>,
+class Record: public AdvancedIdentity, public Self<Record>,
   public DataType<Record>, public BaseRecord<Record>,
   StoredWithArrayOf<StableNode>, WithStructuralBehavior {
 public:

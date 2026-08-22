@@ -28,9 +28,8 @@
 
 namespace mozart {
 
-template<class Object>
 static inline
-void printId(AdvancedIdentity<Object>& identity) {
+void printId(AdvancedIdentity& identity) {
   std::cout << "\t- ("
     << identity.getId()
     << ", " << identity.getKindId()
@@ -40,11 +39,10 @@ void printId(AdvancedIdentity<Object>& identity) {
 
 template<class SrcType, class DstType>
 void transmitIds(VM vm, SrcType& src, DstType& dst) {
-  if constexpr (!isIdentity<SrcType>()
-    || !isIdentity<DstType>()) return;
+  if constexpr (!isIdentity<SrcType>() || !isIdentity<DstType>()) return;
 
-  AdvancedIdentity<SrcType>& srcId = src.getAdvancedIdentity();
-  AdvancedIdentity<DstType>& dstId = dst.getAdvancedIdentity();
+  AdvancedIdentity& srcId = src.getAdvancedIdentity();
+  AdvancedIdentity& dstId = dst.getAdvancedIdentity();
 
   /**
    * @brief 
