@@ -160,6 +160,14 @@ private:
 
 class VirtualMachine {
 public:
+  struct Statistics {
+    size_t schedulesCount = 0;
+    size_t operationsCount = 0;
+    size_t systemSchedulesCount = 0;
+    size_t systemOperationsCount = 0;
+    size_t gcSchedulesCount = 0;
+  };
+public:
   enum ExecutionMode {
     Normal = 0,
     LimitedSchedules,
@@ -500,6 +508,9 @@ public:
     return atomTable.getUniqueName(this, length, data);
   }
 public:
+  Statistics getStatistics() { return _statistics; }
+
+public:
   Introspection& getIntrospection() {
     return introspection;
   }
@@ -574,12 +585,12 @@ public:
   }
 
   void updateExecutionMode(size_t nOperations) {
-    _schedulesCounter++;
-    _operationsCounter += nOperations;
+    _statistics.schedulesCount++;
+    _statistics.operationsCount += nOperations;
 
     if (_currentThread->getPriority() == tpSystem) {
-      _systemSchedulesCounter++;
-      _systemOperationsCounter += nOperations;
+      _statistics.systemSchedulesCount++;
+      _statistics.systemOperationsCount += nOperations;
       return;
     }
 
@@ -750,6 +761,8 @@ private:
   ThreadPool threadPool;
   AtomTable atomTable;
   GlobalNode* rootGlobalNode;
+
+  Statistics _statistics;
 
   VirtualMachineEnvironment& environment;
   VirtualMachineEventManager eventManager;

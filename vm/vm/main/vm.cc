@@ -104,6 +104,7 @@ VirtualMachine::run_return_type VirtualMachine::run() {
 
       getTopLevelSpace()->install();
       doGC();
+      _statistics.gcSchedulesCount++;
 
       _gcDone = true;
     }

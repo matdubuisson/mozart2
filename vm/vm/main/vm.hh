@@ -109,8 +109,6 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
   _gcRequestedNot.test_and_set();
 
   resetExecutionMode();
-  _schedulesCounter = _operationsCounter = 0;
-  _systemSchedulesCounter = _systemOperationsCounter = 0;
 
   initialize();
   _pickleTypesRecord = new (this) StableNode(this, Pickler::buildTypesRecord(this));

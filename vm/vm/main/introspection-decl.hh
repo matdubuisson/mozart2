@@ -59,7 +59,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
-  size_t getSchedulesCounter(VM vm);
+  size_t getSchedulesCount(VM vm);
 
   /**
    * @brief Get the total number of executed operations since VM launch
@@ -67,7 +67,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
-  size_t getOperationsCounter(VM vm);
+  size_t getOperationsCount(VM vm);
 
   /**
    * @brief Get the number of system thread schedules since VM launch
@@ -75,7 +75,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
-  size_t getSystemSchedulesCounter(VM vm);
+  size_t getSystemSchedulesCount(VM vm);
 
   /**
    * @brief Get the total number of executed system thread operations since VM launch
@@ -83,7 +83,15 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
-  size_t getSystemOperationsCounter(VM vm);
+  size_t getSystemOperationsCount(VM vm);
+
+  /**
+   * @brief Get the total number of schedules since VM launch
+   * 
+   * @param vm A pointer on the virtual machine
+   * @return size_t 
+   */
+  size_t getGCSchedulesCount(VM vm);
 
   /**
    * @brief Get the next thread that will be chosen by the scheduler 

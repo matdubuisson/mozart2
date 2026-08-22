@@ -44,28 +44,33 @@ std::string Introspection::OperationArgument::toRepr(VM vm, RichNode value) {
 /* ========== VM state ========== */
 
 inline
-size_t Introspection::getSchedulesCounter(VM vm) {
-  return vm->_schedulesCounter;
+size_t Introspection::getSchedulesCount(VM vm) {
+  return vm->_statistics.schedulesCount;
 }
 
 inline
-size_t Introspection::getOperationsCounter(VM vm) {
-  return vm->_operationsCounter;
+size_t Introspection::getOperationsCount(VM vm) {
+  return vm->_statistics.operationsCount;
 }
 
 inline
-size_t Introspection::getSystemSchedulesCounter(VM vm) {
-  return vm->_systemSchedulesCounter;
+size_t Introspection::getSystemSchedulesCount(VM vm) {
+  return vm->_statistics.systemSchedulesCount;
 }
 
 inline
-size_t Introspection::getSystemOperationsCounter(VM vm) {
-  return vm->_systemOperationsCounter;
+size_t Introspection::getSystemOperationsCount(VM vm) {
+  return vm->_statistics.systemOperationsCount;
+}
+
+inline
+size_t Introspection::getGCSchedulesCount(VM vm) {
+  return vm->_statistics.gcSchedulesCount;
 }
 
 inline
 Runnable* Introspection::getNextScheduledThread(VM vm, bool includeSystemThreads) {
-  return vm->getThreadPool().getNext(includeSystemThreads);
+  return vm->threadPool.getNext(includeSystemThreads);
 }
 
 /* ========== Threads getters ========== */

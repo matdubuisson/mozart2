@@ -9,12 +9,94 @@ local
 
   proc {DisplayOptions}
     {DisplayNameDescriptions
-      ["threads" "nodes" "variables"]
       [
+        "vm"
+        "threads"
+        "nodes"
+        "variables"
+      ]
+      [
+        "display counters related to the virtual machine in general"
         "display counters related to threads"
         "display counters related to nodes"
         "display counters related to variables"
       ]}
+  end
+
+  % VM aggregates
+
+  proc {DisplayVMOptions}
+    {DisplayNameDescriptions
+      [
+        "schedules"
+        "operations"
+        "systemSchedules"
+        "systemOperations"
+        "gcSchedules"
+        "all"
+      ]
+      [
+        "display the total schedules counter"
+        "display the total executed operations counter"
+        "display the gc executions number"
+        "display all VM counters"
+      ]}
+  end
+
+  proc {HandleVMOption Arguments}
+    proc {PrintSchedulesCount}
+      {PrintCount
+        "Schedules count"
+        {Boot_Introspection.getSchedulesCount $}}
+    end
+
+    proc {PrintOperationsCount}
+      {PrintCount
+        "Operations count"
+        {Boot_Introspection.getOperationsCount $}}
+    end
+
+    proc {PrintSystemSchedulesCount}
+      {PrintCount
+        "System schedules count"
+        {Boot_Introspection.getSystemSchedulesCount $}}
+    end
+
+    proc {PrintSystemOperationsCount}
+      {PrintCount
+        "System operations count"
+        {Boot_Introspection.getSystemOperationsCount $}}
+    end
+
+    proc {PrintGCExecutionsCount}
+      {PrintCount
+        "GC schedules count"
+        {Boot_Introspection.getGCSchedulesCount $}}
+    end
+  in
+    case Arguments of nil then
+      {DisplayVMOptions}
+    [] Argument|NextArguments then
+      case Argument of "help" then
+        {DisplayVMOptions}
+      [] "schedules" then
+        {PrintSchedulesCount}
+      [] "operations" then
+        {PrintOperationsCount}
+      [] "systemSchedules" then
+        {PrintSchedulesCount}
+      [] "systemOperations" then
+        {PrintOperationsCount}
+      [] "gcSchedules" then
+        {PrintGCExecutionsCount}
+      else
+        {PrintSchedulesCount}
+        {PrintOperationsCount}
+        {PrintSystemSchedulesCount}
+        {PrintSystemOperationsCount}
+        {PrintGCExecutionsCount}
+      end
+    end
   end
 
   % Threads aggregates
@@ -278,6 +360,8 @@ in
   [] Argument|NextArguments then
     case Argument of "help" then
       {DisplayOptions}
+    [] "vm" then
+      {HandleVMOption NextArguments}
     [] "threads" then
       {HandleThreadsOption NextArguments}
     [] "nodes" then

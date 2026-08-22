@@ -50,43 +50,53 @@ public:
 
   /* ========== Virtual Machine stats ========== */  
 
-  class GetSchedulesCounter: public Builtin<GetSchedulesCounter> {
+  class GetSchedulesCount: public Builtin<GetSchedulesCount> {
   public:
-    GetSchedulesCounter(): Builtin("getSchedulesCounter") {}
+    GetSchedulesCount(): Builtin("getSchedulesCount") {}
 
     static void call(VM vm, Out result) {
-      Introspection& introspection = vm->getIntrospection();
-      result = build(vm, introspection.getSchedulesCounter(vm));
+      result = build(vm,
+        vm->getIntrospection().getSchedulesCount(vm));
     }
   };
 
-  class GetOperationsCounter: public Builtin<GetOperationsCounter> {
+  class GetOperationsCount: public Builtin<GetOperationsCount> {
   public:
-    GetOperationsCounter(): Builtin("getOperationsCounter") {}
+    GetOperationsCount(): Builtin("getOperationsCount") {}
 
     static void call(VM vm, Out result) {
-      Introspection& introspection = vm->getIntrospection();
-      result = build(vm, introspection.getOperationsCounter(vm));
+      result = build(vm,
+        vm->getIntrospection().getOperationsCount(vm));
     }
   };
 
-  class GetSystemSchedulesCounter: public Builtin<GetSystemSchedulesCounter> {
+  class GetSystemSchedulesCount: public Builtin<GetSystemSchedulesCount> {
   public:
-    GetSystemSchedulesCounter(): Builtin("getSystemSchedulesCounter") {}
+    GetSystemSchedulesCount(): Builtin("getSystemSchedulesCount") {}
 
     static void call(VM vm, Out result) {
-      Introspection& introspection = vm->getIntrospection();
-      result = build(vm, introspection.getSystemSchedulesCounter(vm));
+      result = build(vm,
+        vm->getIntrospection().getSystemSchedulesCount(vm));
     }
   };
 
-  class GetSystemOperationsCounter: public Builtin<GetSystemOperationsCounter> {
+  class GetSystemOperationsCount: public Builtin<GetSystemOperationsCount> {
   public:
-    GetSystemOperationsCounter(): Builtin("getSystemOperationsCounter") {}
+    GetSystemOperationsCount(): Builtin("getSystemOperationsCount") {}
 
     static void call(VM vm, Out result) {
-      Introspection& introspection = vm->getIntrospection();
-      result = build(vm, introspection.getSystemOperationsCounter(vm));
+      result = build(vm,
+        vm->getIntrospection().getSystemOperationsCount(vm));
+    }
+  };
+
+  class GetGCSchedulesCount: public Builtin<GetGCSchedulesCount> {
+  public:
+    GetGCSchedulesCount(): Builtin("getGCSchedulesCount") {}
+
+    static void call(VM vm, Out result) {
+      result = build(vm,
+        vm->getIntrospection().getGCSchedulesCount(vm));
     }
   };
 
