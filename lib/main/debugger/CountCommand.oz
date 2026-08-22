@@ -12,14 +12,14 @@ local
       [
         "vm"
         "threads"
-        "nodes"
         "variables"
+        "nodes"
       ]
       [
         "display counters related to the virtual machine in general"
         "display counters related to threads"
-        "display counters related to nodes"
         "display counters related to variables"
+        "display counters related to nodes"
       ]}
   end
 
@@ -152,6 +152,62 @@ local
 
       if NextArguments \= nil then
         {HandleThreadsOption NextArguments}
+      end
+    end
+  end
+
+  % Variables aggregates
+
+  proc {DisplayVariablesOptions}
+    {DisplayNameDescriptions
+      ["REMARK:" "bound" "unbound" "total" "all"]
+      [
+        "All garbage collected variables are not parts of the aggregates"
+
+        "display the number of bound variables"
+        "display the number of unbound variables"
+        "display the number of variables"
+        "display every counter related to variables"
+      ]}
+  end
+
+  proc {HandleVariablesOption Arguments}
+    proc {PrintBoundVariablesCount}
+      {PrintCount "Bound variables"
+        {Boot_Introspection.getBoundVariablesCount $}}
+    end
+
+    proc {PrintUnboundVariablesCount}
+      {PrintCount "Unbound variables"
+        {Boot_Introspection.getUnBoundVariablesCount $}}
+    end
+
+    proc {PrintVariablesCount}
+      {PrintCount "Variables"
+        {Boot_Introspection.getVariablesCount $}}
+    end
+  in
+    case Arguments of nil then
+      {DisplayVariablesOptions}
+    [] Argument|NextArguments then
+      case Argument of "help" then 
+        {DisplayVariablesOptions}
+      [] "bound" then
+        {PrintBoundVariablesCount}
+      [] "unbound" then
+        {PrintUnboundVariablesCount}
+      [] "total" then
+        {PrintVariablesCount}
+      [] "all" then
+        {PrintBoundVariablesCount}
+        {PrintUnboundVariablesCount}
+        {PrintVariablesCount}
+      else
+        {PrintError "Unexpected variables counter '"#Argument#"'"#TRYHELP}
+      end
+
+      if NextArguments \= nil then
+        {HandleVariablesOption NextArguments}
       end
     end
   end
@@ -298,62 +354,6 @@ local
       end
     end
   end
-
-  % Variables aggregates
-
-  proc {DisplayVariablesOptions}
-    {DisplayNameDescriptions
-      ["REMARK:" "bound" "unbound" "total" "all"]
-      [
-        "All garbage collected variables are not parts of the aggregates"
-
-        "display the number of bound variables"
-        "display the number of unbound variables"
-        "display the number of variables"
-        "display every counter related to variables"
-      ]}
-  end
-
-  proc {HandleVariablesOption Arguments}
-    proc {PrintBoundVariablesCount}
-      {PrintCount "Bound variables"
-        {Boot_Introspection.getBoundVariablesCount $}}
-    end
-
-    proc {PrintUnboundVariablesCount}
-      {PrintCount "Unbound variables"
-        {Boot_Introspection.getUnBoundVariablesCount $}}
-    end
-
-    proc {PrintVariablesCount}
-      {PrintCount "Variables"
-        {Boot_Introspection.getVariablesCount $}}
-    end
-  in
-    case Arguments of nil then
-      {DisplayVariablesOptions}
-    [] Argument|NextArguments then
-      case Argument of "help" then 
-        {DisplayVariablesOptions}
-      [] "bound" then
-        {PrintBoundVariablesCount}
-      [] "unbound" then
-        {PrintUnboundVariablesCount}
-      [] "total" then
-        {PrintVariablesCount}
-      [] "all" then
-        {PrintBoundVariablesCount}
-        {PrintUnboundVariablesCount}
-        {PrintVariablesCount}
-      else
-        {PrintError "Unexpected variables counter '"#Argument#"'"#TRYHELP}
-      end
-
-      if NextArguments \= nil then
-        {HandleVariablesOption NextArguments}
-      end
-    end
-  end
 in
   case Arguments of nil then
     {DisplayOptions}
@@ -364,10 +364,10 @@ in
       {HandleVMOption NextArguments}
     [] "threads" then
       {HandleThreadsOption NextArguments}
-    [] "nodes" then
-      {HandleNodesOption NextArguments}
     [] "variables" then
       {HandleVariablesOption NextArguments}
+    [] "nodes" then
+      {HandleNodesOption NextArguments}
     else
       {PrintError "Unexpected counter option '"#Argument#"'"#TRYHELP}
     end
