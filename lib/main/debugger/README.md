@@ -18,6 +18,36 @@ $ command help
 $ command <some-args> help
 ```
 
+### About everything
+
+#### count
+
+There are four things to study :
+- vm: counters related to the Virtual Machine.
+- threads: counters related specifically to threads.
+- variables: counters related specifically to variables.
+- nodes: counters related specifically to nodes.
+
+Each option has its own manual describing which aggregates can be displayed.
+Enter one or several names to display counter(s) or enter 'all' to display them all.
+
+```
+$ count vm <aggregates>
+$ count threads <aggregates>
+$ count variables <aggregates>
+$ count nodes <aggregates>
+$ count help
+```
+
+For each option you can display one or several or get the manual.
+
+```
+$ count <option> <aggregate>
+$ count <option> <aggregate0> .... <aggregateN>
+$ count <option> all
+$ count <option> help
+```
+
 ### About runnables/threads
 
 #### thread
