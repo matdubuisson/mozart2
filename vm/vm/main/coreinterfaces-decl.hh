@@ -33,6 +33,19 @@
 
 namespace mozart {
 
+// class Identifiable;
+// template<>
+// struct Interface<Identifiable>:
+//   ImplementedBy<ReifiedThread>,
+//   NoAutoWait, NoAutoReflectiveCalls {
+
+//   size_t getId() {
+//     return SIZE_MAX;
+//   }
+
+//   void setId(size_t id) {}
+// };
+
 class DataflowVariable;
 template<>
 struct Interface<DataflowVariable>:
