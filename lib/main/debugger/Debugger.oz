@@ -57,67 +57,6 @@ define
 
   ModeCell = {Cell.new true $}
 
-  proc {UpdateState State AlarmsCell Alarms ?AlarmRaised ?NewState}
-    Journal = {Boot_EventManager.getJournal $}
-  in
-    case Journal of journal(
-      runnables: runnablesJournal(
-        inserted: InsertedRunnables
-        removed: RemovedRunnables
-        updated: UpdatedRunnables
-        collected: CollectedRunnables
-      )
-
-      % variables: variablesJournal(
-      %   optVariables: optVariablesJournal(
-      %     created: CreatedOptVariables
-      %     collected: CollectedOptVariables
-      %     needed: NeededOptVariables
-      %     bound: BoundOptVariables
-      %     waited: WaitedOptVariables
-      %   )
-      %   variables: variablesJournal(
-      %     created: CreatedVariables
-      %     collected: CollectedVariables
-      %     needed: NeededVariables
-      %     bound: BoundVariables
-      %     waited: WaitedVariables
-      %   )
-      %   readOnlyVariables: readOnlyVariables(
-      %     created: CreatedReadOnlyVariables
-      %     collected: CollectedReadOnlyVariables
-      %     needed: NeededReadOnlyVariables
-      %     bound: BoundReadOnlyVariables
-      %     waited: WaitedReadOnlyVariables
-      %   )
-      % )
-
-      variables: variablesJournal(
-        optVariables: OptVariablesJournal
-        variables: VariablesJournal
-        readOnlyVariables: ReadOnlyVariablesJournal
-      )
-
-      structures: structuresJournal(
-        created: CreatedStructures
-        collected: CollectedStructures
-      )
-
-      ...
-
-    ) then
-      \insert Alarm
-    in
-      AlarmRaised = {ParseAlarms Alarms $}
-    end
-
-    % if AlarmRaised then
-    %   {PrintWarning "Alarm raised"}
-    % end
-
-    NewState = State
-  end
-
   proc {ProcessCommand}
     /*
       It ensures the debugger will not be preempted during its analysis
