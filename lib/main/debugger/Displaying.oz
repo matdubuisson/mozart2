@@ -46,7 +46,7 @@ proc {DisplayThreadState Tab State}
     
     local
       proc {Print String}
-        {PrintInfo Tab#TAB#String}
+        {PrintInfo Tab#TAB#"=> "#String}
       end
     in
       {Print "Id: "#
@@ -89,7 +89,7 @@ proc {DisplayThreadStatistics Tab Statistics}
 
     local
       proc {Print String}
-        {PrintInfo Tab#TAB#String}
+        {PrintInfo Tab#TAB#"=> "#String}
       end
     in
       {Print "Runs: "#RunsCount}
@@ -122,7 +122,7 @@ proc {DisplayThreadNodes Tab Nodes}
 
     local
       proc {Print String}
-        {PrintInfo Tab#TAB#String}
+        {PrintInfo Tab#TAB#"=> "#String}
       end
     in
       {Print "Variable nodes: "#VariableNodesCount}
@@ -167,7 +167,7 @@ proc {DisplayVariable Tab Variable}
 
     local
       proc {Print String}
-        {PrintInfo Tab#TAB#String}
+        {PrintInfo Tab#TAB#"=> "#String}
       end
     in
       {Print "Type: "#
