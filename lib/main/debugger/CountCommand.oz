@@ -89,12 +89,18 @@ local
         {PrintOperationsCount}
       [] "gcSchedules" then
         {PrintGCExecutionsCount}
-      else
+      [] "all" then
         {PrintSchedulesCount}
         {PrintOperationsCount}
         {PrintSystemSchedulesCount}
         {PrintSystemOperationsCount}
         {PrintGCExecutionsCount}
+      else
+        {PrintError "Unexpected vm counter '"#Argument#"'"#TRYHELP}
+      end
+
+      if NextArguments \= nil then
+        {HandleVMOption NextArguments}
       end
     end
   end
@@ -369,7 +375,7 @@ in
     [] "nodes" then
       {HandleNodesOption NextArguments}
     else
-      {PrintError "Unexpected counter option '"#Argument#"'"#TRYHELP}
+      {PrintError "Unexpected count option '"#Argument#"'"#TRYHELP}
     end
   end
 end
