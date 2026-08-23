@@ -364,10 +364,10 @@ Several filtering arguments are available and they take specific parameters :
 - `Attribute >= Something`: same principle but check if greater or equal.
 - `Attribute <= Something`: same principle but check if lower or equal.
 - `Attribute has <value>`: checks if the attribute is a list and contains the specified element.
-- `(condition)`: put a condition in parenthesis.
+<!-- - `(condition)`: put a condition in parenthesis. -->
 - `condition0 and condition1`: filter using the conjunction of both conditions.
 - `condition0 or condition1`: filter using the disjunction of both conditions.
-- `condition0 xor condition1`: filter using the exclusive disjunction of both conditions.
+<!-- - `condition0 xor condition1`: filter using the exclusive disjunction of both conditions. -->
 
 ### Preempted flag
 
