@@ -358,7 +358,7 @@ Several filtering arguments are available and they take specific parameters :
 - `from <index>`: display from the specified index included.
 - `to <index>`: display to the specified index excluded.
 - `Attribute == Something`: filter all rows having the specified attribute equals to the given value.
-- `Attribute != Something`: same principle but check if different.
+- `Attribute \= Something`: same principle but check if different.
 - `Attribute > Something`: same principle but check if greater.
 - `Attribute < Something`: same principle but check if lower.
 - `Attribute >= Something`: same principle but check if greater or equal.
