@@ -40,17 +40,17 @@ define
   TRYHELP = ", try help to get more details"
 
   % All printers to display runtime data, infos and errors
+  \insert Util
+
   \insert Printing
 
   \insert Error
 
-  \insert Displaying
-  
-  \insert Extract
-
   \insert Format
 
-  \insert Util
+  \insert Display
+  
+  \insert Filter
 
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
@@ -199,11 +199,32 @@ define
     {Loop}
   end
 in
-  %{Boot_EventManager.track variable bound 123456 nil} % [123456 654321]
-  %{Boot_EventManager.track variable bound 654321 nil}
-  
   {Loop}
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
