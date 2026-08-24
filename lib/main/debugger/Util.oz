@@ -73,6 +73,28 @@ proc {ExtractInputsWithError Type Arguments DefaultValue ?Error ?Result}
   end
 end
 
+% proc {ExtractOneInput Type Arguments DefaultValue ?Result}
+%   case Arguments of nil then Result = DefaultValue
+%   [] Argument|NextArguments then
+%     Result = {ExtractInput Type Argument DefaultValue $}
+%   end
+% end
+
+proc {ExtractSomething Something Type Arguments ?Result}
+  case Arguments of nil then
+    Result = none
+    {PrintError "Argument '"#Something#
+      "' takes a "#Type#" as parameter but nothing was provided"}
+  [] Argument|NextArguments then
+    Result = {ExtractInput Type Argument none $}
+    
+    if Result == none then
+      {PrintError "Invalid parameter '"#Argument#"' provided to '"#
+        Something#"' argument"}
+    end
+  end
+end
+
 proc {ExtractFromTo Arguments DefaultFrom DefaultTo ?From ?To}
   case Arguments of nil then
     From = DefaultFrom

@@ -33,15 +33,20 @@ local
           {PrintError "Invalid operation '"#Op#"' provided"}
         end
 
-        if {String.isInt StringValue $} then
-          Value = {String.toInt StringValue $}
-        elseif {String.isFloat StringValue $} then
-          Value = {String.toFloat StringValue $}
-        elseif {String.isAtom StringValue $} then
-          Value = {String.toAtom StringValue $}
-        else Value = StringValue end
+        case StringValue of "true" then Value = true
+        [] "false" then Value = false
+        [] "nil" then Value = nil
+        else
+          if {String.isInt StringValue $} then
+            Value = {String.toInt StringValue $}
+          elseif {String.isFloat StringValue $} then
+            Value = {String.toFloat StringValue $}
+          elseif {String.isAtom StringValue $} then
+            Value = {String.toAtom StringValue $}
+          else Value = StringValue end
+        end
 
-        if OpInt == none then
+        if AttributeAtom == none orelse OpInt == none then
           Condition = none
           NewNextArguments = nil
         else
@@ -50,7 +55,6 @@ local
             operation: OpInt
             value: Value
           )
-          {Boot_System.printRepr Condition false true}
           NewNextArguments = NextArguments
         end
       else
@@ -61,64 +65,110 @@ local
       end
     end
 
-    proc {ExtractConditions Arguments ?Conditions}
-      case Arguments of nil then Conditions = nil
+    proc {ExtractConditions Arguments From To
+      ?FinalFrom ?FinalTo ?Conditions ?Result}
+      proc {Return}
+        FinalFrom = From
+        FinalTo = To
+        Conditions = nil
+      end
+    in
+      case Arguments of nil then
+        {Return}
+        Result = true
       [] Argument|NextArguments then
-        Condition NextConditions NewNextArguments
-      in
-        case Argument of "and" then
-          Condition = 'and'
-          NewNextArguments = NextArguments
-        [] "or" then
-          Condition = 'or'
-          NewNextArguments = NextArguments
-        else
-          {ExtractCondition Arguments Condition NewNextArguments}
+        proc {Error}
+          {Return}
+          Result = false
         end
 
-        if Condition == none then Conditions = nil
+        proc {Normal Condition NextArguments}
+          NextConditions
+        in
+          if Condition == none then {Error}
+          else
+            Conditions = Condition|NextConditions
+            {ExtractConditions NextArguments From To
+              FinalFrom FinalTo
+              NextConditions Result}
+          end
+        end
+      
+        proc {GetBound Which Arguments ?Value ?NextArguments}
+          Value = {ExtractSomething Which int Arguments $}
+          
+          if Value == none then {Error}
+          else
+            case Arguments of nil then {Error}
+            [] _|Tail then
+              NextArguments = Tail
+            end
+          end
+        end
+      in
+        case Argument of "from" then
+          Value NextNextArguments
+        in
+          {GetBound "from" NextArguments Value NextNextArguments}
+          {ExtractConditions NextNextArguments Value To
+            FinalFrom FinalTo Conditions Result}
+        [] "to" then
+            Value NextNextArguments
+        in
+          {GetBound "from" NextArguments Value NextNextArguments}
+          {ExtractConditions NextNextArguments From Value
+            FinalFrom FinalTo Conditions Result}
+        [] "and" then {Normal 'and' NextArguments}
+        [] "or" then {Normal 'or' NextArguments}
         else
-          Conditions = Condition|NextConditions
-          {ExtractConditions NewNextArguments NextConditions}
+          Condition NewNextArguments
+        in
+          {ExtractCondition Arguments Condition NewNextArguments}
+          {Normal Condition NewNextArguments}
         end
       end
     end
   in
-    proc {ExtractFilteringParameters Arguments ?Conditions}
-      {ExtractConditions Arguments Conditions}
-      {Boot_System.printRepr Conditions false true}
+    proc {ExtractFilteringParameters Arguments ?From ?To ?Conditions ?Result}
+      {ExtractConditions Arguments 0 100 From To Conditions Result}
     end
   end
 
   local
     proc {MatchCondition Input Condition ?Result}
-      % {Boot_System.printRepr input(Input) false true}
-      % {Boot_System.printRepr condition(Condition) false true}
-
       case Condition of condition(
         attribute: Attribute
         operation: Operation
         value: Value
       ) then
-        AttributeValue = Input.Attribute
-      in      
-        if Operation == OpEqual then
-          Result = (AttributeValue == Value)
-        elseif Operation == OpNotEqual then
-          Result = (AttributeValue \= Value)
-        elseif Operation == OpGreater then
-          Result = (AttributeValue > Value)
-        elseif Operation == OpLower then
-          Result = (AttributeValue < Value)
-        elseif Operation == OpGreaterOrEqual then
-          Result = (AttributeValue >= Value)
-        elseif Operation == OpLowerOrEqual then
-          Result = (AttributeValue =< Value)
-        elseif Operation == OpHas then
-          Result = {List.member Value AttributeValue $}
+        Arity = {Record.arity Input $}
+      in
+        % Input.Attribute
+        if {List.member Attribute Arity $} then
+          AttributeValue = Input.Attribute
+        in
+          if Operation == OpEqual then
+            Result = (AttributeValue == Value)
+          elseif Operation == OpNotEqual then
+            Result = (AttributeValue \= Value)
+          elseif Operation == OpGreater then
+            Result = (AttributeValue > Value)
+          elseif Operation == OpLower then
+            Result = (AttributeValue < Value)
+          elseif Operation == OpGreaterOrEqual then
+            Result = (AttributeValue >= Value)
+          elseif Operation == OpLowerOrEqual then
+            Result = (AttributeValue =< Value)
+          elseif Operation == OpHas then
+            Result = {List.member Value AttributeValue $}
+          end
         else
-          Result = false
-          {PrintError "Unknown operation '"#Operation#"'"}
+          Label = {Record.label Input $}
+          Features = {Boot_System.getRepr Arity ~1 ~1 $}
+        in
+          Result = error
+          {PrintError "Attribute '"#Attribute#"' is not a feature of record '"#
+            Label#"', see list of features: "#Features}
         end
       end
     end
@@ -129,7 +179,11 @@ local
         case Condition of condition(...) then
           NewFlag = {MatchCondition Input Condition $}
         in
-          {MatchConditions Input NextConditions NewFlag Result}
+          case NewFlag of error then
+            Result = error
+          else
+            {MatchConditions Input NextConditions NewFlag Result}
+          end
         [] 'and' then
           if Flag then
             {MatchConditions Input NextConditions true Result}
@@ -157,16 +211,22 @@ local
     proc {FilterInputsUsingFilteringParameters Inputs Conditions ?FilteredInputs}
       case Inputs of nil then FilteredInputs = nil
       [] Input|NextInputs then
-        NextFilteredInputs
+        Flag = {MatchConditions Input Conditions true $}
       in
-        if {MatchConditions Input Conditions true $} then
-          FilteredInputs = Input|NextFilteredInputs
+        case Flag of error then
+          FilteredInputs = nil
         else
-          NextFilteredInputs = FilteredInputs
-        end
+          NextFilteredInputs
+        in
+          if Flag then
+            FilteredInputs = Input|NextFilteredInputs
+          else
+            NextFilteredInputs = FilteredInputs
+          end
 
-        {FilterInputsUsingFilteringParameters
-          NextInputs Conditions NextFilteredInputs}
+          {FilterInputsUsingFilteringParameters
+            NextInputs Conditions NextFilteredInputs}
+        end
       end
     end
   end

@@ -17,6 +17,8 @@ local
 
   proc {HandleStateOption From To Conditions}
     States = {Boot_Introspection.getAllThreadStates From To $}
+    Inputs = {FilterInputsUsingFilteringParameters
+      States Conditions $}
   in
     {DisplayCSV
       [
@@ -24,8 +26,7 @@ local
         "Priority" "Type" % Importance
         "Runnable" "Terminated" "Dead" "Preempted" "Preemptible" % State
       ]
-      {FilterInputsUsingFilteringParameters
-        States Conditions $}
+      Inputs
       12
       FormatThreadState}
   end
@@ -64,14 +65,16 @@ local
   end
 
   proc {HandleOption Option Arguments}
-    Conditions = {ExtractFilteringParameters Arguments $}
+    From To Conditions
   in
-    case Option of state then
-      {HandleStateOption 0 100 Conditions}
-    [] statistics then
-      {HandleStatisticsOption 0 100 Conditions}
-    [] nodes then
-      {HandleNodesOption 0 100 Conditions}
+    if {ExtractFilteringParameters Arguments From To Conditions $} then
+      case Option of state then
+        {HandleStateOption From To Conditions}
+      [] statistics then
+        {HandleStatisticsOption From To Conditions}
+      [] nodes then
+        {HandleNodesOption From To Conditions}
+      end
     end
   end
 in
