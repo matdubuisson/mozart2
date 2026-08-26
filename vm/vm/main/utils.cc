@@ -28,15 +28,6 @@
 
 namespace mozart {
 
-static inline
-void printId(AdvancedIdentity& identity) {
-  std::cout << "\t- ("
-    << identity.getId()
-    << ", " << identity.getKindId()
-    << ", " << identity.getGenerationId()
-    << ")" << std::endl;
-}
-
 template<class SrcType, class DstType>
 void transmitIds(VM vm, SrcType& src, DstType& dst) {
   if constexpr (!isIdentity<SrcType>() || !isIdentity<DstType>()) return;
@@ -89,7 +80,6 @@ void ozListWatch(VM vm, RichNode list) {
   RichNode current = getNext(vm, list);
 
   while (current.is<Cons>()) {
-    printId(current.as<Cons>().getSelf());
     previous = current;
     current = getNext(vm, current);
   }
