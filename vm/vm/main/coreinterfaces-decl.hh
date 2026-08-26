@@ -33,18 +33,24 @@
 
 namespace mozart {
 
-// class Identifiable;
-// template<>
-// struct Interface<Identifiable>:
-//   ImplementedBy<ReifiedThread>,
-//   NoAutoWait, NoAutoReflectiveCalls {
+class Identifiable;
+template<>
+struct Interface<Identifiable>:
+  ImplementedBy<ReifiedThread,
+    Variable, ReadOnlyVariable,
+    Abstraction, Cons, Tuple, Record>,
+  NoAutoWait, NoAutoReflectiveCalls {
 
-//   size_t getId() {
-//     return SIZE_MAX;
-//   }
+  bool is(RichNode self, VM vm) {
+    return false;
+  }
 
-//   void setId(size_t id) {}
-// };
+  size_t getId(RichNode self, VM vm) {
+    return SIZE_MAX;
+  }
+
+  void setId(RichNode self, VM vm, size_t id) {}
+};
 
 class DataflowVariable;
 template<>

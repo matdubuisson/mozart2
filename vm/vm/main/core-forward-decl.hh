@@ -144,6 +144,8 @@ class Abstraction;
 class Cons;
 class Tuple;
 class Record;
+
+class RichNode;
 template<typename S>
 class TypedRichNode;
 

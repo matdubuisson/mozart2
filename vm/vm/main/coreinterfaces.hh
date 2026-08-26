@@ -41,7 +41,7 @@ namespace mozart {
 // Generated stuff //
 /////////////////////
 
-// #include "Identifiable-interf.hh"
+#include "Identifiable-interf.hh"
 #include "DataflowVariable-interf.hh"
 #include "BindableReadOnly-interf.hh"
 #include "ValueEquatable-interf.hh"
