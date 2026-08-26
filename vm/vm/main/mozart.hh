@@ -28,6 +28,7 @@
 #include "mozartcore.hh"
 
 #include "coredatatypes.hh"
+#include "identity.hh"
 
 #include "builtins.hh"
 #include "coreatoms.hh"
