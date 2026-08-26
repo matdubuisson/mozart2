@@ -30,10 +30,11 @@ namespace mozart {
 namespace builtins {
 
 void ModIdentity::GetId::call(VM vm, In object, Out result) {
-  if (Identifiable(object).is(vm)) {
-    result = build(vm, Identifiable(object).getId(vm));
+  Identifiable identifiable = Identifiable(object);
+  if (identifiable.is(vm)) {
+    result = build(vm, identifiable.getId(vm));
   } else {
-    result = build(vm, "none");
+    result = build(vm, -1);
   }
 }
 

@@ -41,6 +41,14 @@ struct Interface<Identifiable>:
     Abstraction, Cons, Tuple, Record>,
   NoAutoWait, NoAutoReflectiveCalls {
 
+  void copyIdentity(RichNode self, VM vm, const Identity& other) {
+    raiseTypeError(vm, "Identity", self);
+  }
+  
+  void copyIdentity(RichNode self, VM vm, const Identity* other) {
+    raiseTypeError(vm, "Identity", self);
+  }
+
   bool is(RichNode self, VM vm) {
     return false;
   }
@@ -50,6 +58,55 @@ struct Interface<Identifiable>:
   }
 
   void setId(RichNode self, VM vm, size_t id) {}
+};
+
+class AdvancedIdentifiable;
+template<>
+struct Interface<AdvancedIdentifiable>:
+  ImplementedBy<ReifiedThread,
+    Variable, ReadOnlyVariable,
+    Cons, Tuple, Record>,
+  NoAutoWait, NoAutoReflectiveCalls {
+
+  void copyIdentity(RichNode self, VM vm, const Identity& other) {
+    raiseTypeError(vm, "Identity", self);
+  }
+  
+  void copyIdentity(RichNode self, VM vm, const Identity* other) {
+    raiseTypeError(vm, "Identity", self);
+  }
+
+  bool is(RichNode self, VM vm) {
+    return false;
+  }
+
+  size_t getId(RichNode self, VM vm) {
+    return SIZE_MAX;
+  }
+
+  void setId(RichNode self, VM vm, size_t id) {}
+
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other) {}
+
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other) {}
+
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
+    bool newGeneration = true) {}
+
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
+    bool newGeneration = true) {}
+
+  size_t getKindId(RichNode self, VM vm) {
+    return SIZE_MAX;
+  }
+
+  size_t getGenerationId(RichNode self, VM vm) {
+    return SIZE_MAX;
+  }
+
+  bool isKindLeader(RichNode self, VM vm) {
+    return false;
+  }
 };
 
 class DataflowVariable;
