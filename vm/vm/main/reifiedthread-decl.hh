@@ -58,6 +58,18 @@ public:
   bool equals(VM vm, RichNode right);
 
 public:
+  inline
+  bool is(RichNode self, VM vm) {
+    return true;
+  }
+
+  inline
+  size_t getId(RichNode self, VM vm);
+
+  inline
+  void setId(RichNode self, VM vm, size_t id);
+
+public:
   Runnable* value() {
     return _runnable;
   }

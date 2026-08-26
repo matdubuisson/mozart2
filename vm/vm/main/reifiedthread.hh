@@ -45,6 +45,14 @@ bool ReifiedThread::equals(VM vm, RichNode right) {
   return value() == right.as<ReifiedThread>().value();
 }
 
+size_t ReifiedThread::getId(RichNode self, VM vm) {
+  return _runnable->getId(self, vm);
+}
+
+void ReifiedThread::setId(RichNode self, VM vm, size_t id) {
+  _runnable->setId(self, vm, id);
+}
+
 void ReifiedThread::wakeUp(VM vm) {
   if (!_runnable->isRunnable())
     _runnable->resume();
