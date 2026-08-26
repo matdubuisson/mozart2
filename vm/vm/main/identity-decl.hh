@@ -64,6 +64,19 @@ public:
 
 public:
   /**
+   * @brief Get the identity like a cast from the class source Identified to Identity&
+   * 
+   * @return Identity& 
+   */
+  Identity& getIdentity() {
+    return *this;
+  }
+
+  inline
+  Identity& getIdentity(RichNode self, VM vm);
+
+public:
+  /**
    * @brief Copy the identity from an other type of identity
    * 
    * @tparam OtherIdentified The class defining the identiable template
@@ -72,6 +85,9 @@ public:
   void copyIdentity(const Identity& other) {
     _id = other.getId();
   }
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity& other);
 
   /**
    * @brief Copy the identity from an other type of identity
@@ -83,6 +99,9 @@ public:
     assert(other != nullptr);
     copyIdentity(*other);
   }
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity* other);
 
 public:
   inline
@@ -113,21 +132,38 @@ public:
   inline
   void setId(RichNode self, VM vm, size_t id);
 
-public:
-  /**
-   * @brief Get the identity like a cast from the class source Identified to Identity&
-   * 
-   * @return Identity& 
-   */
-  Identity& getIdentity() {
-    return *this;
-  }
-
 protected:
   size_t _id;
 };
 
-class AdvancedIdentityTransmitter;
+class CopiedIdentity {
+public:
+  CopiedIdentity() {}
+
+public:
+  inline
+  virtual Identity& getIdentity() = 0;
+
+  inline
+  Identity& getIdentity(RichNode self, VM vm);
+
+public:
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity* other);
+
+public:
+  inline
+  bool is(RichNode self, VM vm);
+  
+  inline
+  size_t getId(RichNode self, VM vm);
+
+  inline
+  void setId(RichNode self, VM vm, size_t id);
+};
 
 /**
  * @brief An advanced identifiant adding kind id and generation id
@@ -150,6 +186,19 @@ public:
     _kindId(other._kindId), _generationId(other._generationId) {}
 
 public:
+  /**
+   * @brief Get the identity like a cast from the class source AdvancedIdentity to AdvancedIdentity&
+   * 
+   * @return AdvancedIdentity& 
+   */
+  AdvancedIdentity& getAdvancedIdentity() {
+    return *this;
+  }
+
+  inline
+  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm);
+
+public:
   // Helps C++ to know which copyIdentity to use
   using Identity::copyIdentity;
 
@@ -159,13 +208,15 @@ public:
    * @tparam OtherIdentified The class defining the identity template
    * @param other Another instance of a different identity template
    */
-  template<class OtherIdentified>
   void copyIdentity(const AdvancedIdentity& other) {
     Identity::copyIdentity(other);
 
     _kindId = other.getKindId();
     _generationId = other.getGenerationId();
   }
+  
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);
 
   /**
    * @brief Copy the identify from an other advanced identity template
@@ -177,6 +228,9 @@ public:
     assert(other != nullptr);
     copyIdentity(*other);
   }
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other);
 
   /**
    * @brief Follow the identify of an other advanced identity template
@@ -193,6 +247,10 @@ public:
       _generationId = other.getGenerationId();
   }
 
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
+    bool newGeneration = true);
+
   /**
    * @brief Follow the identify of an other advanced identity template
    * 
@@ -203,6 +261,10 @@ public:
     assert(other != nullptr);
     followIdentity(*other, newGeneration);
   }
+  
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
+    bool newGeneration = true);
 
 public:
   /**
@@ -216,6 +278,9 @@ public:
       Identity::getId() : _kindId;
   }
 
+  inline
+  size_t getKindId(RichNode self, VM vm);
+
   /**
    * @brief Get the generation id
    * 
@@ -224,6 +289,9 @@ public:
   size_t getGenerationId() const {
     return _generationId;
   }
+
+  inline
+  size_t getGenerationId(RichNode self, VM vm);
 
 public:
   /**
@@ -236,78 +304,53 @@ public:
     return _kindId == SIZE_MAX;
   }
 
-public:
-  /**
-   * @brief Get the identity like a cast from the class source AdvancedIdentity to AdvancedIdentity&
-   * 
-   * @return AdvancedIdentity& 
-   */
-  AdvancedIdentity& getAdvancedIdentity() {
-    return *this;
-  }
+  inline
+  bool isKindLeader(RichNode self, VM vm);
 
 private:
-  friend class AdvancedIdentityTransmitter;
-
   size_t _kindId, _generationId;
 };
 
-// class AdvancedIdentityTransmitter {
-// public:
-//   AdvancedIdentityTransmitter() {}
+class CopiedAdvancedIdentity: public CopiedIdentity {
+public:
+  CopiedAdvancedIdentity() {}
 
-// public:
-//   /**
-//    * @brief Follow the identify of an other advanced identity template
-//    * 
-//    * @tparam OtherIdentified The class defining the identity template
-//    * @param other Another instance of a different identity template
-//    */
-//   template<class OtherIdentified>
-//   void followIdentity(const AdvancedIdentity<OtherIdentified>& other) {
-//     _kindId = other._kindId;
-//     _generationId = other._generationId;
-//   }
+public:
+  inline
+  virtual AdvancedIdentity& getAdvancedIdentity() = 0;
 
-//   /**
-//    * @brief Follow the identify of an other advanced identity template
-//    * 
-//    * @tparam OtherIdentified The class defining the identity template
-//    * @param other A pointer on another instance of a different identity template
-//    */
-//   template<class OtherIdentified>
-//   void followIdentity(const AdvancedIdentity<OtherIdentified>* other) {
-//     assert(other != nullptr);
-//     followIdentity<OtherIdentified>(*other);
-//   }
+  inline
+  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm);
 
-//     /**
-//    * @brief Follow the identify of an other advanced identity template
-//    * 
-//    * @tparam OtherIdentified The class defining the identity template
-//    * @param other Another instance of a different identity template
-//    */
-//   template<class OtherIdentified>
-//   void transmitIdentity(const AdvancedIdentity<OtherIdentified>& other) {
-//     other._kindId = _kindId;
-//     other._generationId = _generationId + 1;
-//   }
+public:
+  // Helps C++ to know which copyIdentity to use
+  using CopiedIdentity::copyIdentity;
 
-//   /**
-//    * @brief Follow the identify of an other advanced identity template
-//    * 
-//    * @tparam OtherIdentified The class defining the identity template
-//    * @param other A pointer on another instance of a different identity template
-//    */
-//   template<class OtherIdentified>
-//   void transmitIdentity(const AdvancedIdentity<OtherIdentified>* other) {
-//     assert(other != nullptr);
-//     transmitIdentity<OtherIdentified>(*other);
-//   }
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);
 
-// private:
-//   size_t _kindId, _generationId;
-// };
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
+    bool newGeneration = true);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
+    bool newGeneration = true);
+
+public:
+  inline
+  size_t getKindId(RichNode self, VM vm);
+
+  inline
+  size_t getGenerationId(RichNode self, VM vm);
+
+public:
+  inline
+  bool isKindLeader(RichNode self, VM vm);
+};
 
 }
 
