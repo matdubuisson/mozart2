@@ -464,7 +464,7 @@ void Introspection::VariableCandidates::add(size_t candidateThreadId) {
 }
 
 static inline
-void updateVariableCandidatesMap(Runnable* runnable, RichNode node, size_t variableId,
+void updateVariableCandidatesMap(VM vm, Runnable* runnable, RichNode node, size_t variableId,
   Introspection::VariableCandidatesMap& map) {
   size_t candidateThreadId = runnable->getId();
   bool isNotKey = map.find(variableId) == map.end();
@@ -479,14 +479,14 @@ void updateVariableCandidatesMap(Runnable* runnable, RichNode node, size_t varia
 }
 
 static inline
-void updateVariableCandidatesMap(Runnable* runnable, RichNode node,
+void updateVariableCandidatesMap(VM vm, Runnable* runnable, RichNode node,
   Introspection::VariableCandidatesMap& map) {
   if (node.is<Variable>()) {
     Variable variable = Accessor<Variable>::get(node.value());
-    updateVariableCandidatesMap(runnable, node, variable.getId(), map);
+    updateVariableCandidatesMap(vm, runnable, node, variable.getId(), map);
   } else if (node.is<ReadOnlyVariable>()) {
     ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-    updateVariableCandidatesMap(runnable, node, variable.getId(), map);
+    updateVariableCandidatesMap(vm, runnable, node, variable.getId(), map);
   } else {
     assert(false);
   }
@@ -522,7 +522,7 @@ Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM 
   VariableCandidatesMap map;
   doForEachVariable(vm, [candidateThreadId, &map](VM vm, Runnable* runnable, RichNode node) {
     if (runnable->getId() == candidateThreadId)
-      updateVariableCandidatesMap(runnable, node, map);
+      updateVariableCandidatesMap(vm, runnable, node, map);
   });
   return map;
 }
@@ -531,7 +531,7 @@ inline
 Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM vm) {
   VariableCandidatesMap map;
   doForEachVariable(vm, [&map](VM vm, Runnable* runnable, RichNode node) {
-    updateVariableCandidatesMap(runnable, node, map);
+    updateVariableCandidatesMap(vm, runnable, node, map);
   });
   return map;
 }
