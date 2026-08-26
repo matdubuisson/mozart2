@@ -43,13 +43,6 @@ bool VirtualMachineEventManager::contains(IdsVector& idsVector, size_t id) {
   return id != SIZE_MAX && count(idsVector.begin(), idsVector.end(), id) > 0;
 }
 
-template<class S>
-size_t VirtualMachineEventManager::getStructureId(StructureInfo<S> structure) {
-  if (structure.node.template is<S>())
-    return structure.node.template as<S>().getId();
-  else return SIZE_MAX;
-}
-
 bool VirtualMachineEventManager::matchTracking(VM vm, RunnableTracking& tracking,
   RunnableInfo info, RunnableAnnounce announce) {
 

@@ -517,10 +517,6 @@ private:
   inline
   bool contains(IdsVector& idsVector, size_t id);
 
-  template<class S>
-  inline
-  size_t getStructureId(StructureInfo<S> structure);
-
 public:
   void track(VM vm, RunnableTracking tracking) {
     runnableTrackingVector.push_back(tracking);
