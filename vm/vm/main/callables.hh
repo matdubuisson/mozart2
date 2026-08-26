@@ -100,8 +100,8 @@ void BuiltinProcedure::printReprToStream(VM vm, std::ostream& out,
 
 #include "Abstraction-implem.hh"
 
-Abstraction::Abstraction(VM vm, size_t Gc, RichNode body)
-  : WithHome(vm), _gnode(nullptr), _Gc(Gc) {
+Abstraction::Abstraction(VM vm, size_t Gc, RichNode body) :
+  WithHome(vm), _gnode(nullptr), _Gc(Gc) {
 
   _body.init(vm, body);
   _codeAreaCacheValid = false;
@@ -112,8 +112,8 @@ Abstraction::Abstraction(VM vm, size_t Gc, RichNode body)
     getElements(i).init(vm);
 }
 
-Abstraction::Abstraction(VM vm, size_t Gc, GR gr, Abstraction& from):
-  WithHome(vm, gr, from) {
+Abstraction::Abstraction(VM vm, size_t Gc, GR gr, Abstraction& from) :
+  Identity(from), WithHome(vm, gr, from) {
 
   gr->copyGNode(_gnode, from._gnode);
   gr->copyStableNode(_body, from._body);
