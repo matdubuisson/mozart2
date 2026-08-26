@@ -29,6 +29,8 @@
 #include <cstddef>
 #include <cassert>
 
+#include "core-forward-decl.hh"
+
 namespace mozart {
 
 /**
@@ -83,6 +85,9 @@ public:
   }
 
 public:
+  inline
+  bool is(RichNode self, VM vm);
+
   /**
    * @brief Get the id
    * 
@@ -91,6 +96,9 @@ public:
   size_t getId() const {
     return _id;
   }
+  
+  inline
+  size_t getId(RichNode self, VM vm);
 
   /**
    * @brief Set the id
@@ -101,6 +109,9 @@ public:
   void setId(size_t id) {
     _id = id;
   }
+
+  inline
+  void setId(RichNode self, VM vm, size_t id);
 
 public:
   /**

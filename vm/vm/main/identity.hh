@@ -30,6 +30,18 @@
 
 namespace mozart {
 
+bool Identity::is(RichNode self, VM vm) {
+  return true;
+}
+
+size_t Identity::getId(RichNode self, VM vm) {
+  return _id;
+}
+
+void Identity::setId(RichNode self, VM vm, size_t id) {
+  _id = id;
+}
+
 }
 
 #endif
