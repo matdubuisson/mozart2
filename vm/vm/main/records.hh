@@ -236,12 +236,10 @@ Cons::Cons(VM vm, Head&& head, Tail&& tail) {
   _elements[0].init(vm, std::forward<Head>(head));
   _elements[1].init(vm, std::forward<Tail>(tail));
 
-  if constexpr (std::is_same_v<std::remove_cvref_t<Tail>, unit_t>) {
-    
-  } else if (isIdentity(tail)) {
-    transmitIds(vm, *this, tail);
-  } else if (tail.type() == OptVar::type()) {
-  }
+  // Not working because tail is most of the time unit_t
+  // AdvancedIdentifiable identifiable = AdvancedIdentifiable(tail);
+  // if (identifiable.is(vm))
+  //   identifiable.followIdentity(vm, *this, true);
 
   vm->getEventManager().announceStructure<Cons>(vm, this,
     VirtualMachineEventManager::StructureAnnounce::Created);

@@ -75,14 +75,65 @@ void transmitIds(VM vm, RichNode src, RichNode dst) {
   }
 }
 
-void ozListWatch(VM vm, RichNode list) {
-  RichNode previous = list;
-  RichNode current = getNext(vm, list);
+void initArrayAt(VM vm, RichNode structure,
+  StaticArray<StableNode>& array, size_t index) {
+  UnstableNode variable = Variable::build(vm);
 
-  while (current.is<Cons>()) {
-    previous = current;
-    current = getNext(vm, current);
+  array[index].init(vm, variable);
+
+  AdvancedIdentifiable identifiableStructure = AdvancedIdentifiable(structure);
+  if (identifiableStructure.is(vm)) {
+    AdvancedIdentifiable(variable).followIdentity(vm,
+      identifiableStructure.getAdvancedIdentity(vm), false);
+  } else if (structure.is<Reference>()) {
+    initArrayAt(vm,
+      RichNode(*structure.as<Reference>().dest()),
+      array, index
+    );
+  }
+
+  //transmitIds(vm, structure, variable);
+}
+
+static inline
+void initArrayAtAux(VM vm, RichNode structure,
+  StaticArray<StableNode>& array, size_t index, RichNode value) {
+
+  AdvancedIdentifiable identifiableValue = AdvancedIdentifiable(value);
+  AdvancedIdentifiable identifiableStructure = AdvancedIdentifiable(structure);
+  
+  if (identifiableValue.is(vm) && identifiableStructure.is(vm)) {
+    identifiableValue.followIdentity(vm,
+      identifiableStructure.getAdvancedIdentity(vm), false);
+  } else if (structure.is<Reference>()) {
+    initArrayAtAux(vm,
+      RichNode(*structure.as<Reference>().dest()),
+      array, index, value
+    );
+  } else if (value.is<Reference>()) {
+    initArrayAtAux(vm,
+      structure,
+      array, index,
+      *value.as<Reference>().dest()
+    );
   }
 }
+
+void initArrayAt(VM vm, RichNode structure,
+  StaticArray<StableNode>& array, size_t index, StableNode& value) {
+
+  array[index].init(vm, value);
+
+  initArrayAtAux(vm, structure, array, index, RichNode(value));
+}
+
+void initArrayAt(VM vm, RichNode structure,
+  StaticArray<StableNode>& array, size_t index, UnstableNode& value) {
+
+  array[index].init(vm, value);
+
+  initArrayAtAux(vm, structure, array, index, RichNode(value));
+}
+
 
 }

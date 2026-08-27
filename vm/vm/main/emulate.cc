@@ -1000,7 +1000,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
                */
               for (size_t index = 0; index < length; index++) {
                 // array[i].init(vm, OptVar::build(vm));
-                initArrayI(vm, structure, array, index);
+                initArrayAt(vm, structure, array, index);
               }
 
               _statistics.bindsCount++;
@@ -1080,25 +1080,25 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
               switch (subOpCode) {
                 case SubOpArrayFillX: {
                   // array[index].init(vm, XPC(1));
-                  initArrayI(vm, structure, array, index, XPC(1));
+                  initArrayAt(vm, structure, array, index, XPC(1));
                   advancePC(1);
                   break;
                 }
                 case SubOpArrayFillY: {
                   // array[index].init(vm, YPC(1));
-                  initArrayI(vm, structure, array, index, YPC(1));
+                  initArrayAt(vm, structure, array, index, YPC(1));
                   advancePC(1);
                   break;
                 }
                 case SubOpArrayFillG: {
                   // array[index].init(vm, GPC(1));
-                  initArrayI(vm, structure, array, index, GPC(1));
+                  initArrayAt(vm, structure, array, index, GPC(1));
                   advancePC(1);
                   break;
                 }
                 case SubOpArrayFillK: {
                   // array[index].init(vm, KPC(1));
-                  initArrayI(vm, structure, array, index, KPC(1));
+                  initArrayAt(vm, structure, array, index, KPC(1));
                   advancePC(1);
                   break;
                 }
@@ -1106,7 +1106,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
                 case SubOpArrayFillNewVarX: {
                   // array[index].init(vm, OptVar::build(vm));
                   // array[index].init(vm, Variable::build(vm));
-                  initArrayI(vm, structure, array, index);
+                  initArrayAt(vm, structure, array, index);
                   XPC(1) = Reference::build(vm, &array[index]);
                   advancePC(1);
                   break;
@@ -1114,7 +1114,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
                 case SubOpArrayFillNewVarY: {
                   // array[index].init(vm, OptVar::build(vm));
                   // array[index].init(vm, Variable::build(vm));
-                  initArrayI(vm, structure, array, index);
+                  initArrayAt(vm, structure, array, index);
                   YPC(1) = Reference::build(vm, &array[index]);
                   advancePC(1);
                   break;
@@ -1124,7 +1124,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
                   for (size_t count = IntPC(1); count > 0; count--) {
                     // array[index].init(vm, OptVar::build(vm));
                     // array[index].init(vm, Variable::build(vm));
-                    initArrayI(vm, structure, array, index);
+                    initArrayAt(vm, structure, array, index);
                     index++;
                   }
                   index--;

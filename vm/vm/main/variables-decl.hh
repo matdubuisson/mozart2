@@ -353,7 +353,7 @@ public:
 #include "OptVar-implem-decl.hh"
 #endif
 
-class OptVar: public DataType<OptVar>, public WithHome,
+class OptVar: public OptVarIdentity, public DataType<OptVar>, public WithHome,
   Transient, StoredAs<SpaceRef>, WithVariableBehavior<100> {
 public:
   explicit OptVar(SpaceRef home): WithHome(home) {}

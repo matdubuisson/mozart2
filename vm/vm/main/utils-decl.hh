@@ -215,16 +215,16 @@ void transmitIds(VM vm, RichNode src, UnstableNode& dst);
 inline
 void transmitIds(VM vm, UnstableNode& src, RichNode dst);
 
-inline
-void initArrayI(VM vm, RichNode structure,
+// inline
+void initArrayAt(VM vm, RichNode structure,
   StaticArray<StableNode>& array, size_t index);
 
-inline
-void initArrayI(VM vm, RichNode structure,
+// inline
+void initArrayAt(VM vm, RichNode structure,
   StaticArray<StableNode>& array, size_t index, StableNode& value);
 
-inline
-void initArrayI(VM vm, RichNode structure,
+// inline
+void initArrayAt(VM vm, RichNode structure,
   StaticArray<StableNode>& array, size_t index, UnstableNode& value);
 
 //////////////////////////////////

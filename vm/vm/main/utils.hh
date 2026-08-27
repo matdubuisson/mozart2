@@ -306,24 +306,24 @@ void transmitIds(VM vm, UnstableNode& src, RichNode dst) {
   transmitIds(vm, RichNode(src), dst);
 }
 
-void initArrayI(VM vm, RichNode structure,
-  StaticArray<StableNode>& array, size_t index) {
-  UnstableNode variable = Variable::build(vm);
-  array[index].init(vm, variable);
-  transmitIds(vm, structure, variable);
-}
+// void initArrayI(VM vm, RichNode structure,
+//   StaticArray<StableNode>& array, size_t index) {
+//   UnstableNode variable = Variable::build(vm);
+//   array[index].init(vm, variable);
+//   transmitIds(vm, structure, variable);
+// }
 
-void initArrayI(VM vm, RichNode structure,
-  StaticArray<StableNode>& array, size_t index, StableNode& value) {
-  array[index].init(vm, value);
-  transmitIds(vm, structure, value);
-}
+// void initArrayI(VM vm, RichNode structure,
+//   StaticArray<StableNode>& array, size_t index, StableNode& value) {
+//   array[index].init(vm, value);
+//   transmitIds(vm, structure, value);
+// }
 
-void initArrayI(VM vm, RichNode structure,
-  StaticArray<StableNode>& array, size_t index, UnstableNode& value) {
-  array[index].init(vm, value);
-  transmitIds(vm, structure, value);
-}
+// void initArrayI(VM vm, RichNode structure,
+//   StaticArray<StableNode>& array, size_t index, UnstableNode& value) {
+//   array[index].init(vm, value);
+//   transmitIds(vm, structure, value);
+// }
 
 //////////////////////////////////
 // Working with Oz lists in C++ //

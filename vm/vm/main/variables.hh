@@ -164,7 +164,7 @@ bool Variable::shouldWakeUpUnderSpace(VM vm, Space* space) {
 
 void Variable::bind(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
-  transmitIds<Variable>(vm, *this, self);
+  AdvancedIdentifiable(self).followIdentity(vm, *this, true);
   vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
@@ -180,13 +180,13 @@ ReadOnlyVariable::ReadOnlyVariable(VM vm, GR gr, ReadOnlyVariable& from):
 
 void ReadOnlyVariable::bind(RichNode self, VM vm, RichNode src) {
   waitFor(vm, self);
-  transmitIds<ReadOnlyVariable>(vm, *this, self);
+  AdvancedIdentifiable(self).followIdentity(vm, *this, true);
   vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
 void ReadOnlyVariable::bindReadOnly(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
-  transmitIds<ReadOnlyVariable>(vm, *this, self);
+  AdvancedIdentifiable(self).followIdentity(vm, *this, true);
   vm->getEventManager().announceBoundVariable(vm, this, self, src);
 }
 
