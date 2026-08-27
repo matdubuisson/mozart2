@@ -41,6 +41,10 @@ struct Interface<Identifiable>:
     Abstraction, Cons, Tuple, Record>,
   NoAutoWait, NoAutoReflectiveCalls {
 
+  Identity& getIdentity(RichNode self, VM vm) {
+    raiseTypeError(vm, "Identity", self);
+  }
+
   void copyIdentity(RichNode self, VM vm, const Identity& other) {
     raiseTypeError(vm, "Identity", self);
   }
@@ -68,12 +72,20 @@ struct Interface<AdvancedIdentifiable>:
     Cons, Tuple, Record>,
   NoAutoWait, NoAutoReflectiveCalls {
 
+  Identity& getIdentity(RichNode self, VM vm) {
+    raiseTypeError(vm, "AdvancedIdentity", self);
+  }
+
+  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm) {
+    raiseTypeError(vm, "AdvancedIdentity", self);
+  }
+
   void copyIdentity(RichNode self, VM vm, const Identity& other) {
-    raiseTypeError(vm, "Identity", self);
+    raiseTypeError(vm, "AdvancedIdentity", self);
   }
   
   void copyIdentity(RichNode self, VM vm, const Identity* other) {
-    raiseTypeError(vm, "Identity", self);
+    raiseTypeError(vm, "AdvancedIdentity", self);
   }
 
   bool is(RichNode self, VM vm) {
