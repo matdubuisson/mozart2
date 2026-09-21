@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <cassert>
+#include <iostream>
 
 #include "core-forward-decl.hh"
 
@@ -39,6 +40,10 @@ namespace mozart {
  * 
  * The target objects are mainly runnables, variables and structures as abstractions and cons for streams.
  */
+
+//////////////
+// Identity //
+//////////////
 
 /**
  * @brief Attributes an unique id to a Mozart object
@@ -104,6 +109,10 @@ public:
   void copyIdentity(RichNode self, VM vm, const Identity* other);
 
 public:
+  bool is() {
+    return true;
+  }
+
   inline
   bool is(RichNode self, VM vm);
 
@@ -136,6 +145,10 @@ protected:
   size_t _id;
 };
 
+////////////////////
+// CopiedIdentity //
+////////////////////
+
 class CopiedIdentity {
 public:
   CopiedIdentity() {}
@@ -164,6 +177,10 @@ public:
   inline
   void setId(RichNode self, VM vm, size_t id);
 };
+
+//////////////////////
+// AdvancedIdentity //
+//////////////////////
 
 /**
  * @brief An advanced identifiant adding kind id and generation id
@@ -238,18 +255,25 @@ public:
    * @tparam OtherIdentified The class defining the identity template
    * @param other Another instance of a different identity template
    */
-  void followIdentity(const AdvancedIdentity& other, bool newGeneration = true) {
+  void followIdentity(const AdvancedIdentity& other, bool newGeneration) {
+    assert(_kindId == SIZE_MAX);
     _kindId = other.getKindId();
+
+    if (_kindId == 11111111 || _kindId == 22222222 || _kindId == 33333333) {
+      std::cout << "KindId: " << _kindId << ", " << other.getGenerationId() << std::endl;
+    }
 
     if (newGeneration)
       _generationId = other.getGenerationId() + 1;
     else
       _generationId = other.getGenerationId();
+
+    if (_kindId == 11111111 || _kindId == 22222222 || _kindId == 33333333)
+      std::cout << "New: " << _generationId << std::endl;
   }
 
   inline
-  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
-    bool newGeneration = true);
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration);
 
   /**
    * @brief Follow the identify of an other advanced identity template
@@ -257,14 +281,13 @@ public:
    * @tparam OtherIdentified The class defining the identity template
    * @param other A pointer on another instance of a different identity template
    */
-  void followIdentity(const AdvancedIdentity* other, bool newGeneration = true) {
+  void followIdentity(const AdvancedIdentity* other, bool newGeneration) {
     assert(other != nullptr);
     followIdentity(*other, newGeneration);
   }
   
   inline
-  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
-    bool newGeneration = true);
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
 
 public:
   /**
@@ -311,6 +334,10 @@ private:
   size_t _kindId, _generationId;
 };
 
+////////////////////////////
+// CopiedAdvancedIdentity //
+////////////////////////////
+
 class CopiedAdvancedIdentity: public CopiedIdentity {
 public:
   CopiedAdvancedIdentity() {}
@@ -333,12 +360,80 @@ public:
   void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other);
 
   inline
-  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
-    bool newGeneration = true);
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration);
 
   inline
-  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
-    bool newGeneration = true);
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
+
+public:
+  inline
+  size_t getKindId(RichNode self, VM vm);
+
+  inline
+  size_t getGenerationId(RichNode self, VM vm);
+
+public:
+  inline
+  bool isKindLeader(RichNode self, VM vm);
+};
+
+////////////////////
+// OptVarIdentity //
+////////////////////
+
+/**
+ * @brief Warning this interface should not have any attributes else it will break OptVar optimizations !!
+ * 
+ * This interface has for only purpose to interface identity methods to OptVar without making them heavier.
+ * Any operation applied to a such variable will transform it into a normal variable then will perform
+ * the requested operation. It allows transparency for the identity of variables vs opt variables,
+ * to convert as less as possible opt variables to variables and converting an opt variable to variable
+ * only when needed.
+ */
+
+class OptVarIdentity {
+public:
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity* other);
+
+public:
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
+
+public:
+  inline
+  void copyIdentity(RichNode self, VM vm, const OptVarIdentity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const OptVarIdentity* other);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const OptVarIdentity& other, bool newGeneration);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const OptVarIdentity* other, bool newGeneration);
+
+public:
+  inline
+  bool is(RichNode self, VM vm);
+  
+  inline
+  size_t getId(RichNode self, VM vm);
+
+  inline
+  void setId(RichNode self, VM vm, size_t id);
 
 public:
   inline

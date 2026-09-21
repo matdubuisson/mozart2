@@ -26,13 +26,93 @@
 
 namespace mozart {
 
-// template<class Identified>
-// size_t Identity<Identified>::_idsCounter = 0;
+// In order to resolve a cycling dependency problem :
+//   - coreinterfaces-decl.hh needs identity-decl.hh
+//   - identity-decl.hh needs coreinterfaces-decl.hh
+// These implementations are put here into a concrete C file.
 
-// template<class Identified>
-// size_t AdvancedIdentity<Identified>::_kindIdsCounter = 0;
+////////////////////
+// OptVarIdentity //
+////////////////////
 
-// template<class Identified>
-// size_t AdvancedIdentity<Identified>::_generationIdsCounter = 0;
+void OptVarIdentity::copyIdentity(RichNode self, VM vm, const Identity& other) {
+  self.become(vm, Variable::build(vm));
+  Identifiable(self).copyIdentity(vm, other);
+}
+
+void OptVarIdentity::copyIdentity(RichNode self, VM vm, const Identity* other) {
+  self.become(vm, Variable::build(vm));
+  Identifiable(self).copyIdentity(vm, other);
+}
+
+void OptVarIdentity::copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other) {
+  self.become(vm, Variable::build(vm));
+  AdvancedIdentifiable(self).copyIdentity(vm, other);
+}
+
+void OptVarIdentity::copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other) {
+  self.become(vm, Variable::build(vm));
+  AdvancedIdentifiable(self).copyIdentity(vm, other);
+}
+
+void OptVarIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
+  bool newGeneration) {
+  self.become(vm, Variable::build(vm));
+  AdvancedIdentifiable(self).followIdentity(vm, other, newGeneration);
+}
+
+void OptVarIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
+  bool newGeneration) {
+  self.become(vm, Variable::build(vm));
+  AdvancedIdentifiable(self).followIdentity(vm, other, newGeneration);
+}
+
+void OptVarIdentity::copyIdentity(RichNode self, VM vm, const OptVarIdentity& other) {
+  assert(false);
+}
+
+void OptVarIdentity::copyIdentity(RichNode self, VM vm, const OptVarIdentity* other) {
+  assert(false);
+}
+
+void OptVarIdentity::followIdentity(RichNode self, VM vm, const OptVarIdentity& other,
+  bool newGeneration) {
+  assert(false);
+}
+
+void OptVarIdentity::followIdentity(RichNode self, VM vm, const OptVarIdentity* other,
+  bool newGeneration) {
+  assert(false);
+}
+
+bool OptVarIdentity::is(RichNode self, VM vm) {
+  self.become(vm, Variable::build(vm));
+  return Identifiable(self).is(vm);
+}
+
+size_t OptVarIdentity::getId(RichNode self, VM vm) {
+  self.become(vm, Variable::build(vm));
+  return Identifiable(self).getId(vm);
+}
+
+void OptVarIdentity::setId(RichNode self, VM vm, size_t id) {
+  self.become(vm, Variable::build(vm));
+  Identifiable(self).setId(vm, id);
+}
+
+size_t OptVarIdentity::getKindId(RichNode self, VM vm) {
+  self.become(vm, Variable::build(vm));
+  return AdvancedIdentifiable(self).getKindId(vm);
+}
+
+size_t OptVarIdentity::getGenerationId(RichNode self, VM vm) {
+  self.become(vm, Variable::build(vm));
+  return AdvancedIdentifiable(self).getGenerationId(vm);
+}
+
+bool OptVarIdentity::isKindLeader(RichNode self, VM vm) {
+  self.become(vm, Variable::build(vm));
+  return AdvancedIdentifiable(self).isKindLeader(vm);
+}
 
 }

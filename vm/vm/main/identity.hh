@@ -103,11 +103,17 @@ void AdvancedIdentity::copyIdentity(RichNode self, VM vm, const AdvancedIdentity
 }
 
 void AdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration) {
-  followIdentity(other);
+  if (_kindId == 11111111 || _kindId == 22222222 || _kindId == 33333333) {
+    std::cout << "Who? " << self.type()->getName().c_str() << std::endl;
+  }
+  followIdentity(other, newGeneration);
 }
 
 void AdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration) {
-  followIdentity(other);
+  if (_kindId == 11111111 || _kindId == 22222222 || _kindId == 33333333) {
+    std::cout << "Who? " << self.type()->getName().c_str() << std::endl;
+  }
+  followIdentity(other, newGeneration);
 }
 
 size_t AdvancedIdentity::getKindId(RichNode self, VM vm) {
@@ -139,11 +145,11 @@ void CopiedAdvancedIdentity::copyIdentity(RichNode self, VM vm, const AdvancedId
 }
 
 void CopiedAdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration) {
-  getAdvancedIdentity().followIdentity(self, vm, other);
+  getAdvancedIdentity().followIdentity(self, vm, other, newGeneration);
 }
 
 void CopiedAdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration) {
-  getAdvancedIdentity().followIdentity(self, vm, other);
+  getAdvancedIdentity().followIdentity(self, vm, other, newGeneration);
 }
 
 size_t CopiedAdvancedIdentity::getKindId(RichNode self, VM vm) {
