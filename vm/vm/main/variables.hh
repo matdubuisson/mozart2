@@ -25,7 +25,6 @@
 #ifndef MOZART_VARIABLES_H
 #define MOZART_VARIABLES_H
 
-#include <typeinfo>
 #include "mozartcore.hh"
 
 #ifndef MOZART_GENERATOR
