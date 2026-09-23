@@ -37,7 +37,7 @@ class Identifiable;
 template<>
 struct Interface<Identifiable>:
   ImplementedBy<ReifiedThread,
-    Variable, ReadOnlyVariable,
+    Variable, ReadOnlyVariable, OptVar,
     Abstraction, Cons, Tuple, Record>,
   NoAutoWait, NoAutoReflectiveCalls {
 
@@ -68,7 +68,7 @@ class AdvancedIdentifiable;
 template<>
 struct Interface<AdvancedIdentifiable>:
   ImplementedBy<ReifiedThread,
-    Variable, ReadOnlyVariable,
+    Variable, ReadOnlyVariable, OptVar,
     Cons, Tuple, Record>,
   NoAutoWait, NoAutoReflectiveCalls {
 

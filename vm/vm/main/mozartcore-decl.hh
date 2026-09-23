@@ -26,7 +26,6 @@
 #define MOZART_MOZARTCORE_DECL_H
 
 #include "core-forward-decl.hh"
-#include "identity-decl.hh"
 #include "self-decl.hh"
 
 #include "nullable-decl.hh"
@@ -48,7 +47,6 @@
 #include "coders-decl.hh"
 #include "utf-decl.hh"
 #include "functiontraits-decl.hh"
-#include "identity-decl.hh"
 #include "introspection-decl.hh"
 #include "vm-decl.hh"
 #include "vmeventmanager-decl.hh"

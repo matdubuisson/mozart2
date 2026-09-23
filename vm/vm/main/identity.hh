@@ -25,8 +25,9 @@
 #ifndef MOZART_IDENTITY_H
 #define MOZART_IDENTITY_H
 
-#include "identity-decl.hh"
 #include "mozartcore.hh"
+
+#ifndef MOZART_GENERATOR
 
 namespace mozart {
 
@@ -164,6 +165,90 @@ bool CopiedAdvancedIdentity::isKindLeader(RichNode self, VM vm) {
   return getAdvancedIdentity().isKindLeader(self, vm);
 }
 
+/////////////////////////
+// TransparentIdentity //
+/////////////////////////
+
+Identity& TransparentIdentity::getIdentity(RichNode self, VM vm) {
+  becomeIdentifiable(self, vm);
+  return Identifiable(self).getIdentity(vm);
 }
 
-#endif
+bool TransparentIdentity::is(RichNode self, VM vm) {
+  becomeIdentifiable(self, vm);
+  return Identifiable(self).is(vm);
+}
+
+size_t TransparentIdentity::getId(RichNode self, VM vm) {
+  becomeIdentifiable(self, vm);
+  return Identifiable(self).getId(vm);
+}
+
+void TransparentIdentity::setId(RichNode self, VM vm, size_t id) {
+  becomeIdentifiable(self, vm);
+  Identifiable(self).setId(vm, id);
+}
+
+void TransparentIdentity::copyIdentity(RichNode self, VM vm, const Identity& other) {
+  becomeIdentifiable(self, vm);
+  Identifiable(self).copyIdentity(vm, other);
+}
+
+void TransparentIdentity::copyIdentity(RichNode self, VM vm, const Identity* other) {
+  becomeIdentifiable(self, vm);
+  Identifiable(self).copyIdentity(vm, other);
+}
+
+/////////////////////////////////
+// TransparentAdvancedIdentity //
+/////////////////////////////////
+
+AdvancedIdentity& TransparentAdvancedIdentity::getAdvancedIdentity(RichNode self, VM vm) {
+  becomeAdvancedIdentifiable(self, vm);
+  return AdvancedIdentifiable(self).getAdvancedIdentity(vm);
+}
+
+size_t TransparentAdvancedIdentity::getKindId(RichNode self, VM vm) {
+  becomeAdvancedIdentifiable(self, vm);
+  return AdvancedIdentifiable(self).getKindId(vm);
+}
+
+size_t TransparentAdvancedIdentity::getGenerationId(RichNode self, VM vm) {
+  becomeAdvancedIdentifiable(self, vm);
+  return AdvancedIdentifiable(self).getGenerationId(vm);
+}
+
+bool TransparentAdvancedIdentity::isKindLeader(RichNode self, VM vm) {
+  becomeAdvancedIdentifiable(self, vm);
+  return AdvancedIdentifiable(self).isKindLeader(vm);
+}
+
+void TransparentAdvancedIdentity::copyIdentity(RichNode self, VM vm,
+  const AdvancedIdentity& other) {
+  becomeAdvancedIdentifiable(self, vm);
+  AdvancedIdentifiable(self).copyIdentity(vm, other);
+}
+
+void TransparentAdvancedIdentity::copyIdentity(RichNode self, VM vm,
+  const AdvancedIdentity* other) {
+  becomeAdvancedIdentifiable(self, vm);
+  AdvancedIdentifiable(self).copyIdentity(vm, other);
+}
+
+void TransparentAdvancedIdentity::followIdentity(RichNode self, VM vm,
+  const AdvancedIdentity& other, bool newGeneration) {
+  becomeAdvancedIdentifiable(self, vm);
+  AdvancedIdentifiable(self).followIdentity(vm, other, newGeneration);
+}
+
+void TransparentAdvancedIdentity::followIdentity(RichNode self, VM vm,
+  const AdvancedIdentity* other, bool newGeneration) {
+  becomeAdvancedIdentifiable(self, vm);
+  AdvancedIdentifiable(self).followIdentity(vm, other, newGeneration);
+}
+
+}
+
+#endif // MOZART_GENERATOR
+
+#endif // MOZART_IDENTITY_H

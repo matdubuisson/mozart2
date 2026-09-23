@@ -30,7 +30,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "core-forward-decl.hh"
+#include "mozartcore-decl.hh"
 
 namespace mozart {
 
@@ -377,9 +377,9 @@ public:
   bool isKindLeader(RichNode self, VM vm);
 };
 
-////////////////////
-// OptVarIdentity //
-////////////////////
+/////////////////////////
+// TransparentIdentity //
+/////////////////////////
 
 /**
  * @brief Warning this interface should not have any attributes else it will break OptVar optimizations !!
@@ -395,6 +395,10 @@ class TransparentIdentity {
 protected:
   inline
   virtual void becomeIdentifiable(RichNode self, VM vm) = 0;
+
+public:
+  inline
+  Identity& getIdentity(RichNode self, VM vm);
 
 public:
   inline
@@ -415,10 +419,18 @@ public:
 
 };
 
+/////////////////////////////////
+// TransparentAdvancedIdentity //
+/////////////////////////////////
+
 class TransparentAdvancedIdentity : public TransparentIdentity {
 protected:
   inline
   virtual void becomeAdvancedIdentifiable(RichNode self, VM vm) = 0;
+
+public:
+  inline
+  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm);
 
 public:
   inline

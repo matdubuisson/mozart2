@@ -33,6 +33,8 @@
 #include "grtypes-decl.hh"
 #include "patmattypes-decl.hh"
 
+#include "identity-decl.hh"
+
 #include "array-decl.hh"
 #include "atom-decl.hh"
 #include "boolean-decl.hh"
