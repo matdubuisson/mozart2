@@ -31,88 +31,76 @@ namespace mozart {
 //   - identity-decl.hh needs coreinterfaces-decl.hh
 // These implementations are put here into a concrete C file.
 
-////////////////////
-// OptVarIdentity //
-////////////////////
+/////////////////////////
+// TransparentIdentity //
+/////////////////////////
 
-void OptVarIdentity::copyIdentity(RichNode self, VM vm, const Identity& other) {
-  self.become(vm, Variable::build(vm));
-  Identifiable(self).copyIdentity(vm, other);
-}
-
-void OptVarIdentity::copyIdentity(RichNode self, VM vm, const Identity* other) {
-  self.become(vm, Variable::build(vm));
-  Identifiable(self).copyIdentity(vm, other);
-}
-
-void OptVarIdentity::copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other) {
-  self.become(vm, Variable::build(vm));
-  AdvancedIdentifiable(self).copyIdentity(vm, other);
-}
-
-void OptVarIdentity::copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other) {
-  self.become(vm, Variable::build(vm));
-  AdvancedIdentifiable(self).copyIdentity(vm, other);
-}
-
-void OptVarIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
-  bool newGeneration) {
-  self.become(vm, Variable::build(vm));
-  AdvancedIdentifiable(self).followIdentity(vm, other, newGeneration);
-}
-
-void OptVarIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
-  bool newGeneration) {
-  self.become(vm, Variable::build(vm));
-  AdvancedIdentifiable(self).followIdentity(vm, other, newGeneration);
-}
-
-void OptVarIdentity::copyIdentity(RichNode self, VM vm, const OptVarIdentity& other) {
-  assert(false);
-}
-
-void OptVarIdentity::copyIdentity(RichNode self, VM vm, const OptVarIdentity* other) {
-  assert(false);
-}
-
-void OptVarIdentity::followIdentity(RichNode self, VM vm, const OptVarIdentity& other,
-  bool newGeneration) {
-  assert(false);
-}
-
-void OptVarIdentity::followIdentity(RichNode self, VM vm, const OptVarIdentity* other,
-  bool newGeneration) {
-  assert(false);
-}
-
-bool OptVarIdentity::is(RichNode self, VM vm) {
-  self.become(vm, Variable::build(vm));
+bool TransparentIdentity::is(RichNode self, VM vm) {
+  becomeIdentifiable(self, vm);
   return Identifiable(self).is(vm);
 }
 
-size_t OptVarIdentity::getId(RichNode self, VM vm) {
-  self.become(vm, Variable::build(vm));
+size_t TransparentIdentity::getId(RichNode self, VM vm) {
+  becomeIdentifiable(self, vm);
   return Identifiable(self).getId(vm);
 }
 
-void OptVarIdentity::setId(RichNode self, VM vm, size_t id) {
-  self.become(vm, Variable::build(vm));
+void TransparentIdentity::setId(RichNode self, VM vm, size_t id) {
+  becomeIdentifiable(self, vm);
   Identifiable(self).setId(vm, id);
 }
 
-size_t OptVarIdentity::getKindId(RichNode self, VM vm) {
-  self.become(vm, Variable::build(vm));
+void TransparentIdentity::copyIdentity(RichNode self, VM vm, const Identity& other) {
+  becomeIdentifiable(self, vm);
+  Identifiable(self).copyIdentity(vm, other);
+}
+
+void TransparentIdentity::copyIdentity(RichNode self, VM vm, const Identity* other) {
+  becomeIdentifiable(self, vm);
+  Identifiable(self).copyIdentity(vm, other);
+}
+
+/////////////////////////////////
+// TransparentAdvancedIdentity //
+/////////////////////////////////
+
+size_t TransparentAdvancedIdentity::getKindId(RichNode self, VM vm) {
+  becomeAdvancedIdentifiable(self, vm);
   return AdvancedIdentifiable(self).getKindId(vm);
 }
 
-size_t OptVarIdentity::getGenerationId(RichNode self, VM vm) {
-  self.become(vm, Variable::build(vm));
+size_t TransparentAdvancedIdentity::getGenerationId(RichNode self, VM vm) {
+  becomeAdvancedIdentifiable(self, vm);
   return AdvancedIdentifiable(self).getGenerationId(vm);
 }
 
-bool OptVarIdentity::isKindLeader(RichNode self, VM vm) {
-  self.become(vm, Variable::build(vm));
+bool TransparentAdvancedIdentity::isKindLeader(RichNode self, VM vm) {
+  becomeAdvancedIdentifiable(self, vm);
   return AdvancedIdentifiable(self).isKindLeader(vm);
+}
+
+void TransparentAdvancedIdentity::copyIdentity(RichNode self, VM vm,
+  const AdvancedIdentity& other) {
+  becomeAdvancedIdentifiable(self, vm);
+  AdvancedIdentifiable(self).copyIdentity(vm, other);
+}
+
+void TransparentAdvancedIdentity::copyIdentity(RichNode self, VM vm,
+  const AdvancedIdentity* other) {
+  becomeAdvancedIdentifiable(self, vm);
+  AdvancedIdentifiable(self).copyIdentity(vm, other);
+}
+
+void TransparentAdvancedIdentity::followIdentity(RichNode self, VM vm,
+  const AdvancedIdentity& other, bool newGeneration) {
+  becomeAdvancedIdentifiable(self, vm);
+  AdvancedIdentifiable(self).followIdentity(vm, other, newGeneration);
+}
+
+void TransparentAdvancedIdentity::followIdentity(RichNode self, VM vm,
+  const AdvancedIdentity* other, bool newGeneration) {
+  becomeAdvancedIdentifiable(self, vm);
+  AdvancedIdentifiable(self).followIdentity(vm, other, newGeneration);
 }
 
 }

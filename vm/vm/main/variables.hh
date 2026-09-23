@@ -200,6 +200,14 @@ void OptVar::create(SpaceRef& self, VM vm, GR gr, OptVar from) {
   gr->copySpace(self, from.home());
 }
 
+void OptVar::becomeIdentifiable(RichNode self, VM vm) {
+  self.become(vm, Variable::build(vm));
+}
+
+void OptVar::becomeAdvancedIdentifiable(RichNode self, VM vm) {
+  self.become(vm, Variable::build(vm));
+}
+
 void OptVar::addToSuspendList(RichNode self, VM vm, RichNode variable) {
   self.become(vm, Variable::build(vm));
   DataflowVariable(self).addToSuspendList(vm, variable);

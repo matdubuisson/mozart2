@@ -391,39 +391,10 @@ public:
  * only when needed.
  */
 
-class OptVarIdentity {
-public:
+class TransparentIdentity {
+protected:
   inline
-  void copyIdentity(RichNode self, VM vm, const Identity& other);
-
-  inline
-  void copyIdentity(RichNode self, VM vm, const Identity* other);
-
-public:
-  inline
-  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);
-
-  inline
-  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other);
-
-  inline
-  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration);
-
-  inline
-  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
-
-public:
-  inline
-  void copyIdentity(RichNode self, VM vm, const OptVarIdentity& other);
-
-  inline
-  void copyIdentity(RichNode self, VM vm, const OptVarIdentity* other);
-
-  inline
-  void followIdentity(RichNode self, VM vm, const OptVarIdentity& other, bool newGeneration);
-
-  inline
-  void followIdentity(RichNode self, VM vm, const OptVarIdentity* other, bool newGeneration);
+  virtual void becomeIdentifiable(RichNode self, VM vm) = 0;
 
 public:
   inline
@@ -437,6 +408,20 @@ public:
 
 public:
   inline
+  void copyIdentity(RichNode self, VM vm, const Identity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity* other);
+
+};
+
+class TransparentAdvancedIdentity : public TransparentIdentity {
+protected:
+  inline
+  virtual void becomeAdvancedIdentifiable(RichNode self, VM vm) = 0;
+
+public:
+  inline
   size_t getKindId(RichNode self, VM vm);
 
   inline
@@ -445,6 +430,21 @@ public:
 public:
   inline
   bool isKindLeader(RichNode self, VM vm);
+
+public:
+  using TransparentIdentity::copyIdentity;
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
 };
 
 }

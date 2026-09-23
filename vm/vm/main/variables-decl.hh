@@ -353,7 +353,7 @@ public:
 #include "OptVar-implem-decl.hh"
 #endif
 
-class OptVar: public OptVarIdentity, public DataType<OptVar>, public WithHome,
+class OptVar: public TransparentAdvancedIdentity, public DataType<OptVar>, public WithHome,
   Transient, StoredAs<SpaceRef>, WithVariableBehavior<100> {
 public:
   explicit OptVar(SpaceRef home): WithHome(home) {}
@@ -368,6 +368,17 @@ public:
 
   inline
   static void create(SpaceRef& self, VM vm, GR gr, OptVar from);
+
+public:
+  using TransparentAdvancedIdentity::becomeIdentifiable;
+
+  inline
+  void becomeIdentifiable(RichNode self, VM vm) override;
+
+  using TransparentAdvancedIdentity::becomeAdvancedIdentifiable;
+
+  inline
+  void becomeAdvancedIdentifiable(RichNode self, VM vm) override;
 
 public:
   // DataflowVariable interface
