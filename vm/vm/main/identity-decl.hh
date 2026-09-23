@@ -294,20 +294,17 @@ private:
   size_t _kindId, _generationId;
 };
 
-////////////////////
-// CopiedIdentity //
-////////////////////
+////////////////////////
+// ReferencedIdentity //
+////////////////////////
 
-class CopiedIdentity {
+class ReferencedIdentity {
 public:
-  CopiedIdentity() {}
+  ReferencedIdentity() {}
 
 public:
   inline
-  virtual Identity& getIdentity() = 0;
-
-  inline
-  Identity& getIdentity(RichNode self, VM vm);
+  virtual Identity& getIdentity(RichNode self, VM vm) = 0;
 
 public:
   inline
@@ -327,20 +324,17 @@ public:
   void copyIdentity(RichNode self, VM vm, const Identity* other);
 };
 
-////////////////////////////
-// CopiedAdvancedIdentity //
-////////////////////////////
+////////////////////////////////
+// ReferencedAdvancedIdentity //
+////////////////////////////////
 
-class CopiedAdvancedIdentity: public CopiedIdentity {
+class ReferencedAdvancedIdentity: public ReferencedIdentity {
 public:
-  CopiedAdvancedIdentity() {}
+  ReferencedAdvancedIdentity() {}
 
 public:
   inline
-  virtual AdvancedIdentity& getAdvancedIdentity() = 0;
-
-  inline
-  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm);
+  virtual AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm) = 0;
 
 public:
   inline
@@ -355,7 +349,7 @@ public:
 
 public:
   // Helps C++ to know which copyIdentity to use
-  using CopiedIdentity::copyIdentity;
+  using ReferencedIdentity::copyIdentity;
 
   inline
   void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);
@@ -370,9 +364,9 @@ public:
   void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
 };
 
-/////////////////////////
-// TransparentIdentity //
-/////////////////////////
+///////////////////////
+// DelegatedIdentity //
+///////////////////////
 
 /**
  * @brief Warning this interface should not have any attributes else it will break OptVar optimizations !!
@@ -384,7 +378,7 @@ public:
  * only when needed.
  */
 
-class TransparentIdentity {
+class DelegatedIdentity {
 protected:
   inline
   virtual void becomeIdentifiable(RichNode self, VM vm) = 0;
@@ -412,11 +406,11 @@ public:
 
 };
 
-/////////////////////////////////
-// TransparentAdvancedIdentity //
-/////////////////////////////////
+///////////////////////////////
+// DelegatedAdvancedIdentity //
+///////////////////////////////
 
-class TransparentAdvancedIdentity : public TransparentIdentity {
+class DelegatedAdvancedIdentity : public DelegatedIdentity {
 protected:
   inline
   virtual void becomeAdvancedIdentifiable(RichNode self, VM vm) = 0;
@@ -437,7 +431,7 @@ public:
   bool isKindLeader(RichNode self, VM vm);
 
 public:
-  using TransparentIdentity::copyIdentity;
+  using DelegatedIdentity::copyIdentity;
 
   inline
   void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);

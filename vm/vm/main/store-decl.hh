@@ -444,6 +444,7 @@ private:
   friend struct StructuralDualWalk;
   friend class Serializer;
   friend class Pickler;
+  friend class Reference; // For referenced identities
 
   /**
    * Re-initiates the rich node from the referenced stable node

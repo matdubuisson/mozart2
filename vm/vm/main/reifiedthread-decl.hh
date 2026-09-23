@@ -37,7 +37,7 @@ namespace mozart {
 #include "ReifiedThread-implem-decl.hh"
 #endif
 
-class ReifiedThread: public CopiedAdvancedIdentity, public DataType<ReifiedThread>,
+class ReifiedThread: public ReferencedAdvancedIdentity, public DataType<ReifiedThread>,
   StoredAs<Runnable*>, WithValueBehavior {
 public:
   static atom_t getTypeAtom(VM vm) {
@@ -54,17 +54,17 @@ public:
   static void create(Runnable*& self, VM vm, GR gr, ReifiedThread from);
 
 public:
-  using CopiedIdentity::getIdentity;
+  using ReferencedIdentity::getIdentity;
 
   inline
-  Identity& getIdentity() override {
+  Identity& getIdentity(RichNode self, VM vm) override {
     return _runnable->getIdentity();
   }
 
-  using CopiedAdvancedIdentity::getAdvancedIdentity;
+  using ReferencedAdvancedIdentity::getAdvancedIdentity;
 
   inline
-  AdvancedIdentity& getAdvancedIdentity() override {
+  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm) override {
     return _runnable->getAdvancedIdentity();
   }
 
