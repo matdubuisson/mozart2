@@ -81,34 +81,6 @@ public:
   Identity& getIdentity(RichNode self, VM vm);
 
 public:
-  /**
-   * @brief Copy the identity from an other type of identity
-   * 
-   * @tparam OtherIdentified The class defining the identiable template
-   * @param other Another instance of a different identifable template
-   */
-  void copyIdentity(const Identity& other) {
-    _id = other.getId();
-  }
-
-  inline
-  void copyIdentity(RichNode self, VM vm, const Identity& other);
-
-  /**
-   * @brief Copy the identity from an other type of identity
-   * 
-   * @tparam OtherIdentified The class defining the identity template
-   * @param other A pointer on another instance of a different identity template
-   */
-  void copyIdentity(const Identity* other) {
-    assert(other != nullptr);
-    copyIdentity(*other);
-  }
-
-  inline
-  void copyIdentity(RichNode self, VM vm, const Identity* other);
-
-public:
   bool is() {
     return true;
   }
@@ -141,41 +113,36 @@ public:
   inline
   void setId(RichNode self, VM vm, size_t id);
 
-protected:
-  size_t _id;
-};
-
-////////////////////
-// CopiedIdentity //
-////////////////////
-
-class CopiedIdentity {
 public:
-  CopiedIdentity() {}
+  /**
+   * @brief Copy the identity from an other type of identity
+   * 
+   * @tparam OtherIdentified The class defining the identiable template
+   * @param other Another instance of a different identifable template
+   */
+  void copyIdentity(const Identity& other) {
+    _id = other.getId();
+  }
 
-public:
-  inline
-  virtual Identity& getIdentity() = 0;
-
-  inline
-  Identity& getIdentity(RichNode self, VM vm);
-
-public:
   inline
   void copyIdentity(RichNode self, VM vm, const Identity& other);
+
+  /**
+   * @brief Copy the identity from an other type of identity
+   * 
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other A pointer on another instance of a different identity template
+   */
+  void copyIdentity(const Identity* other) {
+    assert(other != nullptr);
+    copyIdentity(*other);
+  }
 
   inline
   void copyIdentity(RichNode self, VM vm, const Identity* other);
 
-public:
-  inline
-  bool is(RichNode self, VM vm);
-  
-  inline
-  size_t getId(RichNode self, VM vm);
-
-  inline
-  void setId(RichNode self, VM vm, size_t id);
+protected:
+  size_t _id;
 };
 
 //////////////////////
@@ -214,6 +181,47 @@ public:
 
   inline
   AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm);
+
+public:
+  /**
+   * @brief Get the kind id
+   * 
+   * @return size_t
+   * @remark Kind id == id if the current identity is a kind leader
+   */
+  size_t getKindId() const {
+    return _kindId == SIZE_MAX ?
+      Identity::getId() : _kindId;
+  }
+
+  inline
+  size_t getKindId(RichNode self, VM vm);
+
+  /**
+   * @brief Get the generation id
+   * 
+   * @return size_t 
+   */
+  size_t getGenerationId() const {
+    return _generationId;
+  }
+
+  inline
+  size_t getGenerationId(RichNode self, VM vm);
+
+public:
+  /**
+   * @brief Tells if the current identity is a kind leader
+   * 
+   * @return true 
+   * @return false 
+   */
+  bool isKindLeader() const {
+    return _kindId == SIZE_MAX;
+  }
+
+  inline
+  bool isKindLeader(RichNode self, VM vm);
 
 public:
   // Helps C++ to know which copyIdentity to use
@@ -259,17 +267,10 @@ public:
     assert(_kindId == SIZE_MAX);
     _kindId = other.getKindId();
 
-    if (_kindId == 11111111 || _kindId == 22222222 || _kindId == 33333333) {
-      std::cout << "KindId: " << _kindId << ", " << other.getGenerationId() << std::endl;
-    }
-
     if (newGeneration)
       _generationId = other.getGenerationId() + 1;
     else
       _generationId = other.getGenerationId();
-
-    if (_kindId == 11111111 || _kindId == 22222222 || _kindId == 33333333)
-      std::cout << "New: " << _generationId << std::endl;
   }
 
   inline
@@ -289,49 +290,41 @@ public:
   inline
   void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
 
-public:
-  /**
-   * @brief Get the kind id
-   * 
-   * @return size_t
-   * @remark Kind id == id if the current identity is a kind leader
-   */
-  size_t getKindId() const {
-    return _kindId == SIZE_MAX ?
-      Identity::getId() : _kindId;
-  }
-
-  inline
-  size_t getKindId(RichNode self, VM vm);
-
-  /**
-   * @brief Get the generation id
-   * 
-   * @return size_t 
-   */
-  size_t getGenerationId() const {
-    return _generationId;
-  }
-
-  inline
-  size_t getGenerationId(RichNode self, VM vm);
-
-public:
-  /**
-   * @brief Tells if the current identity is a kind leader
-   * 
-   * @return true 
-   * @return false 
-   */
-  bool isKindLeader() const {
-    return _kindId == SIZE_MAX;
-  }
-
-  inline
-  bool isKindLeader(RichNode self, VM vm);
-
 private:
   size_t _kindId, _generationId;
+};
+
+////////////////////
+// CopiedIdentity //
+////////////////////
+
+class CopiedIdentity {
+public:
+  CopiedIdentity() {}
+
+public:
+  inline
+  virtual Identity& getIdentity() = 0;
+
+  inline
+  Identity& getIdentity(RichNode self, VM vm);
+
+public:
+  inline
+  bool is(RichNode self, VM vm);
+  
+  inline
+  size_t getId(RichNode self, VM vm);
+
+  inline
+  void setId(RichNode self, VM vm, size_t id);
+
+public:
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity* other);
 };
 
 ////////////////////////////
@@ -350,6 +343,17 @@ public:
   AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm);
 
 public:
+  inline
+  size_t getKindId(RichNode self, VM vm);
+
+  inline
+  size_t getGenerationId(RichNode self, VM vm);
+
+public:
+  inline
+  bool isKindLeader(RichNode self, VM vm);
+
+public:
   // Helps C++ to know which copyIdentity to use
   using CopiedIdentity::copyIdentity;
 
@@ -364,17 +368,6 @@ public:
 
   inline
   void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
-
-public:
-  inline
-  size_t getKindId(RichNode self, VM vm);
-
-  inline
-  size_t getGenerationId(RichNode self, VM vm);
-
-public:
-  inline
-  bool isKindLeader(RichNode self, VM vm);
 };
 
 /////////////////////////
