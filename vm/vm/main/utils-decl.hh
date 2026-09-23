@@ -164,57 +164,6 @@ bool isIdentity(RichNode node);
 // Ids transmission and succession //
 /////////////////////////////////////
 
-template<class SrcType, class DstType>
-// inline
-void transmitIds(VM vm, SrcType& src, DstType& dst);
-
-template<class SrcType, class DstType>
-// inline
-void transmitIds(VM vm, SrcType& srcObject, RichNode dst);
-
-template<class SrcType>
-// inline
-void transmitIds(VM vm, SrcType& srcObject, RichNode dst);
-
-template<class SrcType>
-inline
-void transmitIds(VM vm, SrcType& srcObject, StableNode& dst);
-
-template<class SrcType>
-inline
-void transmitIds(VM vm, SrcType& srcObject, UnstableNode& dst);
-
-template<class SrcType>
-inline
-void transmitIds(VM vm, RichNode src, RichNode dst);
-
-// inline
-void transmitIds(VM vm, RichNode src, RichNode dst);
-
-inline
-void transmitIds(VM vm, StableNode& src, StableNode& dst);
-
-inline
-void transmitIds(VM vm, UnstableNode& src, UnstableNode& dst);
-
-inline
-void transmitIds(VM vm, StableNode& src, UnstableNode& dst);
-
-inline
-void transmitIds(VM vm, UnstableNode& src, StableNode& dst);
-
-inline
-void transmitIds(VM vm, RichNode src, StableNode& dst);
-
-inline
-void transmitIds(VM vm, StableNode& src, RichNode dst);
-
-inline
-void transmitIds(VM vm, RichNode src, UnstableNode& dst);
-
-inline
-void transmitIds(VM vm, UnstableNode& src, RichNode dst);
-
 // inline
 void initArrayAt(VM vm, RichNode structure,
   StaticArray<StableNode>& array, size_t index);

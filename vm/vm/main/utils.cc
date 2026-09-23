@@ -28,53 +28,6 @@
 
 namespace mozart {
 
-template<class SrcType, class DstType>
-void transmitIds(VM vm, SrcType& src, DstType& dst) {
-  if constexpr (!isIdentity<SrcType>() || !isIdentity<DstType>()) return;
-
-  AdvancedIdentity& srcId = src.getAdvancedIdentity();
-  AdvancedIdentity& dstId = dst.getAdvancedIdentity();
-
-  /**
-   * @brief 
-   * V to V : copy
-   * V to C : follow
-   * C to V : copy
-   * C to C : follow
-   */
-
-  if constexpr (isStructure<DstType>()) {
-    dstId.followIdentity(srcId, true);
-  } else {
-    dstId.followIdentity(srcId, false);
-  }
-}
-
-template<class SrcType>
-void transmitIds(VM vm, SrcType& srcObject, RichNode dst) {
-  if (dst.is<Variable>()) {
-    transmitIds<SrcType, Variable>(vm, srcObject, dst);
-  } else if (dst.is<ReadOnlyVariable>()) {
-    transmitIds<SrcType, ReadOnlyVariable>(vm, srcObject, dst);
-  } else if (dst.is<Cons>()) {
-    transmitIds<SrcType, Cons>(vm, srcObject, dst);
-  } else if (dst.is<Reference>()) {
-    transmitIds<SrcType>(vm, srcObject, *dst.as<Reference>().dest());
-  }
-}
-
-void transmitIds(VM vm, RichNode src, RichNode dst) {
-  if (src.is<Variable>()) {
-    transmitIds<Variable>(vm, src, dst);
-  } else if (src.is<ReadOnlyVariable>()) {
-    transmitIds<ReadOnlyVariable>(vm, src, dst);
-  } else if (src.is<Cons>()) {
-    transmitIds<Cons>(vm, src, dst);
-  } else if (src.is<Reference>()) {
-    transmitIds(vm, *src.as<Reference>().dest(), dst);
-  }
-}
-
 void initArrayAt(VM vm, RichNode structure,
   StaticArray<StableNode>& array, size_t index) {
   UnstableNode variable = Variable::build(vm);
@@ -91,8 +44,6 @@ void initArrayAt(VM vm, RichNode structure,
       array, index
     );
   }
-
-  //transmitIds(vm, structure, variable);
 }
 
 static inline
