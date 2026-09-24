@@ -55,6 +55,7 @@ private:
   friend class RichNode;
   friend class GraphReplicator;
   friend class Space;
+  friend class Reference;
   friend class Introspection;
 
   template <class T>

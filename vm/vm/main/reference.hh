@@ -37,16 +37,19 @@ namespace mozart {
 
 #include "Reference-implem.hh"
 
-Identity& Reference::getIdentity(RichNode self, VM vm) {
-  StableNode* dereferenced = RichNode::dereference(_dest);
-  assert(Identifiable(*dereferenced).is(vm));
-  return Identifiable(*dereferenced).getIdentity(vm);
+StableNode* Reference::dereference() {
+  assert(_dest != nullptr);
+  StableNode* current = _dest;
+
+  while (current->type() == type()) {
+    current = current->access<Reference>()._dest;
+  }
+
+  return current;
 }
 
-AdvancedIdentity& Reference::getAdvancedIdentity(RichNode self, VM vm) {
-  StableNode* dereferenced = RichNode::dereference(_dest);
-  assert(AdvancedIdentifiable(*dereferenced).is(vm));
-  return AdvancedIdentifiable(*dereferenced).getAdvancedIdentity(vm);
+StableNode& Reference::dereference(RichNode self, VM vm) {
+  return *dereference();
 }
 
 }

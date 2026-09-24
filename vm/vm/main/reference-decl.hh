@@ -37,7 +37,7 @@ namespace mozart {
 #include "Reference-implem-decl.hh"
 #endif
 
-class Reference: public ReferencedAdvancedIdentity,
+class Reference: public NodeReferencedAdvancedIdentity,
   public DataType<Reference>, StoredAs<StableNode*>,
   WithValueBehavior /* used by the generator to infer the Copyable flag */ {
 public:
@@ -53,18 +53,17 @@ public:
   }
 
 public:
-  using ReferencedIdentity::getIdentity;
-
-  inline
-  Identity& getIdentity(RichNode self, VM vm) override;
-
-  using ReferencedAdvancedIdentity::getAdvancedIdentity;
-
-  inline
-  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm) override;
-
-public:
   StableNode* dest() const { return _dest; }
+
+  inline
+  StableNode* dereference();
+
+protected:
+  using NodeReferencedAdvancedIdentity::dereference;
+
+  inline
+  StableNode& dereference(RichNode self, VM vm);
+
 private:
   StableNode* _dest;
 };
