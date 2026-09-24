@@ -302,9 +302,13 @@ class ReferencedIdentity {
 public:
   ReferencedIdentity() {}
 
+protected:
+  inline
+  virtual Identity& getIdentity() = 0;
+
 public:
   inline
-  virtual Identity& getIdentity(RichNode self, VM vm) = 0;
+  Identity& getIdentity(RichNode self, VM vm);
 
 public:
   inline
@@ -332,9 +336,13 @@ class ReferencedAdvancedIdentity: public ReferencedIdentity {
 public:
   ReferencedAdvancedIdentity() {}
 
+protected:
+  inline
+  virtual AdvancedIdentity& getAdvancedIdentity() = 0;
+
 public:
   inline
-  virtual AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm) = 0;
+  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm);
 
 public:
   inline
@@ -350,6 +358,80 @@ public:
 public:
   // Helps C++ to know which copyIdentity to use
   using ReferencedIdentity::copyIdentity;
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration);
+
+  inline
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
+};
+
+////////////////////////////
+// NodeReferencedIdentity //
+////////////////////////////
+
+class NodeReferencedIdentity {
+public:
+  NodeReferencedIdentity() {}
+
+protected:
+  inline
+  virtual StableNode& dereference(RichNode self, VM vm) = 0;
+
+public:
+  inline
+  Identity& getIdentity(RichNode self, VM vm);
+
+public:
+  inline
+  bool is(RichNode self, VM vm);
+  
+  inline
+  size_t getId(RichNode self, VM vm);
+
+  inline
+  void setId(RichNode self, VM vm, size_t id);
+
+public:
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity& other);
+
+  inline
+  void copyIdentity(RichNode self, VM vm, const Identity* other);
+};
+
+////////////////////////////////////
+// NodeReferencedAdvancedIdentity //
+////////////////////////////////////
+
+class NodeReferencedAdvancedIdentity: public NodeReferencedIdentity {
+public:
+  NodeReferencedAdvancedIdentity() {}
+
+public:
+  inline
+  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm);
+
+public:
+  inline
+  size_t getKindId(RichNode self, VM vm);
+
+  inline
+  size_t getGenerationId(RichNode self, VM vm);
+
+public:
+  inline
+  bool isKindLeader(RichNode self, VM vm);
+
+public:
+  // Helps C++ to know which copyIdentity to use
+  using NodeReferencedIdentity::copyIdentity;
 
   inline
   void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other);

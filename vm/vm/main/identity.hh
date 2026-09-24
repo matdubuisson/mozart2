@@ -99,6 +99,10 @@ void AdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdenti
 // ReferencedIdentity //
 ////////////////////////
 
+Identity& ReferencedIdentity::getIdentity(RichNode self, VM vm) {
+  return getIdentity();
+}
+
 bool ReferencedIdentity::is(RichNode self, VM vm) {
   return getIdentity(self, vm).is(self, vm);
 }
@@ -122,6 +126,10 @@ void ReferencedIdentity::copyIdentity(RichNode self, VM vm, const Identity* othe
 ////////////////////////////////
 // ReferencedAdvancedIdentity //
 ////////////////////////////////
+
+AdvancedIdentity& ReferencedAdvancedIdentity::getAdvancedIdentity(RichNode self, VM vm) {
+  return getAdvancedIdentity();
+}
 
 size_t ReferencedAdvancedIdentity::getKindId(RichNode self, VM vm) {
   return getAdvancedIdentity(self, vm).getKindId(self, vm);
@@ -149,6 +157,70 @@ void ReferencedAdvancedIdentity::followIdentity(RichNode self, VM vm, const Adva
 
 void ReferencedAdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration) {
   getAdvancedIdentity(self, vm).followIdentity(self, vm, other, newGeneration);
+}
+
+////////////////////////////
+// NodeReferencedIdentity //
+////////////////////////////
+
+Identity& NodeReferencedIdentity::getIdentity(RichNode self, VM vm) {
+  return Identifiable(dereference(self, vm)).getIdentity(vm);
+}
+
+bool NodeReferencedIdentity::is(RichNode self, VM vm) {
+  return Identifiable(dereference(self, vm)).is(vm);
+}
+
+size_t NodeReferencedIdentity::getId(RichNode self, VM vm) {
+  return Identifiable(dereference(self, vm)).getId(vm);
+}
+
+void NodeReferencedIdentity::setId(RichNode self, VM vm, size_t id) {
+  Identifiable(dereference(self, vm)).setId(vm, id);
+}
+
+void NodeReferencedIdentity::copyIdentity(RichNode self, VM vm, const Identity& other) {
+  Identifiable(dereference(self, vm)).copyIdentity(vm, other);
+}
+
+void NodeReferencedIdentity::copyIdentity(RichNode self, VM vm, const Identity* other) {
+  Identifiable(dereference(self, vm)).copyIdentity(vm, other);
+}
+
+////////////////////////////////////
+// NodeReferencedAdvancedIdentity //
+////////////////////////////////////
+
+AdvancedIdentity& NodeReferencedAdvancedIdentity::getAdvancedIdentity(RichNode self, VM vm) {
+  return AdvancedIdentifiable(dereference(self, vm)).getAdvancedIdentity(vm);
+}
+
+size_t NodeReferencedAdvancedIdentity::getKindId(RichNode self, VM vm) {
+  return AdvancedIdentifiable(dereference(self, vm)).getKindId(vm);
+}
+
+size_t NodeReferencedAdvancedIdentity::getGenerationId(RichNode self, VM vm) {
+  return AdvancedIdentifiable(dereference(self, vm)).getGenerationId(vm);
+}
+
+bool NodeReferencedAdvancedIdentity::isKindLeader(RichNode self, VM vm) {
+  return AdvancedIdentifiable(dereference(self, vm)).isKindLeader(vm);
+}
+
+void NodeReferencedAdvancedIdentity::copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other) {
+  AdvancedIdentifiable(dereference(self, vm)).copyIdentity(vm, other);
+}
+
+void NodeReferencedAdvancedIdentity::copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other) {
+  AdvancedIdentifiable(dereference(self, vm)).copyIdentity(vm, other);
+}
+
+void NodeReferencedAdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration) {
+  AdvancedIdentifiable(dereference(self, vm)).followIdentity(vm, other, newGeneration);
+}
+
+void NodeReferencedAdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration) {
+  AdvancedIdentifiable(dereference(self, vm)).followIdentity(vm, other, newGeneration);
 }
 
 ///////////////////////
