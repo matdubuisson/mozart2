@@ -54,17 +54,17 @@ public:
   static void create(Runnable*& self, VM vm, GR gr, ReifiedThread from);
 
 public:
-  using ReferencedIdentity::getIdentity;
+  using ReferencedAdvancedIdentity::getIdentity;
 
   inline
-  Identity& getIdentity(RichNode self, VM vm) override {
+  Identity& getIdentity() override {
     return _runnable->getIdentity();
   }
 
   using ReferencedAdvancedIdentity::getAdvancedIdentity;
 
   inline
-  AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm) override {
+  AdvancedIdentity& getAdvancedIdentity() override {
     return _runnable->getAdvancedIdentity();
   }
 
