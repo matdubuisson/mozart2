@@ -38,19 +38,13 @@ template<>
 struct Interface<Identifiable>:
   ImplementedBy<ReifiedThread,
     Variable, ReadOnlyVariable, OptVar,
-    Abstraction, Cons, Tuple, Record>,
+    Cons, Tuple, Record,
+    // TODO : Add Abstraction to it but Abstraction inherits Identity but not AdvancedIdentity however AdvancedIdentifiable(abstraction).is(vm) == true thus the system was bugged.
+    Reference>,
   NoAutoWait, NoAutoReflectiveCalls {
 
   Identity& getIdentity(RichNode self, VM vm) {
-    raiseTypeError(vm, "Identity", self);
-  }
-
-  void copyIdentity(RichNode self, VM vm, const Identity& other) {
-    raiseTypeError(vm, "Identity", self);
-  }
-  
-  void copyIdentity(RichNode self, VM vm, const Identity* other) {
-    raiseTypeError(vm, "Identity", self);
+    raiseTypeError(vm, "Identity.getIdentity", self);
   }
 
   bool is(RichNode self, VM vm) {
@@ -62,6 +56,14 @@ struct Interface<Identifiable>:
   }
 
   void setId(RichNode self, VM vm, size_t id) {}
+
+  void copyIdentity(RichNode self, VM vm, const Identity& other) {
+    raiseTypeError(vm, "Identity.copyIdentity", self);
+  }
+  
+  void copyIdentity(RichNode self, VM vm, const Identity* other) {
+    raiseTypeError(vm, "Identity.copyIdentity (ptr)", self);
+  }
 };
 
 class AdvancedIdentifiable;
@@ -69,23 +71,16 @@ template<>
 struct Interface<AdvancedIdentifiable>:
   ImplementedBy<ReifiedThread,
     Variable, ReadOnlyVariable, OptVar,
-    Cons, Tuple, Record>,
+    Cons, Tuple, Record,
+    Reference>,
   NoAutoWait, NoAutoReflectiveCalls {
 
   Identity& getIdentity(RichNode self, VM vm) {
-    raiseTypeError(vm, "AdvancedIdentity", self);
+    raiseTypeError(vm, "AdvancedIdentity.getIdentity", self);
   }
 
   AdvancedIdentity& getAdvancedIdentity(RichNode self, VM vm) {
-    raiseTypeError(vm, "AdvancedIdentity", self);
-  }
-
-  void copyIdentity(RichNode self, VM vm, const Identity& other) {
-    raiseTypeError(vm, "AdvancedIdentity", self);
-  }
-  
-  void copyIdentity(RichNode self, VM vm, const Identity* other) {
-    raiseTypeError(vm, "AdvancedIdentity", self);
+    raiseTypeError(vm, "AdvancedIdentity.getAdvancedIdentity", self);
   }
 
   bool is(RichNode self, VM vm) {
@@ -97,16 +92,6 @@ struct Interface<AdvancedIdentifiable>:
   }
 
   void setId(RichNode self, VM vm, size_t id) {}
-
-  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other) {}
-
-  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other) {}
-
-  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
-    bool newGeneration = true) {}
-
-  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
-    bool newGeneration = true) {}
 
   size_t getKindId(RichNode self, VM vm) {
     return SIZE_MAX;
@@ -118,6 +103,32 @@ struct Interface<AdvancedIdentifiable>:
 
   bool isKindLeader(RichNode self, VM vm) {
     return false;
+  }
+
+  void copyIdentity(RichNode self, VM vm, const Identity& other) {
+    raiseTypeError(vm, "AdvancedIdentity.copyIdentity (Identity)", self);
+  }
+  
+  void copyIdentity(RichNode self, VM vm, const Identity* other) {
+    raiseTypeError(vm, "AdvancedIdentity.copyIdentity (Identity ptr)", self);
+  }
+
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity& other) {
+    raiseTypeError(vm, "AdvancedIdentity.copyIdentity", self);
+  }
+
+  void copyIdentity(RichNode self, VM vm, const AdvancedIdentity* other) {
+    raiseTypeError(vm, "AdvancedIdentity.copyIdentity (ptr)", self);
+  }
+
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity& other,
+    bool newGeneration = true) {
+    raiseTypeError(vm, "AdvancedIdentity.followIdentity", self);
+  }
+
+  void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other,
+    bool newGeneration = true) {
+    raiseTypeError(vm, "AdvancedIdentity.followIdentity (ptr)", self);
   }
 };
 
