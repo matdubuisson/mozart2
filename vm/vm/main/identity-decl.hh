@@ -420,6 +420,9 @@ public:
 
 public:
   inline
+  bool is(RichNode self, VM vm);
+
+  inline
   size_t getKindId(RichNode self, VM vm);
 
   inline

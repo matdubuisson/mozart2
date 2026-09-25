@@ -195,6 +195,10 @@ AdvancedIdentity& NodeReferencedAdvancedIdentity::getAdvancedIdentity(RichNode s
   return AdvancedIdentifiable(dereference(self, vm)).getAdvancedIdentity(vm);
 }
 
+bool NodeReferencedAdvancedIdentity::is(RichNode self, VM vm) {
+  return AdvancedIdentifiable(dereference(self, vm)).is(vm);
+}
+
 size_t NodeReferencedAdvancedIdentity::getKindId(RichNode self, VM vm) {
   return AdvancedIdentifiable(dereference(self, vm)).getKindId(vm);
 }
