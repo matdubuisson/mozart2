@@ -30,23 +30,19 @@ namespace mozart {
 
 void initArrayAt(VM vm, RichNode structure,
   StaticArray<StableNode>& array, size_t index) {
-  UnstableNode variable = Variable::build(vm);
-
-  array[index].init(vm, variable);
 
   AdvancedIdentifiable identifiableStructure = AdvancedIdentifiable(structure);
   if (identifiableStructure.is(vm)) {
+    UnstableNode variable = Variable::build(vm);
+    array[index].init(vm, variable);
+
     AdvancedIdentifiable(variable).followIdentity(vm,
       identifiableStructure.getAdvancedIdentity(vm), false);
-  } else if (structure.is<Reference>()) {
-    initArrayAt(vm,
-      RichNode(*structure.as<Reference>().dest()),
-      array, index
-    );
+  } else {
+    array[index].init(vm, OptVar::build(vm));
   }
 }
 
-static inline
 void initArrayAtAux(VM vm, RichNode structure,
   StaticArray<StableNode>& array, size_t index, RichNode value) {
 
@@ -56,17 +52,6 @@ void initArrayAtAux(VM vm, RichNode structure,
   if (identifiableValue.is(vm) && identifiableStructure.is(vm)) {
     identifiableValue.followIdentity(vm,
       identifiableStructure.getAdvancedIdentity(vm), false);
-  } else if (structure.is<Reference>()) {
-    initArrayAtAux(vm,
-      RichNode(*structure.as<Reference>().dest()),
-      array, index, value
-    );
-  } else if (value.is<Reference>()) {
-    initArrayAtAux(vm,
-      structure,
-      array, index,
-      *value.as<Reference>().dest()
-    );
   }
 }
 
