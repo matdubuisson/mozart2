@@ -117,83 +117,83 @@ define
     NormalExecutionMode = ({Boot_Scheduler.getExecutionMode $} == normal)
     AlarmRaised = {Boot_EventManager.isTrackingTriggered $}
   in
-    if {Boot_Scheduler.isGCReady $} then
-      {PrintWarning "GC ready"}
-    end
-
-    if {Boot_Scheduler.isGCDone $} then
-      {PrintWarning "GC done"}
-    end
-
-    if {Boot_Thread.isPreemptible This $} then
-      {Boot_Thread.setPreemptible This false}
-    end
-
-    if NormalExecutionMode orelse AlarmRaised then
-      {ProcessCommand}
-    else
-      {Boot_Thread.preempt This}
-    end
-
-    % if 
-    %   {Boot_Scheduler.isGCReady $} == false
-    %   andthen {Boot_Scheduler.isGCDone $} == false
-    %   andthen {Boot_EventManager.isTrackingTriggered $} then
-
-    %   local
-    %     Variables = {Boot_Introspection.getAllVariables $}
-
-    %     proc {FormatStateCase Variable ?Result}
-    %       case Variable of variable(
-    %         id: Id
-    %         kindId: KindId
-    %         generationId: GenerationId
-    %         type: Type
-    %         isBound: IsBound
-    %         isNeeded: IsNeeded
-    %         pendings: Pendings
-    %         candidates: Candidates
-    %         value: _
-    %       ) then
-    %         Result = [
-    %           {Int.toString Id $}
-    %           {Int.toString KindId $}
-    %           {Int.toString GenerationId $}
-    %           {Atom.toString Type $}
-    %           {Bool.toString IsBound $}
-    %           {Bool.toString IsNeeded $}
-    %           {Int.toString
-    %             {List.length Pendings $} $}
-    %           {Int.toString
-    %             {List.length Candidates $} $}
-    %         ]
-    %       end
-    %     end
-
-    %   in
-    %     {DisplayCSV
-    %       ["Id" "KindId" "GenerationId" "Type" "IsBound" "IsNeeded" "NPendings" "NCandidates"]
-    %       Variables
-    %       10
-    %       FormatStateCase
-    %     }
-    %   end
-
-    %   local
-    %     % PingPong :
-    %     % Lists = {Boot_Introspection.getLists [100000] $}
-    %     Lists = {Boot_Introspection.getLists [11111111 22222222 33333333 44444444 55555555] $}
-    %   in
-    %     if Lists \= nil then
-    %       {MaskedDisplayCSV
-    %         ["Id" "KindId" "GenerationId" "Hash" "Owners" "List"]
-    %         Lists 10 FormatList
-    %         [true true true true false false]}
-    %       {PrintWarning "Make a stop...."}
-    %       {Boot_System.inputEnter}
-    %     else {PrintWarning "No lists matching conditions found"} end
-    %   end
+    % if {Boot_Scheduler.isGCReady $} then
+    %   {PrintWarning "GC ready"}
     % end
+
+    % if {Boot_Scheduler.isGCDone $} then
+    %   {PrintWarning "GC done"}
+    % end
+
+    % if {Boot_Thread.isPreemptible This $} then
+    %   {Boot_Thread.setPreemptible This false}
+    % end
+
+    % if NormalExecutionMode orelse AlarmRaised then
+    %   {ProcessCommand}
+    % else
+    %   {Boot_Thread.preempt This}
+    % end
+
+    if 
+      {Boot_Scheduler.isGCReady $} == false
+      andthen {Boot_Scheduler.isGCDone $} == false
+      andthen {Boot_EventManager.isTrackingTriggered $} then
+
+      local
+        Variables = {Boot_Introspection.getAllVariables $}
+
+        proc {FormatStateCase Variable ?Result}
+          case Variable of variable(
+            id: Id
+            kindId: KindId
+            generationId: GenerationId
+            type: Type
+            isBound: IsBound
+            isNeeded: IsNeeded
+            pendings: Pendings
+            candidates: Candidates
+            value: _
+          ) then
+            Result = [
+              {Int.toString Id $}
+              {Int.toString KindId $}
+              {Int.toString GenerationId $}
+              {Atom.toString Type $}
+              {Bool.toString IsBound $}
+              {Bool.toString IsNeeded $}
+              {Int.toString
+                {List.length Pendings $} $}
+              {Int.toString
+                {List.length Candidates $} $}
+            ]
+          end
+        end
+
+      in
+        {DisplayCSV
+          ["Id" "KindId" "GenerationId" "Type" "IsBound" "IsNeeded" "NPendings" "NCandidates"]
+          Variables
+          10
+          FormatStateCase
+        }
+      end
+
+      local
+        % PingPong :
+        % Lists = {Boot_Introspection.getLists [100000] $}
+        Lists = {Boot_Introspection.getLists [11111111 22222222 33333333 44444444 55555555] $}
+      in
+        if Lists \= nil then
+          {MaskedDisplayCSV
+            ["Id" "KindId" "GenerationId" "Hash" "Owners" "List"]
+            Lists 10 FormatList
+            [true true true true false false]}
+          {PrintWarning "Make a stop...."}
+          {Boot_System.inputEnter}
+        else {PrintWarning "No lists matching conditions found"} end
+      end
+    end
 
     {Boot_Thread.preempt This}
     {Loop}
