@@ -49,6 +49,23 @@ struct DebugEntry {
   DebugEntry(GR gr, const DebugEntry& other);
 };
 
+struct DebugInfo {
+  // Description
+  StableNode* name;
+  StableNode* path;
+  StableNode* type;
+
+  // Localization
+  StableNode* file;
+  size_t line;
+  size_t column;
+
+  inline
+  explicit DebugInfo(StableNode* name, StableNode *path, StableNode* type,
+    StableNode* file, size_t line, size_t column) :
+    name(name), path(path), type(type), file(file), line(line), column(column) {}
+};
+
 /**
  * Entry of a thread stack
  */

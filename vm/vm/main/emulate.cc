@@ -402,6 +402,15 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
         case OpClearY:
           advancePC(1); break;
 
+        case OpDebugInfo: {
+          DebugInfo debugInfo = DebugInfo(
+            &KPC(1), &KPC(2), &KPC(3),
+            &KPC(4), IntPC(5), IntPC(6)
+          );
+          advancePC(6);
+          break;
+        }
+
         // MOVES
 
         case OpMoveXX:

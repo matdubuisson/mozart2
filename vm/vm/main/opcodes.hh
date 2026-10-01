@@ -203,6 +203,7 @@ const OpCode OpDebugExit = 0xa1;
 const OpCode OpLocalVarname = 0xa2;
 const OpCode OpGlobalVarname = 0xa3;
 const OpCode OpClearY = 0xa4;
+const OpCode OpDebugInfo = 0xa5;
 
 }
 
