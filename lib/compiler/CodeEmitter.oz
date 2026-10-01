@@ -40,6 +40,7 @@ export
 prepare
    Continuations = c(vDebugEntry: 4
                      vDebugExit: 4
+                     vDebugInfo: 6
                      vMakePermanent: 3
                      vClear: 3
                      vUnify: 4
@@ -768,6 +769,8 @@ define
             Emitter, DebugEntry(Coord Kind)
          [] vDebugExit(_ Coord Kind _) then
             Emitter, DebugExit(Coord Kind)
+         [] vDebugInfo(_ Name Path Type Coord _) then
+            Emitter, DebugInfo(Name Path Type Coord)
          [] vMakePermanent(_ RegIndices _) then TempX1 TempX2 S D in
             Emitter, AllocateShortLivedTemp(?TempX2)
             Emitter, AllocateShortLivedTemp(?TempX1)
@@ -1402,6 +1405,12 @@ define
             end
             Emitter, Emit(debugExit(FileName Line Column
                                     {VirtualString.toAtom Comment#'/'#Kind}))
+         end
+      end
+
+      meth DebugInfo(Name Path Type Coord)
+         case Coord of pos(FileName Line Column) then
+            Emitter, Emit(debugInfo(Name Path Type FileName Line Column))
          end
       end
 

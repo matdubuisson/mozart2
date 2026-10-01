@@ -197,6 +197,7 @@ define
             end
             case VInstr of vDebugEntry(_ _ _ _) then skip
             [] vDebugExit(_ _ _ _) then skip
+            [] vDebugInfo(_ _ _ _ _ _) then skip
             [] vMakePermanent(_ RegIndices _) then
                {ForAll RegIndices
                 proc {$ Reg#_#_}
@@ -370,6 +371,7 @@ define
             end
             case VInstr of vDebugEntry(_ _ _ _) then skip
             [] vDebugExit(_ _ _ _) then skip
+            [] vDebugInfo(_ _ _ _ _ _) then skip
             [] vMakePermanent(_ _ _) then skip
             [] vClear(_ _ _) then skip
             [] vUnify(_ _ _ _) then skip
