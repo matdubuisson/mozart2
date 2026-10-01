@@ -1409,9 +1409,9 @@ define
       end
 
       meth DebugInfo(Name Path Type Coord)
-         case Coord of pos(FileName Line Column) then
-            Emitter, Emit(debugInfo(Name Path Type FileName Line Column))
-         end
+         FileName = Coord.1 Line = Coord.2 Column = Coord.3
+      in
+         Emitter, Emit(debugInfo(Name Path Type FileName Line Column))
       end
 
       meth Unify(R1 R2)

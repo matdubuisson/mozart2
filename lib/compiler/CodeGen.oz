@@ -118,6 +118,12 @@ define
       end
    end
 
+   proc {MakeDebugInfo Name Path Type Coord VInter1 VInter2}
+      FileName = Coord.1 Line = Coord.2 Column = Coord.3
+   in
+      VInter1 = vDebugInfo(_ Name Path Type Coord VInter2)
+   end
+
    proc {MakeUnify Reg1 Reg2 VHd VTl}
       if {IsDet Reg1} andthen {IsDet Reg2} andthen Reg1 == Reg2 then
          %% We omit the unification to avoid unnecessary Reg occurrences.
@@ -1011,7 +1017,10 @@ define
              ErrAddr nil}
             VInter1 = vTestBool(_ {@arbiter reg($)} ThenAddr AltAddr ErrAddr
                                 @coord VInter2)
-            {StepPoint @coord 'conditional' VHd VTl VInter1 VInter2}
+            local VInter3 in
+               {MakeDebugInfo 'blabla' 'blabla/blabla' 'if' @coord VInter2 VInter3}
+               {StepPoint @coord 'conditional' VHd VTl VInter1 VInter3}
+            end
          end
       end
    end

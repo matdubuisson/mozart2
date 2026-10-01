@@ -143,7 +143,7 @@ define
          [] vExHandler(OccsRS Addr1 Reg Addr2 Coord Cont InitsRS) then
             vExHandler(OccsRS CodeStore, Deref(Addr1 $) Reg
                        CodeStore, Deref(Addr2 $) Coord CodeStore, Share(Cont $)
-                       InitsRS)[] vDebugInfo(_ _ _ _ _ _) then skip
+                       InitsRS)
          [] vTestBool(OccsRS Reg Addr1 Addr2 Addr3 Coord Cont) then
             vTestBool(OccsRS Reg CodeStore, Deref(Addr1 $)
                       CodeStore, Deref(Addr2 $) CodeStore, Deref(Addr3 $)
