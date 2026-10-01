@@ -71,6 +71,17 @@ DebugEntry::DebugEntry(GR gr, const DebugEntry& from):
   }
 }
 
+std::string DebugInfo::toString(VM vm) {
+  std::basic_stringstream<char> buffer;
+  buffer << "Name: " << getNodeRepr(vm, RichNode(*name)) << std::endl;
+  buffer << "Path: " << getNodeRepr(vm, RichNode(*path)) << std::endl;
+  buffer << "Type: " << getNodeRepr(vm, RichNode(*type)) << std::endl;
+  buffer << "Filename: " << getNodeRepr(vm, RichNode(*filename)) << std::endl;
+  buffer << "Line: " << line << std::endl;
+  buffer << "Column: " << column << std::endl;
+  return buffer.str();
+}
+
 ////////////////
 // StackEntry //
 ////////////////
@@ -407,6 +418,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
             &KPC(1), &KPC(2), &KPC(3),
             &KPC(4), IntPC(5), IntPC(6)
           );
+          std::cout << debugInfo.toString(vm) << std::endl;
           advancePC(6);
           break;
         }

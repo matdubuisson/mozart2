@@ -88,6 +88,9 @@ void requireFeature(VM vm, RichNode feature);
 // Types classification //
 //////////////////////////
 
+static inline
+std::string getNodeRepr(VM vm, RichNode node);
+
 // About runnables
 
 template<class Object>

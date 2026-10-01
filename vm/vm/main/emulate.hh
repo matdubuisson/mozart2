@@ -56,14 +56,17 @@ struct DebugInfo {
   StableNode* type;
 
   // Localization
-  StableNode* file;
+  StableNode* filename;
   size_t line;
   size_t column;
 
   inline
   explicit DebugInfo(StableNode* name, StableNode *path, StableNode* type,
     StableNode* file, size_t line, size_t column) :
-    name(name), path(path), type(type), file(file), line(line), column(column) {}
+    name(name), path(path), type(type), filename(file), line(line), column(column) {}
+
+  inline
+  std::string toString(VM vm);
 };
 
 /**

@@ -150,6 +150,13 @@ void printNode(VM vm, RichNode node) {
   std::cout << "Node: " << buffer.str() << std::endl;
 }
 
+std::string getNodeRepr(VM vm, RichNode node) {
+  auto& config = vm->getPropertyRegistry().config;
+  std::basic_stringstream<char> buffer;
+  buffer << repr(vm, node, config.printDepth, config.printWidth);
+  return buffer.str();
+}
+
 template<class Object>
 constexpr bool isRunnable() {
   return std::is_same_v<Object, Runnable>
