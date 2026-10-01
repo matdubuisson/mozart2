@@ -70,6 +70,10 @@ public:
     return _value;
   }
 
+  atom_t getValue(VM vm) const {
+    return _value;
+  }
+
   inline
   bool equals(VM vm, RichNode right);
 

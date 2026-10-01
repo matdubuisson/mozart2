@@ -270,6 +270,10 @@ struct Interface<AtomLike>:
   bool isAtom(RichNode self, VM vm) {
     return false;
   }
+
+  atom_t getValue(RichNode self, VM vm) const {
+    raiseTypeError(vm, "Atom", self);
+  }
 };
 
 class PotentialFeature;
