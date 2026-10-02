@@ -63,6 +63,7 @@ fun {CoordinatesOf P}
    [] fApply(_ _ C) then C
    [] fProc(_ _ _ _ C) then C
    [] fFun(_ _ _ _ C) then C
+   [] fFunLazy(_ _ _ _ C) then C
    [] fFunctor(_ _ C) then C
    [] fClass(_ _ _ C) then C
    [] fLocal(_ _ C) then C
@@ -135,6 +136,8 @@ proc {GetPatternVariablesStatement S VsHd VsTl}
    [] fProc(E _ _ _ _) then
       {GetPatternVariablesExpression E VsHd VsTl}
    [] fFun(E _ _ _ _) then
+      {GetPatternVariablesExpression E VsHd VsTl}
+   [] fFunLazy(E _ _ _ _) then
       {GetPatternVariablesExpression E VsHd VsTl}
    [] fFunctor(E _ _) then
       {GetPatternVariablesExpression E VsHd VsTl}

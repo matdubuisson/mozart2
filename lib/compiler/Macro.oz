@@ -157,6 +157,9 @@ define
       [] fFun(P1 L P2 _ _) then
          {ContainsMacro P1} orelse {Some L ContainsMacro}
          orelse {ContainsMacro P2}
+      [] fFunLazy(P1 L P2 _ _) then
+         {ContainsMacro P1} orelse {Some L ContainsMacro}
+         orelse {ContainsMacro P2}
       [] fFunctor(P L _) then {ContainsMacro P} orelse {Some L ContainsMacro}
       [] fRequire(L _) then {Some L ContainsMacro}
       [] fPrepare(P1 P2 _) then {ContainsMacro P1} orelse {ContainsMacro P2}
@@ -307,6 +310,10 @@ define
                {FullMacroExpand P2 Env} Fs C)
       [] fFun(P1 L P2 Fs C) then
          fFun({FullMacroExpand P1 Env}
+              {FullMacroExpandList L Env}
+              {FullMacroExpand P2 Env} Fs C)
+      [] fFunLazy(P1 L P2 Fs C) then
+         fFunLazy({FullMacroExpand P1 Env}
               {FullMacroExpandList L Env}
               {FullMacroExpand P2 Env} Fs C)
       [] fFunctor(P L C) then

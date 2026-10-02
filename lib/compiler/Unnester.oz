@@ -538,6 +538,7 @@ define
             NewOrigin = case FE of fSelf(_) then 'Self'
                         [] fProc(_ _ _ _ _) then 'Proc'
                         [] fFun(_ _ _ _ _) then 'Fun'
+                        [] fFunLazy(_ _ _ _ _) then 'FunLazy'
                         [] fFunctor(_ _ _) then 'Functor'
                         [] fClass(_ _ _ _) then 'Class'
                         [] fScanner(_ _ _ _ _ _) then 'Scanner'
@@ -785,6 +786,42 @@ define
                                      CND) RestFlags C)
                Unnester, UnnestStatement(NewFS $)
             end
+         [] fFunLazy(FE1 FEs FE2 ProcFlags C) then LazyFlags RestFlags in
+            {List.partition ProcFlags fun {$ fAtom(A _)} A == 'lazy' end
+             ?LazyFlags ?RestFlags}
+            {List.forAll RestFlags proc{$ fAtom(A _)}
+                                      case A
+                                      of instantiate then skip
+                                      [] dynamic then skip
+                                      [] sited then skip
+                                      else
+                                         {@reporter
+                                          error(coord: C kind: 'flag check warning'
+                                               msg: 'unrecognized flag '#A#' was ignored')}
+                                      end
+                                   end}
+            if {DollarsInScope FEs 0} > 0 then
+               {@reporter error(coord: {DollarCoord FEs} kind: SyntaxError
+                                msg: 'no $ in function head allowed')}
+               nil
+            else CND Formals NewFE NewFS in
+               CND = {CoordNoDebug C}
+               Formals#NewFE = {FoldR FEs
+                                fun {$ FE1 Formals#FE2} GV in
+                                   (fAnonVar('Result' C GV)|Formals)#
+                                   fCase(fOcc(GV) [fCaseClause(FE1 FE2)]
+                                         fNoElse(CND)   %--** better exception
+                                         CND)
+                                end nil#FE2}
+               NewFS = fFunLazy(FE1 Formals
+                            fOpApply('Value.byNeed'
+                                     [fFun(fDollar(CND) nil NewFE nil CND)]
+                                     CND) RestFlags C)
+               Unnester, UnnestStatement(NewFS $)
+            end
+
+         %%%%%%%%%%%%%%%%%%%%%%%%%%
+
          [] fFunctor(FE FDescriptors C) then
             FRequire FPrepare FImport FExport FDefine1 FDefine2
          in
@@ -1465,6 +1502,16 @@ define
          [] fFun(FE1 FEs FE2 ProcFlags C) then
             case FE1 of fDollar(_) then NewFS in
                NewFS = fFun(fOcc(ToGV) FEs FE2 ProcFlags C)
+               Unnester, UnnestStatement(NewFS $)
+            else
+               {@reporter error(coord: {CoordinatesOf FE1} kind: SyntaxError
+                                msg: ('nesting marker expected as designator '#
+                                      'of nested function'))}
+               Unnester, UnnestStatement(FE $)
+            end
+         [] fFunLazy(FE1 FEs FE2 ProcFlags C) then
+            case FE1 of fDollar(_) then NewFS in
+               NewFS = fFunLazy(fOcc(ToGV) FEs FE2 ProcFlags C)
                Unnester, UnnestStatement(NewFS $)
             else
                {@reporter error(coord: {CoordinatesOf FE1} kind: SyntaxError
@@ -2702,6 +2749,7 @@ define
          [] fApply(P Ps C) then fApply({TP P} {Map Ps TP} {CS C})
          [] fProc(P1 Ps P2 Fs C) then fProc({TP P1} Ps {SP P2} Fs {CS C})
          [] fFun(P1 Ps P2 Fs C) then fFun({TP P1} Ps {SP P2} Fs {CS C})
+         [] fFunLazy(P1 Ps P2 Fs C) then fFunLazy({TP P1} Ps {SP P2} Fs {CS C})
          [] fFunctor(P1 Ds C) then
             fFunctor({TP P1} {Map Ds EP} {CS C})
          [] fClass(P Ds Ms C) then
@@ -2788,6 +2836,7 @@ define
          [] fApply(P Ps C) then fApply({TP P} {Map Ps TP} {FS C})
          [] fProc(P1 Ps P2 Fs C) then fProc({TP P1} Ps {SP P2} Fs {FS C})
          [] fFun(P1 Ps P2 Fs C) then fFun({TP P1} Ps {SP P2} Fs {FS C})
+         [] fFunLazy(P1 Ps P2 Fs C) then fFunLazy({TP P1} Ps {SP P2} Fs {FS C})
          [] fFunctor(P1 Ds C) then
             fFunctor({TP P1} {Map Ds EP} {FS C})
          [] fRequire(_ _) then P

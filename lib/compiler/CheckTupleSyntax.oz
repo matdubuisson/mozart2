@@ -79,6 +79,9 @@ local
       [] fFun(P1 Ps P2 Fs C) then
          {Phrase P1} {ForAll Ps Phrase} {Phrase P2} {ForAll Fs Atom}
          {Coord C}
+      [] fFunLazy(P1 Ps P2 Fs C) then
+         {Phrase P1} {ForAll Ps Phrase} {Phrase P2} {ForAll Fs Atom}
+         {Coord C}
       [] fFunctor(P Fs C) then
          {Phrase P} {ForAll Fs FunctorDescriptor} {Coord C}
       [] fClass(P Cs Ms C) then

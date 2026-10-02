@@ -229,6 +229,9 @@ define
                   context('function definition' [pB 'fun' star(atom) '{' plus(lvl0) '}' inPhrase 'end' pE])#fun{$ [P1 _ Fs _ As _ S _ P2]}
                                                                                                                fFun(As.1 As.2 S Fs {MkPos P1 P2})
                                                                                                             end
+                  context('lazy function definition' [pB 'fun' 'lazy' star(atom) '{' plus(lvl0) '}' inPhrase 'end' pE])#fun{$ [P1 _ Fs _ As _ S _ P2]}
+                                                                                                               fFunLazy(As.1 As.2 S Fs {MkPos P1 P2})
+                                                                                                            end
                   [pB '{' plus(lvl0) '}' pE]#fun{$ [P1 _ As _ P2]}fApply(As.1 As.2 {MkPos P1 P2}) end
                   context('if phrase' [pB 'if' internalIf 'end' pE])#fun{$ [P1 _ S _ P2]}{AdjoinAt S 4 {MkPos P1 P2}}end
                   context('case phrase' [pB 'case' internalCase 'end' pE])#fun{$ [P1 _ S _ P2]}{AdjoinAt S 4 {MkPos P1 P2}}end

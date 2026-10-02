@@ -44,7 +44,7 @@ define
       'class' 'cond' 'declare' 'define' 'dis' 'do'
       'div' 'else' 'elsecase' 'elseif' 'elseof' 'end'
       'export' 'fail' 'feat' 'finally' 'from' 'for'
-      'fun' 'functor' 'if' 'import' 'in' 'local'
+      'fun' 'functor' 'if' 'import' 'in' 'lazy' 'local'
       'lock' 'meth' 'mod' 'not' 'of' 'or' 'orelse'
       'prepare' 'proc' 'prop' 'raise' 'require'
       'self' 'skip' 'suchthat' 'then' 'thread' 'try'
