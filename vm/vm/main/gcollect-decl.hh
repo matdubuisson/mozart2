@@ -28,6 +28,7 @@
 #include "core-forward-decl.hh"
 
 #include "graphreplicator-decl.hh"
+#include "introspection-decl.hh"
 
 namespace mozart {
 
@@ -63,6 +64,9 @@ private:
   template <class NodeType, class GCedType>
   inline
   void processNode(NodeType*& to, RichNode from);
+
+private:
+  friend class Introspection;
 };
 
 }

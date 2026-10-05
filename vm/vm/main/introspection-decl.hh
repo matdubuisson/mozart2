@@ -50,7 +50,32 @@ public:
   /** @brief Create a introspection object */
   Introspection() {}
 
+  using IdsVector = std::vector<size_t>;
+
 public:
+  /* ========== VM getters ========== */
+
+  inline
+  GarbageCollector& getGarbageCollector(VM vm);
+
+  inline
+  MemManagedList<Runnable**>& getGarbageCollectedThreads(VM vm);
+
+  struct GarbageCollectorTodos {
+    IdsVector runnableIds;
+    IdsVector variableIds;
+    IdsVector structureIds;
+  };
+
+private:
+  template<class StableOrUnstableNode>
+  inline
+  void getGarbageCollectorTodos(VM vm, GarbageCollectorTodos& todos, Node* nodes);
+
+public:
+  inline
+  GarbageCollectorTodos getGarbageCollectorTodos(VM vm);
+
   /* ========== VM state ========== */
 
   /**
@@ -59,6 +84,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
+  inline
   size_t getSchedulesCount(VM vm);
 
   /**
@@ -67,6 +93,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
+  inline
   size_t getOperationsCount(VM vm);
 
   /**
@@ -75,6 +102,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
+  inline
   size_t getSystemSchedulesCount(VM vm);
 
   /**
@@ -83,6 +111,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
+  inline
   size_t getSystemOperationsCount(VM vm);
 
   /**
@@ -91,6 +120,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return size_t 
    */
+  inline
   size_t getGCSchedulesCount(VM vm);
 
   /**
@@ -100,6 +130,7 @@ public:
    * @param includeSystemThreads If system threads are included in the threads set or not
    * @return Runnable* The next scheduled thread
    */
+  inline
   Runnable* getNextScheduledThread(VM vm, bool includeSystemThreads);
 
   enum ArgumentType {
@@ -1198,7 +1229,6 @@ public:
 public:
   /* ========== Reachability graph ========== */
 
-  using IdsVector = std::vector<size_t>;
   using IdToIdsMap = std::unordered_map<size_t, IdsVector>;
 
   struct ReachabilityGraph {

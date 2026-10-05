@@ -113,6 +113,8 @@ public:
 protected:
   MemoryManager& sourceMM;
 private:
+  friend class Introspection;
+
   Kind _kind;
 
   struct {

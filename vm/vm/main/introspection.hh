@@ -29,7 +29,8 @@
 #include <algorithm>
 
 #include "mozartcore.hh"
-#include "emulate.hh"
+
+#ifndef MOZART_GENERATOR
 
 namespace mozart {
 
@@ -41,34 +42,77 @@ std::string Introspection::OperationArgument::toRepr(VM vm, RichNode value) {
   return buffer.str();
 }
 
+/* ========== VM getters ========== */
+
+GarbageCollector& Introspection::getGarbageCollector(VM vm) {
+  return vm->gc;
+}
+
+MemManagedList<Runnable**>& Introspection::getGarbageCollectedThreads(VM vm) {
+  return vm->gc.todos.threads;
+}
+
+Introspection::GarbageCollectorTodos Introspection::getGarbageCollectorTodos(VM vm) {
+  GarbageCollector& gc = vm->gc;
+  GarbageCollectorTodos todos;
+
+  // for (Runnable** runnablePointer : todos.threads) {
+  //   if (*runnablePointer != nullptr) {
+  //     size_t id = (*runnablePointer)->getId();
+  //     todos.runnableIds.push_back(id);
+  //   }
+  // }
+
+  getGarbageCollectorTodos<StableNode>(vm, todos, gc.todos.stableNodes);
+  getGarbageCollectorTodos<UnstableNode>(vm, todos, gc.todos.unstableNodes);
+  return todos;
+}
+
+template<class StableOrUnstableNode>
+void Introspection::getGarbageCollectorTodos(VM vm,
+  GarbageCollectorTodos& todos, Node* nodes) {
+  Node* current = nodes;
+  while (current != nullptr) {
+    StableOrUnstableNode* node = static_cast<StableOrUnstableNode*>(current->grFrom);
+
+    if (node->type() == ReifiedThread::type()) {
+      size_t id = AdvancedIdentifiable(*node).getId(vm);
+      todos.runnableIds.push_back(id);
+    } else if (node->type() == Variable::type()
+      || node->type() == ReadOnlyVariable::type()) {
+      size_t id = AdvancedIdentifiable(*node).getId(vm);
+      todos.variableIds.push_back(id);
+    } else if (node->type() == Cons::type()) {
+      size_t id = AdvancedIdentifiable(*node).getId(vm);
+      todos.variableIds.push_back(id);
+    }
+
+    current = current->grNext;
+  }
+}
+
 /* ========== VM state ========== */
 
-inline
 size_t Introspection::getSchedulesCount(VM vm) {
   return vm->_statistics.schedulesCount;
 }
 
-inline
 size_t Introspection::getOperationsCount(VM vm) {
   return vm->_statistics.operationsCount;
 }
 
-inline
 size_t Introspection::getSystemSchedulesCount(VM vm) {
   return vm->_statistics.systemSchedulesCount;
 }
 
-inline
 size_t Introspection::getSystemOperationsCount(VM vm) {
   return vm->_statistics.systemOperationsCount;
 }
 
-inline
 size_t Introspection::getGCSchedulesCount(VM vm) {
   return vm->_statistics.gcSchedulesCount;
 }
 
-inline
 Runnable* Introspection::getNextScheduledThread(VM vm, bool includeSystemThreads) {
   return vm->threadPool.getNext(includeSystemThreads);
 }
@@ -124,29 +168,6 @@ Introspection::ThreadsCounts Introspection::getThreadsCounts(VM vm) {
 
 /* ========== Registers stats ========== */
 
-inline
-size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
-  NodesRegister nodesRegister, size_t depth) {
-  Thread* thread = dynamic_cast<Thread*>(runnable);
-  if (!thread)
-    return 0;
-
-  assert(depth < thread->stack.size());
-  StackEntry& entry = thread->stack[depth];
-  
-  switch (nodesRegister) {
-    case xRegister: {
-      assert(depth == 0);
-      return thread->xregs._array.size();
-    } case yRegister: {
-      return entry.yregs.size();
-    } case gRegister: {
-      return entry.gregs.size();
-    } case kRegister: {
-      return entry.kregs.size();
-    } default: assert(false); return 0;
-  }
-}
 
 /* ========== Nodes properties ========== */
 
@@ -235,68 +256,8 @@ void updateNodesCountsFromStaticArray(VM vm, Introspection::NodesCounts& counts,
   updateNodesCountsFromNodes<UnstableNode>(vm, counts, array);
 }
 
-inline
-void Introspection::getNodesCounts(VM vm, Runnable* runnable,
-  Introspection::NodesCounts& counts) {
-  
-  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-    StaticArray<UnstableNode>& xregs = thread->xregs._array;
-    counts.xNodesCount += xregs.size();
-    updateNodesCountsFromStaticArray(vm, counts, xregs);
-
-    ThreadStack& stack = thread->stack;
-    for (ThreadStack::iterator entry = stack.begin();
-      entry != stack.end(); ++entry) {
-      counts.stackDepth++;
-
-      StaticArray<UnstableNode>& yregs = entry->yregs;
-      StaticArray<StableNode>& gregs = entry->gregs;
-      StaticArray<StableNode>& kregs = entry->kregs;
-
-      counts.yNodesCount += yregs.size();
-      counts.gNodesCount += gregs.size();
-      counts.kNodesCount += kregs.size();
-
-      updateNodesCountsFromStaticArray(vm, counts, yregs);
-      updateNodesCountsFromStaticArray(vm, counts, gregs);
-      updateNodesCountsFromStaticArray(vm, counts, kregs);
-    }
-  }
-}
-
 /* ========== Nodes getters ========== */
 
-inline
-RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-  size_t depth, size_t index) {
-  Thread* thread = dynamic_cast<Thread*>(runnable);
-  if (!thread)
-    return RichNode(nullptr);
-
-  assert(depth < thread->stack.size());
-  StackEntry& entry = thread->stack[depth];
-  
-  switch (nodesRegister) {
-    case xRegister: {
-      assert(depth == 0);
-      StaticArray<UnstableNode> xregs = thread->xregs._array;
-      assert(index < xregs.size());
-      return RichNode(xregs[index]);
-    } case yRegister: {
-      StaticArray<UnstableNode> yregs = entry.yregs;
-      assert(index < yregs.size());
-      return RichNode(yregs[index]);
-    } case gRegister: {
-      StaticArray<StableNode> gregs = entry.gregs;
-      assert(index < gregs.size());
-      return RichNode(gregs[index]);
-    } case kRegister: {
-      StaticArray<StableNode> kregs = entry.kregs;
-      assert(index < kregs.size());
-      return RichNode(kregs[index]);
-    } default: assert(false); return RichNode(nullptr);
-  }
-}
 
 /* ========== Nodes executers ========== */
 
@@ -314,45 +275,6 @@ void doForEachNodeFromStaticArray(VM vm, Runnable* runnable, StaticArray<T> arra
     if (valid(vm, node))
       parse(vm, runnable, node);
   }
-}
-
-inline
-void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
-  size_t depth, size_t from, size_t to, NodeBoolLambda valid, RunnableAndNodeLambda parse) {
-    
-  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
-    assert(depth < thread->stack.size());
-    StackEntry& entry = thread->stack[depth];
-
-    switch (nodesRegister) {
-      case xRegister: {
-        assert(depth == 0);
-        StaticArray<UnstableNode> xregs = thread->xregs._array;
-        // assert(to <= xregs.size());
-        doForEachNodeFromStaticArray(vm, runnable, xregs, from, to,
-          valid, parse);
-        break;
-      } case yRegister: {
-        StaticArray<UnstableNode> yregs = entry.yregs;
-        // assert(to <= yregs.size());
-        doForEachNodeFromStaticArray(vm, runnable, yregs, from, to,
-          valid, parse);
-        break;
-      } case gRegister: {
-        StaticArray<StableNode> gregs = entry.gregs;
-        // assert(to <= gregs.size());
-        doForEachNodeFromStaticArray(vm, runnable, gregs, from, to,
-          valid, parse);
-        break;
-      } case kRegister: {
-        StaticArray<StableNode> kregs = entry.kregs;
-        // assert(to <= kregs.size());
-        doForEachNodeFromStaticArray(vm, runnable, kregs, from, to,
-          valid, parse);
-        break;
-      } default: assert(false);
-    }
-  }  
 }
 
 /* ========== Variables properties ========== */
@@ -624,11 +546,11 @@ Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm, Runnab
     [&counts](VM vm, Runnable* _, RichNode node) {
     if (node.is<Cons>())
       counts.consCount++;
-    if (node.is<Tuple>())
+    else if (node.is<Tuple>())
       counts.tuplesCount++;
-    if (node.is<Arity>())
+    else if (node.is<Arity>())
       counts.aritiesCount++;
-    if (node.is<Record>())
+    else if (node.is<Record>())
       counts.recordsCount++;
   });
 
@@ -636,5 +558,7 @@ Introspection::StructuresCounts Introspection::getStructuresCounts(VM vm, Runnab
 }
 
 }
+
+#endif // MOZART_GENERATOR
 
 #endif // MOZART_INTROSPECTION_H
