@@ -1017,10 +1017,7 @@ define
              ErrAddr nil}
             VInter1 = vTestBool(_ {@arbiter reg($)} ThenAddr AltAddr ErrAddr
                                 @coord VInter2)
-            local VInter3 in
-               {MakeDebugInfo 'blabla' 'blabla/blabla' 'if' @coord VInter2 VInter3}
-               {StepPoint @coord 'conditional' VHd VTl VInter1 VInter3}
-            end
+            {StepPoint @coord 'conditional' VHd VTl VInter1 VInter2}            
          end
       end
    end
