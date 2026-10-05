@@ -25,6 +25,7 @@
 #ifndef MOZART_MODINTROSPECTION_H
 #define MOZART_MODINTROSPECTION_H
 
+#include "../introspection-decl.hh"
 #include "mozartcore-module.hh"
 
 #include <unordered_set>
@@ -121,6 +122,22 @@ public:
     GetNextOperation(): Builtin("getNextOperation") {}
 
     static void call(VM vm, In includeSystemThreadsNode, Out result);
+  };
+
+  /* ========== Garbage Collector ========== */
+
+  class GetGarbageCollectedThreads: public Builtin<GetGarbageCollectedThreads> {
+  public:
+    GetGarbageCollectedThreads(): Builtin("getGarbageCollectedThreads") {}
+
+    static void call(VM vm, Out result);
+  };
+
+  class GetGarbageCollectorTodos: public Builtin<GetGarbageCollectorTodos> {
+  public:
+    GetGarbageCollectorTodos(): Builtin("getGarbageCollectorTodos") {}
+
+    static void call(VM vm, Out result);
   };
 
   /* ========== Threads ========== */

@@ -4,6 +4,7 @@ set(MODULE_SOURCES
   modidentity.cc
 
   modintrospection-vm.cc
+  modintrospection-gc.cc
   modintrospection-runnable.cc
   modintrospection-variable.cc
   modintrospection-node.cc

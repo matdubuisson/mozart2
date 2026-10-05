@@ -117,9 +117,14 @@ define
     NormalExecutionMode = ({Boot_Scheduler.getExecutionMode $} == normal)
     AlarmRaised = {Boot_EventManager.isTrackingTriggered $}
   in
-    % if {Boot_Scheduler.isGCReady $} then
-    %   {PrintWarning "GC ready"}
-    % end
+    if {Boot_Scheduler.isGCReady $} then
+      CollectedThreadIds = {Boot_Introspection.getGarbageCollectedThreads $}
+      Todos = {Boot_Introspection.getGarbageCollectorTodos $}
+    in
+      {PrintWarning "GC ready"}
+      {Boot_System.printRepr CollectedThreadIds false true}
+      {Boot_System.printRepr Todos false true}
+    end
 
     % if {Boot_Scheduler.isGCDone $} then
     %   {PrintWarning "GC done"}
