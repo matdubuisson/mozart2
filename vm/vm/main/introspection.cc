@@ -852,4 +852,132 @@ Introspection::RunnableAndNodeLambda Introspection::getAddConsLambda(VM vm, Node
   };
 }
 
+/* ========== Registers stats ========== */
+
+size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
+  NodesRegister nodesRegister, size_t depth) {
+  Thread* thread = dynamic_cast<Thread*>(runnable);
+  if (!thread)
+    return 0;
+
+  assert(depth < thread->stack.size());
+  StackEntry& entry = thread->stack[depth];
+  
+  switch (nodesRegister) {
+    case xRegister: {
+      assert(depth == 0);
+      return thread->xregs._array.size();
+    } case yRegister: {
+      return entry.yregs.size();
+    } case gRegister: {
+      return entry.gregs.size();
+    } case kRegister: {
+      return entry.kregs.size();
+    } default: assert(false); return 0;
+  }
+}
+
+/* ========== Nodes counters ========== */
+
+void Introspection::getNodesCounts(VM vm, Runnable* runnable,
+  Introspection::NodesCounts& counts) {
+  
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    StaticArray<UnstableNode>& xregs = thread->xregs._array;
+    counts.xNodesCount += xregs.size();
+    updateNodesCountsFromStaticArray(vm, counts, xregs);
+
+    ThreadStack& stack = thread->stack;
+    for (ThreadStack::iterator entry = stack.begin();
+      entry != stack.end(); ++entry) {
+      counts.stackDepth++;
+
+      StaticArray<UnstableNode>& yregs = entry->yregs;
+      StaticArray<StableNode>& gregs = entry->gregs;
+      StaticArray<StableNode>& kregs = entry->kregs;
+
+      counts.yNodesCount += yregs.size();
+      counts.gNodesCount += gregs.size();
+      counts.kNodesCount += kregs.size();
+
+      updateNodesCountsFromStaticArray(vm, counts, yregs);
+      updateNodesCountsFromStaticArray(vm, counts, gregs);
+      updateNodesCountsFromStaticArray(vm, counts, kregs);
+    }
+  }
+}
+
+/* ========== Nodes getters ========== */
+
+RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+  size_t depth, size_t index) {
+  Thread* thread = dynamic_cast<Thread*>(runnable);
+  if (!thread)
+    return RichNode(nullptr);
+
+  assert(depth < thread->stack.size());
+  StackEntry& entry = thread->stack[depth];
+  
+  switch (nodesRegister) {
+    case xRegister: {
+      assert(depth == 0);
+      StaticArray<UnstableNode> xregs = thread->xregs._array;
+      assert(index < xregs.size());
+      return RichNode(xregs[index]);
+    } case yRegister: {
+      StaticArray<UnstableNode> yregs = entry.yregs;
+      assert(index < yregs.size());
+      return RichNode(yregs[index]);
+    } case gRegister: {
+      StaticArray<StableNode> gregs = entry.gregs;
+      assert(index < gregs.size());
+      return RichNode(gregs[index]);
+    } case kRegister: {
+      StaticArray<StableNode> kregs = entry.kregs;
+      assert(index < kregs.size());
+      return RichNode(kregs[index]);
+    } default: assert(false); return RichNode(nullptr);
+  }
+}
+
+/* ========== Nodes executers ========== */
+
+void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+  size_t depth, size_t from, size_t to, NodeBoolLambda valid, RunnableAndNodeLambda parse) {
+    
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    assert(depth < thread->stack.size());
+    StackEntry& entry = thread->stack[depth];
+
+    switch (nodesRegister) {
+      case xRegister: {
+        assert(depth == 0);
+        StaticArray<UnstableNode> xregs = thread->xregs._array;
+        // assert(to <= xregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, xregs, from, to,
+          valid, parse);
+        break;
+      } case yRegister: {
+        StaticArray<UnstableNode> yregs = entry.yregs;
+        // assert(to <= yregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, yregs, from, to,
+          valid, parse);
+        break;
+      } case gRegister: {
+        StaticArray<StableNode> gregs = entry.gregs;
+        // assert(to <= gregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, gregs, from, to,
+          valid, parse);
+        break;
+      } case kRegister: {
+        StaticArray<StableNode> kregs = entry.kregs;
+        // assert(to <= kregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, kregs, from, to,
+          valid, parse);
+        break;
+      } default: assert(false);
+    }
+  }  
+}
+
 }
