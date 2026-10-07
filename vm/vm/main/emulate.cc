@@ -418,7 +418,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
             &KPC(1), &KPC(2), &KPC(3),
             &KPC(4), IntPC(5), IntPC(6)
           );
-          std::cout << debugInfo.toString(vm) << std::endl;
+          // std::cout << debugInfo.toString(vm) << std::endl;
           advancePC(6);
           break;
         }

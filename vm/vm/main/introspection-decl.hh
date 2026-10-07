@@ -47,10 +47,54 @@ public:
   NodeBoolLambda allNodes = [](VM, RichNode) { return true; };
 
 public:
+  /* ========== Structures related to ids ========== */
+
+  template<class Value>
+  static inline
+  UnstableNode build(VM vm, Value value);
+
+  using Id = size_t;
+
+  template<class Value>
+  using Vector = std::vector<Value>;
+
+  template<class Type>
+  struct IsVector : std::false_type {};
+
+  template<class Value>
+  struct IsVector<Vector<Value>> : std::true_type {};
+
+  template<class Type>
+  static inline constexpr bool is_Vector_v = IsVector<Type>::value;
+
+  template<class Value>
+  static inline
+  UnstableNode buildVector(VM vm, const Vector<Value>& vector);
+
+  using IdsVector = std::vector<Id>;
+
+  template<class Key, class Value>
+  using Map = std::unordered_map<Key, Value>;
+
+  template<class Type>
+  struct IsMap : std::false_type {};
+
+  template<class Key, class Value>
+  struct IsMap<Map<Key, Value>> : std::true_type {};
+
+  template<class Type>
+  static inline constexpr bool is_Map_v = IsMap<Type>::value;
+
+  template<class Key, class Value>
+  static inline
+  UnstableNode buildMap(VM vm, const Map<Key, Value>& map);
+
+  template<class Value>
+  using IdToValueMap = Map<Id, Value>;
+
+public:
   /** @brief Create a introspection object */
   Introspection() {}
-
-  using IdsVector = std::vector<size_t>;
 
 public:
   /* ========== VM getters ========== */
@@ -165,6 +209,9 @@ public:
     std::string image;
   };
 
+  static inline
+  UnstableNode buildOperationArgument(VM vm, const OperationArgument argument);
+
   struct Operation {
     Operation(OpCode opCode) :
       opCode(opCode) {}
@@ -174,6 +221,9 @@ public:
     
     std::vector<OperationArgument> arguments;
   };
+
+  static inline
+  UnstableNode buildOperation(VM vm, const Operation operation);
 
   /**
    * @brief Get the next bytecode instruction executed by a specified thread
@@ -195,12 +245,21 @@ public:
 public:
   /* ========== Threads stats ========== */
 
+  static inline
+  UnstableNode buildThreadState(VM vm, const Runnable* runnable);
+
+  static inline
+  UnstableNode buildThreadStatistics(VM vm, const Runnable* runnable);
+
   /** @brief Threads' counts have the following types */
   struct ThreadsCounts {
     size_t activeThreadsCount = 0;
     size_t passiveThreadsCount = 0;
     size_t threadsCount = 0;
   };
+
+  static inline
+  UnstableNode buildThreadsCounts(VM vm, const ThreadsCounts& counts);
 
 public:
   /* ========== Threads getters ========== */
@@ -212,6 +271,7 @@ public:
    * @param id The target id
    * @return Runnable* A pointer on the thread or nullptr if not found
    */
+  inline
   Runnable* getThread(VM vm, size_t id);
 
   /**
@@ -220,6 +280,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return RunnableList& A reference on the VM runnables list
    */
+  inline
   RunnableList& getThreads(VM vm);
 
 public:
@@ -232,6 +293,7 @@ public:
    * @param valid A predicate lambda to filter threads
    * @param parse A lambda to execute a specific operation on the filtered threads
    */
+  inline
   void doForEachThread(VM vm, RunnableBoolLambda valid, RunnableLambda parse);
 
 public:
@@ -243,6 +305,7 @@ public:
    * @param vm A pointer on the virtual machine
    * @return ThreadsCounts 
    */
+  inline
   ThreadsCounts getThreadsCounts(VM vm);
 
   /**
@@ -288,6 +351,17 @@ public:
     anyRegister
   };
 
+  static inline
+  std::string getRegisterName(NodesRegister type) {
+    switch (type) {
+      case xRegister: return "X";
+      case yRegister: return "Y";
+      case gRegister: return "G";
+      case kRegister: return "K";
+      default: assert(false); return "";
+    }
+  }
+
 private:
   /* ========== Registers stats ========== */
   
@@ -301,6 +375,7 @@ private:
    * @param depth The target register depth (0 for x registers)
    * @return size_t 
    */
+  inline
   size_t getNodesRegisterSize(VM vm, Runnable* runnable, NodesRegister nodesRegister,
     size_t depth);
 public:
@@ -380,9 +455,32 @@ public:
     size_t nodesCount = 0;
   };
 
-private:
+  static inline
+  UnstableNode buildNodesCounts(VM vm, const NodesCounts& counts);
+
+public:
   /* ========== Nodes properties ========== */
 
+  static inline
+  std::string nodeToString(VM vm, RichNode node);
+
+  static inline
+  std::string nodeStructuralBehaviorToString(StructuralBehavior behavior);
+
+  static inline
+  UnstableNode buildNode(VM vm, RichNode node);
+
+  static inline
+  UnstableNode buildNode(VM vm, StableNode& node) {
+    return buildNode(vm, RichNode(node));
+  }
+
+  static inline
+  UnstableNode buildNode(VM vm, UnstableNode& node) {
+    return buildNode(vm, RichNode(node));
+  }
+
+private:
   /**
    * @brief Get the of the provided node
    * 
@@ -390,6 +488,7 @@ private:
    * @param node A pointer on the target node
    * @return Type 
    */
+  inline
   Type getNodeType(VM vm, Node* node);
 
   /**
@@ -399,6 +498,7 @@ private:
    * @param node A pointer on the target node
    * @return MemWord 
    */
+  inline
   MemWord getNodeValue(VM vm, Node* node);
 
 public:
@@ -410,6 +510,7 @@ public:
    * @return true 
    * @return false 
    */
+  inline
   bool isVariableNode(VM vm, RichNode node);
 
   /**
@@ -420,6 +521,7 @@ public:
    * @return true 
    * @return false 
    */
+  inline
   bool isStructuralNode(VM vm, RichNode node);
 
   /**
@@ -430,6 +532,7 @@ public:
    * @return true 
    * @return false 
    */
+  inline
   bool isValueNode(VM vm, RichNode node);
 
   /**
@@ -440,6 +543,7 @@ public:
    * @return true 
    * @return false 
    */
+  inline
   bool isTokenNode(VM vm, RichNode node);
 
 private:
@@ -452,6 +556,7 @@ private:
    * @param runnable A pointer on a specific thread
    * @param counts A reference on a structure with counters to update
    */
+  inline
   void getNodesCounts(VM vm, Runnable* runnable, NodesCounts& counts);
 
 public:
@@ -777,6 +882,7 @@ private:
    * @param index A index to find the register from the register
    * @return RichNode 
    */
+  inline
   RichNode getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
     size_t depth, size_t index);
 public:
@@ -855,6 +961,7 @@ private:
    * @param valid A predicate to valid a node
    * @param parse An operation to execute on filtered nodes
    */
+  inline
   void doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
     size_t depth, size_t from, size_t to, NodeBoolLambda valid, RunnableAndNodeLambda parse);
 
@@ -1013,6 +1120,7 @@ private:
    * @return true 
    * @return false 
    */
+  inline
   bool isBoundVariable(VM vm, RichNode node);
 
   /**
@@ -1024,6 +1132,7 @@ private:
    * @return true 
    * @return false 
    */
+  inline
   bool isNeededVariable(VM vm, RichNode node);
 
   /**
@@ -1035,6 +1144,7 @@ private:
    * @return true 
    * @return false 
    */
+  inline
   bool isWaitedVariable(VM vm, RichNode node);
 
 private:
@@ -1047,6 +1157,7 @@ private:
    * @param runnable A pointer on a specific thread
    * @param counts A reference on a structure with counters to update
    */
+  inline
   void getVariablesCounts(VM vm, Runnable* runnable, VariablesCounts& counts);
 
 public:
@@ -1152,8 +1263,10 @@ private:
    * @param to 
    * @param parse 
    */
+  inline
   void doForEachVariable(VM vm, Runnable* runnable, NodesRegister nodesRegister,
     size_t depth, size_t from, size_t to, RunnableAndNodeLambda parse);
+
 public:
   /* ========== Variables executers ========== */
 
@@ -1194,54 +1307,89 @@ public:
   }
 
 public:
-  /* ========== Variables candidates ========== */
-  using CandidatesList = std::vector<size_t>;
+  /* ========== Variables state ========== */
 
-  struct VariableCandidates {
-    VariableCandidates(RichNode node) : node(node) {}
+  using Pendings = VMAllocatedList<StableNode*>;
+
+  struct VariableState {
+    VariableState(): node(RichNode(nullptr)) {}
+
+    explicit VariableState(RichNode node) : node(node) {}
 
     RichNode node;
-    CandidatesList candidates;
+    IdsVector candidates;
+    IdsVector pendings;
 
-    bool isNull() {
-      return node.isNullNode();
+  private:
+    static inline
+    bool has(const IdsVector& ids, Id id);
+
+    static inline
+    void add(IdsVector& ids, Id id);
+
+  public:
+    inline
+    bool hasCandidate(Id id) {
+      return has(candidates, id);
     }
 
-    void setNode(RichNode n) {
-      node = n;
+    inline
+    void addCandidate(Id id) {
+      add(candidates, id);
     }
 
-    bool has(size_t candidateThreadId);
+    inline
+    bool hasPending(Id id) {
+      return has(pendings, id);
+    }
 
-    void add(size_t candidateThreadId);
+    inline
+    void addPending(Id id) {
+      add(pendings, id);
+    }
   };
 
-  using VariableCandidatesMap = std::unordered_map<size_t, VariableCandidates>;
+  static inline
+  UnstableNode buildVariable(VM vm, const VariableState& variable);
+
+  using VariableStatesVector = Vector<VariableState>;
+
+  using IdToVariableStateMap = Map<Id, VariableState>;
+
+private:
+  /* ========== Variables candidates extractors ========== */
+  inline
+  void pendingsToIdsVector(VM vm, VariableState& state, Pendings& pendings);
+
+  inline
+  void getVariablePartially(VM vm, VariableState& state, RichNode node);
 
 public:
-  /* ========== Variables candidates extractors ========== */
-  VariableCandidates getVariable(VM vm, size_t variableId);
+  inline
+  VariableState getVariable(VM vm, Id id);
 
-  VariableCandidatesMap getVariableCandidatesMap(VM vm, Runnable* runnable);
+  inline
+  IdToVariableStateMap getVariables(VM vm, Runnable* runnable);
 
-  VariableCandidatesMap getVariableCandidatesMap(VM vm);
+  inline
+  IdToVariableStateMap getVariables(VM vm);
 
 public:
   /* ========== Reachability graph ========== */
 
-  using IdToIdsMap = std::unordered_map<size_t, IdsVector>;
+  using IdToIdsMap = Map<Id, IdsVector>;
 
   struct ReachabilityGraph {
     IdToIdsMap threadToVariables;
     IdToIdsMap variableToThreads;
   };
-
-private:
-  using Pendings = VMAllocatedList<StableNode*>;
   
+private:
+  inline
   void computeReachabilityGraph(VM vm, ReachabilityGraph& graph, size_t variableId, Pendings& pendings);
 
 public:
+  inline
   ReachabilityGraph computeReachabilityGraph(VM vm);
 
 public:
@@ -1301,26 +1449,27 @@ public:
   }
 
 public:
-  using RunnableVector = std::vector<Runnable*>;
+  using RunnablesVector = Vector<Runnable*>;
 
   /* ========== Structures list ========== */
   struct OwnedRichNode {
     OwnedRichNode(RichNode node) : node(node) {}
 
-    RunnableVector runnables;
+    RunnablesVector runnables;
     RichNode node;
   };
-  using NodesMap = std::unordered_map<size_t, OwnedRichNode>;
+
+  using IdToOwnedRichNodeMap = IdToValueMap<OwnedRichNode>;
 
 private:
-  RunnableAndNodeLambda getAddConsLambda(VM vm, NodesMap& map);
+  RunnableAndNodeLambda getAddConsLambda(VM vm, IdToOwnedRichNodeMap& map);
 
 public:
   /* ========== Structures list ========== */
   // RichNode getList(VM vm, size_t id);
 
-  NodesMap getLists(VM vm, Runnable* runnable) {
-    NodesMap map;
+  IdToOwnedRichNodeMap getLists(VM vm, Runnable* runnable) {
+    IdToOwnedRichNodeMap map;
     doForEachNode(vm, runnable,
       allNodes,
       getAddConsLambda(vm, map)
@@ -1328,8 +1477,8 @@ public:
     return map;
   }
 
-  NodesMap getLists(VM vm) {
-    NodesMap map;
+  IdToOwnedRichNodeMap getLists(VM vm) {
+    IdToOwnedRichNodeMap map;
     doForEachNode(vm,
       allRunnables,
       allNodes,

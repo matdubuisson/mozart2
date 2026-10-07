@@ -322,7 +322,7 @@ public:
     return _lastOpCode;
   }
 
-  Statistics getStatistics() {
+  const Statistics& getStatistics() const {
     return _statistics;
   }
 

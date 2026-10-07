@@ -34,12 +34,97 @@
 
 namespace mozart {
 
-inline
 std::string Introspection::OperationArgument::toRepr(VM vm, RichNode value) {
   auto& config = vm->getPropertyRegistry().config;
   std::basic_stringstream<char> buffer;
   buffer << repr(vm, value, config.printDepth, config.printWidth);
   return buffer.str();
+}
+
+template<class Value>
+UnstableNode Introspection::build(VM vm, Value value) {
+  return build(vm, value);
+}
+
+template<class Value>
+UnstableNode Introspection::buildVector(VM vm, const Vector<Value>& vector) {
+  OzListBuilder builder(vm);
+  for (Value value : vector) {
+    builder.push_back(vm, build<Value>(vm, value));
+  }
+  return builder.get(vm);
+}
+
+template<class Key, class Value>
+UnstableNode Introspection::buildMap(VM vm, const Map<Key, Value>& map) {
+  UnstableNode label = Atom::build(vm, "map");
+  size_t i = 0, width = map.size();
+  UnstableField fields[width];
+
+  for (auto pair : map) {
+    Key key = pair.first;
+    Value value = pair.second;
+    fields[i].feature = build<Key>(vm, key);
+
+    if constexpr (is_Vector_v<Value>)
+      fields[i].value = buildVector(vm, value);
+    else if constexpr (is_Map_v<Value>)
+      fields[i].value = buildMap(vm, value);
+    else
+      fields[i].value = build<Value>(vm, value);
+    
+    i++;
+  }
+
+  return buildRecordDynamic(vm, label, width, fields);
+}
+
+/* ========== VM state ========== */
+
+UnstableNode Introspection::buildOperationArgument(VM vm, const OperationArgument argument) {
+  std::string type;
+
+  switch (argument.type) {
+    case I: type = "Int"; break;
+    case X: type = "X"; break;
+    case Y: type = "Y"; break;
+    case G: type = "G"; break;
+    case K: type = "K"; break;
+    default: assert(false);
+  }
+
+  return buildRecord(vm,
+    buildArity(
+      vm,
+      "operationArgument",
+      "image",
+      "index",
+      "type"
+    ),
+    build(vm, argument.image.c_str()),
+    build(vm, argument.index),
+    build(vm, type.c_str())
+  );
+}
+
+UnstableNode Introspection::buildOperation(VM vm, const Operation operation) {
+  OzListBuilder builder(vm);
+
+  for (OperationArgument opArgument : operation.arguments) {
+    builder.push_back(vm, buildOperationArgument(vm, opArgument));
+  }
+
+  return buildRecord(vm,
+    buildArity(vm,
+      "operation",
+      "arguments",
+      "name",
+      "opCode"
+    ),
+    builder.get(vm),
+    build(vm, operation.name.c_str()),
+    build(vm, operation.opCode)
+  );
 }
 
 /* ========== VM getters ========== */
@@ -50,6 +135,32 @@ GarbageCollector& Introspection::getGarbageCollector(VM vm) {
 
 MemManagedList<Runnable**>& Introspection::getGarbageCollectedThreads(VM vm) {
   return vm->gc.todos.threads;
+}
+
+template<class StableOrUnstableNode>
+void Introspection::getGarbageCollectorTodos(VM vm,
+  GarbageCollectorTodos& todos, Node* nodes) {
+  Node* current = nodes;
+  while (current != nullptr) {
+    StableOrUnstableNode* node = static_cast<StableOrUnstableNode*>(current->grFrom);
+
+    std::cout << "A: " << current->type()->getName().c_str() << std::endl;
+    std::cout << "B: " << current->grFrom->type()->getName().c_str() << std::endl;
+
+    if (node->type() == ReifiedThread::type()) {
+      size_t id = AdvancedIdentifiable(*node).getId(vm);
+      todos.runnableIds.push_back(id);
+    } else if (node->type() == Variable::type()
+      || node->type() == ReadOnlyVariable::type()) {
+      size_t id = AdvancedIdentifiable(*node).getId(vm);
+      todos.variableIds.push_back(id);
+    } else if (node->type() == Cons::type()) {
+      size_t id = AdvancedIdentifiable(*node).getId(vm);
+      todos.variableIds.push_back(id);
+    }
+
+    current = current->grNext;
+  }
 }
 
 Introspection::GarbageCollectorTodos Introspection::getGarbageCollectorTodos(VM vm) {
@@ -66,29 +177,6 @@ Introspection::GarbageCollectorTodos Introspection::getGarbageCollectorTodos(VM 
   getGarbageCollectorTodos<StableNode>(vm, todos, gc.todos.stableNodes);
   getGarbageCollectorTodos<UnstableNode>(vm, todos, gc.todos.unstableNodes);
   return todos;
-}
-
-template<class StableOrUnstableNode>
-void Introspection::getGarbageCollectorTodos(VM vm,
-  GarbageCollectorTodos& todos, Node* nodes) {
-  Node* current = nodes;
-  while (current != nullptr) {
-    StableOrUnstableNode* node = static_cast<StableOrUnstableNode*>(current->grFrom);
-
-    if (node->type() == ReifiedThread::type()) {
-      size_t id = AdvancedIdentifiable(*node).getId(vm);
-      todos.runnableIds.push_back(id);
-    } else if (node->type() == Variable::type()
-      || node->type() == ReadOnlyVariable::type()) {
-      size_t id = AdvancedIdentifiable(*node).getId(vm);
-      todos.variableIds.push_back(id);
-    } else if (node->type() == Cons::type()) {
-      size_t id = AdvancedIdentifiable(*node).getId(vm);
-      todos.variableIds.push_back(id);
-    }
-
-    current = current->grNext;
-  }
 }
 
 /* ========== VM state ========== */
@@ -117,9 +205,105 @@ Runnable* Introspection::getNextScheduledThread(VM vm, bool includeSystemThreads
   return vm->threadPool.getNext(includeSystemThreads);
 }
 
+/* ========== Threads stats ========== */
+
+UnstableNode Introspection::buildThreadState(VM vm, const Runnable* runnable) {
+  UnstableNode id = build(vm, runnable->getId());
+  UnstableNode kindId = build(vm, runnable->getKindId());
+  UnstableNode generationId = build(vm, runnable->getGenerationId());
+  UnstableNode isRunnable = build(vm, runnable->isRunnable());
+  UnstableNode isTerminated = build(vm, runnable->isTerminated());
+  UnstableNode isDead = build(vm, runnable->isDead());
+  UnstableNode isPreempted = build(vm, runnable->isPreempted());
+  UnstableNode isPreemptible = build(vm, runnable->isPreemptible());
+
+  UnstableNode priority;
+  switch (runnable->getPriority()) {
+    case tpLow: priority = build(vm, "low"); break;
+    case tpMiddle: priority = build(vm, "medium"); break;
+    case tpHi: priority = build(vm, "high"); break;
+    case tpSystem: priority = build(vm, "system"); break;
+    default: assert(false);
+  }
+
+  UnstableNode type;
+  if (const Thread* thread = dynamic_cast<const Thread*>(runnable))
+    type = build(vm, "thread");
+  else
+    type = build(vm, "runnable");
+
+  return buildRecord(vm,
+    buildArity(vm,
+      "state",
+      "dead",
+      "generationId",
+      "id",
+      "kindId",
+      "preempted",
+      "preemptible",
+      "priority",
+      "runnable",
+      "terminated",
+      "type"
+    ),
+    isDead,
+    generationId,
+    id,
+    kindId,
+    isPreempted,
+    isPreemptible,
+    priority,
+    isRunnable,
+    isTerminated,
+    type
+  );
+}
+
+UnstableNode Introspection::buildThreadStatistics(VM vm, const Runnable* runnable) {
+  Runnable::Statistics statistics = runnable->Runnable::getStatistics();
+
+  size_t operationsCount = 0, bindsCount = 0;
+  if (const Thread* thread = dynamic_cast<const Thread*>(runnable)) {
+    Thread::Statistics threadStatistics = thread->getStatistics();
+    operationsCount = threadStatistics.operationsCount;
+    bindsCount = threadStatistics.bindsCount;
+  }
+
+  return buildRecord(vm,
+    buildArity(vm,
+      "statistics",
+      "bindsCount",
+      "operationsCount",
+      "resumesCount",
+      "runsCount",
+      "suspendsCount",
+      "suspendsOnVarCount"
+    ),
+    build(vm, bindsCount),
+    build(vm, operationsCount),
+    build(vm, statistics.resumesCount),
+    build(vm, statistics.runsCount),
+    build(vm, statistics.suspendsCount),
+    build(vm, statistics.suspendsOnVarCount)
+  );
+}
+
+UnstableNode Introspection::buildThreadsCounts(VM vm, const ThreadsCounts& counts) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "threadsCounts",
+      "active",
+      "passive",
+      "total"
+    ),
+    build(vm, counts.activeThreadsCount),
+    build(vm, counts.passiveThreadsCount),
+    build(vm, counts.threadsCount)
+  );
+}
+
 /* ========== Threads getters ========== */
 
-inline
 Runnable* Introspection::getThread(VM vm, size_t id) {
   using iterator = RunnableList::iterator;
 
@@ -132,14 +316,12 @@ Runnable* Introspection::getThread(VM vm, size_t id) {
   return nullptr;
 }
 
-inline
 RunnableList& Introspection::getThreads(VM vm) {
   return vm->threads;
 }
 
 /* ========== Threads executers ========== */
 
-inline
 void Introspection::doForEachThread(VM vm, Introspection::RunnableBoolLambda valid, Introspection::RunnableLambda parse) {
   using iterator = RunnableList::iterator;
 
@@ -153,7 +335,6 @@ void Introspection::doForEachThread(VM vm, Introspection::RunnableBoolLambda val
 
 /* ========== Threads counters ========== */
 
-inline
 Introspection::ThreadsCounts Introspection::getThreadsCounts(VM vm) {
   ThreadsCounts counts;
   doForEachThread(vm, allRunnables, [&counts](VM vm, Runnable* runnable) {
@@ -168,43 +349,175 @@ Introspection::ThreadsCounts Introspection::getThreadsCounts(VM vm) {
 
 /* ========== Registers stats ========== */
 
+size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
+  NodesRegister nodesRegister, size_t depth) {
+  Thread* thread = dynamic_cast<Thread*>(runnable);
+  if (!thread)
+    return 0;
+
+  assert(depth < thread->stack.size());
+  StackEntry& entry = thread->stack[depth];
+  
+  switch (nodesRegister) {
+    case xRegister: {
+      assert(depth == 0);
+      return thread->xregs._array.size();
+    } case yRegister: {
+      return entry.yregs.size();
+    } case gRegister: {
+      return entry.gregs.size();
+    } case kRegister: {
+      return entry.kregs.size();
+    } default: assert(false); return 0;
+  }
+}
+
+/* ========== Nodes stats ========== */
+
+UnstableNode Introspection::buildNodesCounts(VM vm, const NodesCounts& counts) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "nodes",
+      "gNodesCount",
+      "kNodesCount",
+      "nodesCount",
+      "stableNodesCount",
+      "stackDepth",
+      "structuralNodesCount",
+      "tokenNodesCount",
+      "unstableNodesCount",
+      "valueNodesCount",
+      "variableNodesCount",
+      "xNodesCount",
+      "yNodesCount"
+    ),
+    build(vm, counts.gNodesCount),
+    build(vm, counts.kNodesCount),
+    build(vm, counts.nodesCount),
+    build(vm, counts.stableNodesCount),
+    build(vm, counts.stackDepth),
+    build(vm, counts.structuralNodesCount),
+    build(vm, counts.tokenNodesCount),
+    build(vm, counts.unstableNodesCount),
+    build(vm, counts.valueNodesCount),
+    build(vm, counts.variableNodesCount),
+    build(vm, counts.xNodesCount),
+    build(vm, counts.yNodesCount)
+  );
+}
 
 /* ========== Nodes properties ========== */
 
-inline
+std::string Introspection::nodeToString(VM vm, RichNode node) {
+  auto& config = vm->getPropertyRegistry().config;
+  std::basic_stringstream<char> buffer;
+  buffer << repr(vm, node, config.printDepth, config.printWidth);
+  return buffer.str();
+}
+
+std::string Introspection::nodeStructuralBehaviorToString(StructuralBehavior behavior) {
+  switch (behavior) {
+    case sbVariable: return "variable";
+    case sbValue: return "value";
+    case sbStructural: return "structural";
+    case sbTokenEq: return "tokenEq";
+    default: assert(false); return "";
+  }
+}
+
+UnstableNode Introspection::buildNode(VM vm, RichNode node) {
+  Type type = node.type();
+
+  return buildRecord(vm,
+    buildArity(vm,
+      "node",
+      "bindingPriority",
+      "copyable",
+      "feature",
+      "id",
+      "name",
+      "structuralBehavior",
+      "transient",
+      "uuid",
+      "value"
+    ),
+    build(vm, type->getBindingPriority()),
+    build(vm, type->isCopyable()),
+    build(vm, type->isFeature()),
+    build(vm, node.getId()),
+    build(vm, type->getName().c_str()),
+    build(vm,
+      nodeStructuralBehaviorToString(
+        type->getStructuralBehavior()
+      ).c_str()
+    ),
+    build(vm, type->isTransient()),
+    build(vm, type->getUUID()),
+    build(vm, nodeToString(vm, node).c_str())
+  );
+}
+
 Type Introspection::getNodeType(VM vm, Node* node) {
   assert(node != nullptr);
   return node->data.type;
 }
 
-inline
 MemWord Introspection::getNodeValue(VM vm, Node* node) {
   assert(node != nullptr);
   return node->data.value;
 }
 
-inline
 bool Introspection::isVariableNode(VM vm, RichNode node) {
   if (node.type().info() == nullptr) return false;
   else return node.type()->getStructuralBehavior() == sbVariable;
 }
 
-inline
 bool Introspection::isStructuralNode(VM vm, RichNode node) {
   if (node.type().info() == nullptr) return false;
   else return node.type()->getStructuralBehavior() == sbStructural;
 }
 
-inline
 bool Introspection::isValueNode(VM vm, RichNode node) {
   if (node.type().info() == nullptr) return false;
   else return node.type()->getStructuralBehavior() == sbValue;
 }
 
-inline
 bool Introspection::isTokenNode(VM vm, RichNode node) {
   if (node.type().info() == nullptr) return false;
   else return node.type()->getStructuralBehavior() == sbTokenEq;
+}
+
+/* ========== Nodes getters ========== */
+
+RichNode Introspection::getNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+  size_t depth, size_t index) {
+  Thread* thread = dynamic_cast<Thread*>(runnable);
+  if (!thread)
+    return RichNode(nullptr);
+
+  assert(depth < thread->stack.size());
+  StackEntry& entry = thread->stack[depth];
+  
+  switch (nodesRegister) {
+    case xRegister: {
+      assert(depth == 0);
+      StaticArray<UnstableNode> xregs = thread->xregs._array;
+      assert(index < xregs.size());
+      return RichNode(xregs[index]);
+    } case yRegister: {
+      StaticArray<UnstableNode> yregs = entry.yregs;
+      assert(index < yregs.size());
+      return RichNode(yregs[index]);
+    } case gRegister: {
+      StaticArray<StableNode> gregs = entry.gregs;
+      assert(index < gregs.size());
+      return RichNode(gregs[index]);
+    } case kRegister: {
+      StaticArray<StableNode> kregs = entry.kregs;
+      assert(index < kregs.size());
+      return RichNode(kregs[index]);
+    } default: assert(false); return RichNode(nullptr);
+  }
 }
 
 /* ========== Nodes counters ========== */
@@ -256,6 +569,34 @@ void updateNodesCountsFromStaticArray(VM vm, Introspection::NodesCounts& counts,
   updateNodesCountsFromNodes<UnstableNode>(vm, counts, array);
 }
 
+void Introspection::getNodesCounts(VM vm, Runnable* runnable,
+  Introspection::NodesCounts& counts) {
+  
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    StaticArray<UnstableNode>& xregs = thread->xregs._array;
+    counts.xNodesCount += xregs.size();
+    updateNodesCountsFromStaticArray(vm, counts, xregs);
+
+    ThreadStack& stack = thread->stack;
+    for (ThreadStack::iterator entry = stack.begin();
+      entry != stack.end(); ++entry) {
+      counts.stackDepth++;
+
+      StaticArray<UnstableNode>& yregs = entry->yregs;
+      StaticArray<StableNode>& gregs = entry->gregs;
+      StaticArray<StableNode>& kregs = entry->kregs;
+
+      counts.yNodesCount += yregs.size();
+      counts.gNodesCount += gregs.size();
+      counts.kNodesCount += kregs.size();
+
+      updateNodesCountsFromStaticArray(vm, counts, yregs);
+      updateNodesCountsFromStaticArray(vm, counts, gregs);
+      updateNodesCountsFromStaticArray(vm, counts, kregs);
+    }
+  }
+}
+
 /* ========== Nodes getters ========== */
 
 
@@ -277,6 +618,44 @@ void doForEachNodeFromStaticArray(VM vm, Runnable* runnable, StaticArray<T> arra
   }
 }
 
+void Introspection::doForEachNode(VM vm, Runnable* runnable, NodesRegister nodesRegister,
+  size_t depth, size_t from, size_t to, NodeBoolLambda valid, RunnableAndNodeLambda parse) {
+    
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    assert(depth < thread->stack.size());
+    StackEntry& entry = thread->stack[depth];
+
+    switch (nodesRegister) {
+      case xRegister: {
+        assert(depth == 0);
+        StaticArray<UnstableNode> xregs = thread->xregs._array;
+        // assert(to <= xregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, xregs, from, to,
+          valid, parse);
+        break;
+      } case yRegister: {
+        StaticArray<UnstableNode> yregs = entry.yregs;
+        // assert(to <= yregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, yregs, from, to,
+          valid, parse);
+        break;
+      } case gRegister: {
+        StaticArray<StableNode> gregs = entry.gregs;
+        // assert(to <= gregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, gregs, from, to,
+          valid, parse);
+        break;
+      } case kRegister: {
+        StaticArray<StableNode> kregs = entry.kregs;
+        // assert(to <= kregs.size());
+        doForEachNodeFromStaticArray(vm, runnable, kregs, from, to,
+          valid, parse);
+        break;
+      } default: assert(false);
+    }
+  }  
+}
+
 /* ========== Variables properties ========== */
 
 template<typename T>
@@ -285,7 +664,6 @@ bool _isBoundVariable(VM vm, RichNode& node) {
   return Accessor<T>::get(node.value()).isNeeded(vm);
 }
 
-inline
 bool Introspection::isBoundVariable(VM vm, RichNode node) {
   if (!isVariableNode(vm, node)) return false;
   else if (node.is<OptVar>()) return false;
@@ -307,7 +685,6 @@ bool _isNeededVariable(VM vm, RichNode& node) {
   return Accessor<T>::get(node.value()).isNeeded(vm);
 }
 
-inline
 bool Introspection::isNeededVariable(VM vm, RichNode node) {
   if (!isVariableNode(vm, node)) return false;
   else if (node.is<OptVar>())
@@ -332,7 +709,6 @@ bool _isWaitedVariable(VM vm, RichNode& node) {
   return Accessor<T>::get(node.value()).isWaited(vm);
 }
 
-inline
 bool Introspection::isWaitedVariable(VM vm, RichNode node) {
   if (!isVariableNode(vm, node)) return false;
   else if (node.is<OptVar>()) return false;
@@ -349,7 +725,7 @@ bool Introspection::isWaitedVariable(VM vm, RichNode node) {
 }
 
 /* ========== Variables counters ========== */
-inline
+
 void Introspection::getVariablesCounts(VM vm, Runnable* runnable, VariablesCounts& counts) {
   doForEachNode(vm, runnable,
     [this](VM vm, RichNode node) { return this->isVariableNode(vm, node); },
@@ -364,7 +740,7 @@ void Introspection::getVariablesCounts(VM vm, Runnable* runnable, VariablesCount
 }
 
 /* ========== Variables executers ========== */
-inline
+
 void Introspection::doForEachVariable(VM vm, Runnable* runnable, NodesRegister nodesRegister,
   size_t depth, size_t from, size_t to, RunnableAndNodeLambda parse) {
   
@@ -375,92 +751,165 @@ void Introspection::doForEachVariable(VM vm, Runnable* runnable, NodesRegister n
   );
 }
 
-inline
-bool Introspection::VariableCandidates::has(size_t candidateThreadId) {
-  return std::find(candidates.begin(), candidates.end(), candidateThreadId) != candidates.end();
+bool Introspection::VariableState::has(const IdsVector& ids, Id id) {
+  return std::find(ids.begin(), ids.end(), id) != ids.end();
 }
 
-inline
-void Introspection::VariableCandidates::add(size_t candidateThreadId) {
-  candidates.push_back(candidateThreadId);
+void Introspection::VariableState::add(IdsVector& ids, Id id) {
+  ids.push_back(id);
 }
 
-static inline
-void updateVariableCandidatesMap(VM vm, Runnable* runnable, RichNode node, size_t variableId,
-  Introspection::VariableCandidatesMap& map) {
-  size_t candidateThreadId = runnable->getId();
-  bool isNotKey = map.find(variableId) == map.end();
+/* ========== Variables state ========== */
 
-  if (isNotKey) {
-    Introspection::VariableCandidates variableCandidates(node);
-    variableCandidates.add(candidateThreadId);
-    map.insert({variableId, variableCandidates});
-  } else {
-    map.at(variableId).add(candidateThreadId);
-  }
-}
+UnstableNode Introspection::buildVariable(VM vm, const VariableState& variable) {
+  RichNode node = variable.node;
 
-static inline
-void updateVariableCandidatesMap(VM vm, Runnable* runnable, RichNode node,
-  Introspection::VariableCandidatesMap& map) {
-  if (node.is<Variable>()) {
+  if (node.isNullNode())
+    return build(vm, "none");
+
+  size_t id = SIZE_MAX, kindId = SIZE_MAX, generationId = SIZE_MAX;
+  bool isBound = false, isNeeded = false;
+
+  if (node.type() == Variable::type()) {
     Variable variable = Accessor<Variable>::get(node.value());
-    updateVariableCandidatesMap(vm, runnable, node, variable.getId(), map);
-  } else if (node.is<ReadOnlyVariable>()) {
+    id = variable.getId();
+    kindId = variable.getKindId();
+    generationId = variable.getGenerationId();
+    isBound = variable.isBound(vm);
+    isNeeded = variable.isNeeded(vm);
+  } else if (node.type() == ReadOnlyVariable::type()) {
     ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-    updateVariableCandidatesMap(vm, runnable, node, variable.getId(), map);
-  } else {
-    assert(false);
+    id = variable.getId();
+    kindId = variable.getKindId();
+    generationId = variable.getGenerationId();
+    isBound = variable.isBound(vm);
+    isNeeded = variable.isNeeded(vm);
+  } else return build(vm, "none");
+
+  std::string type = node.type()->getName();
+  std::string representation = Introspection::nodeToString(vm, node);
+
+  return buildRecord(vm,
+    buildArity(vm,
+      "variable",
+      "candidates",
+      "generationId",
+      "id",
+      "isBound",
+      "isNeeded",
+      "kindId",
+      "pendings",
+      "type",
+      "value"
+    ),
+    buildVector<Id>(vm, variable.candidates),
+    build(vm, generationId),
+    build(vm, id),
+    build(vm, isBound),
+    build(vm, isNeeded),
+    build(vm, kindId),
+    buildVector<Id>(vm, variable.pendings),
+    build(vm, type.c_str()),
+    build(vm, representation.c_str())
+  );
+}
+
+template<>
+inline
+UnstableNode Introspection::build(VM vm, VariableState state) {
+  return buildVariable(vm, state);
+}
+
+/* ========== Variables candidates extractors ========== */
+
+void Introspection::pendingsToIdsVector(VM vm, VariableState& state, Pendings& pendings) {
+  for (StableNode* nodePointer : pendings) {
+    StableNode& node = *nodePointer;
+    if (node.type() == ReifiedThread::type())
+      state.addPending(Identifiable(node).getId(vm));
   }
 }
 
-inline
-Introspection::VariableCandidates Introspection::getVariable(VM vm, size_t variableId) {
-  VariableCandidates variable(RichNode(nullptr));
-  doForEachNode(vm, allRunnables,
-    [this](VM vm, RichNode node) { return this->isVariableNode(vm, node); },
-    [&variable, variableId](VM vm, Runnable* runnable, RichNode node) {
+void Introspection::getVariablePartially(VM vm, VariableState& state, RichNode node) {
+  state.node = node;
+
+  if (node.type() == Variable::type()) {
+    Variable variable = Accessor<Variable>::get(node.value());
+    Pendings& pendings = variable.pendings;
+    pendingsToIdsVector(vm, state, pendings);
+  } else if (node.type() == ReadOnlyVariable::type()) {
+    ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
+    Pendings& pendings = variable.pendings;
+    pendingsToIdsVector(vm, state, pendings);
+  } else assert(false);
+}
+
+Introspection::VariableState Introspection::getVariable(VM vm, Id id) {
+  VariableState state = VariableState(RichNode(nullptr));
+  doForEachVariable(vm,
+    [this, &state, id](VM vm, Runnable* runnable, RichNode node) {
       bool found = false;
       if (node.is<Variable>()) {
         Variable variable = Accessor<Variable>::get(node.value());
-        found = variable.getId() == variableId;
+        found = variable.getId() == id;
       } else if (node.is<ReadOnlyVariable>()) {
         ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-        found = variable.getId() == variableId;
+        found = variable.getId() == id;
       } else assert(false);
 
       if (found) {
-        variable.setNode(node);
-        variable.add(runnable->getId());
+        if (state.node.isNullNode())
+          this->getVariablePartially(vm, state, node);
+        state.addCandidate(runnable->getId());
       }
     }
   );
-  return variable;
+  return state;
 }
 
-inline
-Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM vm, Runnable* runnable) {
-  size_t candidateThreadId = runnable->getId();
-  VariableCandidatesMap map;
-  doForEachVariable(vm, [candidateThreadId, &map](VM vm, Runnable* runnable, RichNode node) {
-    if (runnable->getId() == candidateThreadId)
-      updateVariableCandidatesMap(vm, runnable, node, map);
-  });
+Introspection::IdToVariableStateMap Introspection::getVariables(VM vm, Runnable* runnable) {
+  IdToVariableStateMap map = getVariables(vm);
+  
+  for (auto iter = map.begin(); iter != map.end();) {
+    Id id = runnable->getId();
+    VariableState& state = iter->second;
+    if (!state.hasPending(id) && !state.hasCandidate(id))
+      iter = map.erase(iter);
+    else ++iter;
+  }
+
   return map;
 }
 
-inline
-Introspection::VariableCandidatesMap Introspection::getVariableCandidatesMap(VM vm) {
-  VariableCandidatesMap map;
-  doForEachVariable(vm, [&map](VM vm, Runnable* runnable, RichNode node) {
-    updateVariableCandidatesMap(vm, runnable, node, map);
-  });
+Introspection::IdToVariableStateMap Introspection::getVariables(VM vm) {
+  IdToVariableStateMap map;
+
+  doForEachVariable(vm,
+    [this, &map](VM vm, Runnable* runnable, RichNode node) {
+      Id id;
+      if (node.is<Variable>()) {
+        Variable variable = Accessor<Variable>::get(node.value());
+        id = variable.getId();
+      } else if (node.is<ReadOnlyVariable>()) {
+        ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
+        id = variable.getId();
+      } else assert(false);
+
+      if (!map.contains(id)) {
+        VariableState state = VariableState(node);
+        this->getVariablePartially(vm, state, node);
+        map.insert({id, state});
+      }
+
+      map[id].addCandidate(runnable->getId());
+    }
+  );
+
   return map;
 }
 
 /* ========== Reachability graph ========== */
 
-inline
 void Introspection::computeReachabilityGraph(VM vm, ReachabilityGraph& graph, size_t variableId,
   Introspection::Pendings& pendings) {
   for (Pendings::iterator iter = pendings.begin(); iter != pendings.end(); ++iter) {
@@ -480,7 +929,6 @@ void Introspection::computeReachabilityGraph(VM vm, ReachabilityGraph& graph, si
   }
 }
 
-inline
 Introspection::ReachabilityGraph Introspection::computeReachabilityGraph(VM vm) {
   ReachabilityGraph graph;
 

@@ -31,48 +31,19 @@ namespace builtins {
 
 // Nodes counters
 
-UnstableNode ModIntrospection::buildNodesCountsRecord(VM vm, Introspection::NodesCounts& properties) {
-  return buildRecord(vm,
-    buildArity(vm,
-      "nodes",
-      "gNodesCount",
-      "kNodesCount",
-      "nodesCount",
-      "stableNodesCount",
-      "stackDepth",
-      "structuralNodesCount",
-      "tokenNodesCount",
-      "unstableNodesCount",
-      "valueNodesCount",
-      "variableNodesCount",
-      "xNodesCount",
-      "yNodesCount"
-    ),
-    build(vm, properties.gNodesCount),
-    build(vm, properties.kNodesCount),
-    build(vm, properties.nodesCount),
-    build(vm, properties.stableNodesCount),
-    build(vm, properties.stackDepth),
-    build(vm, properties.structuralNodesCount),
-    build(vm, properties.tokenNodesCount),
-    build(vm, properties.unstableNodesCount),
-    build(vm, properties.valueNodesCount),
-    build(vm, properties.variableNodesCount),
-    build(vm, properties.xNodesCount),
-    build(vm, properties.yNodesCount)
-  );
-}
-
 void ModIntrospection::GetNodesCounts::call(VM vm, Out result) {
-  Introspection::NodesCounts properties =
+  Introspection::NodesCounts counts =
     vm->getIntrospection().getNodesCounts(vm);
-  result = buildNodesCountsRecord(vm, properties);
+  result = Introspection::buildNodesCounts(vm, counts);
 }
 
 // Register types sizes
 
+using NodesRegister = Introspection::NodesRegister;
+
 UnstableNode ModIntrospection::getThreadNodesRegisterSize(VM vm, In threadNode, In depthNode,
   NodesRegister nodesRegister) {
+
   Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
   size_t depth = getArgument<size_t>(vm, depthNode);
   Introspection& introspection = vm->getIntrospection();
@@ -93,38 +64,6 @@ UnstableNode ModIntrospection::getThreadNodesRegisterSize(VM vm, In threadNode, 
 
 // Nodes getters
 
-UnstableNode ModIntrospection::buildNodeRecord(VM vm, RichNode node) {
-  Type type = node.type();
-
-  return buildRecord(vm,
-    buildArity(vm,
-      "node",
-      "bindingPriority",
-      "copyable",
-      "feature",
-      "id",
-      "name",
-      "structuralBehavior",
-      "transient",
-      "uuid",
-      "value"
-    ),
-    build(vm, type->getBindingPriority()),
-    build(vm, type->isCopyable()),
-    build(vm, type->isFeature()),
-    build(vm, node.getId()),
-    build(vm, type->getName().c_str()),
-    build(vm,
-      nodeStructuralBehaviorToString(
-        type->getStructuralBehavior()
-      ).c_str()
-    ),
-    build(vm, type->isTransient()),
-    build(vm, type->getUUID()),
-    build(vm, nodeToString(vm, node).c_str())
-  );
-}
-
 UnstableNode ModIntrospection::getThreadXNode(VM vm, In threadNode, In indexNode) {
   Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
   size_t index = getArgument<size_t>(vm, indexNode);
@@ -132,7 +71,7 @@ UnstableNode ModIntrospection::getThreadXNode(VM vm, In threadNode, In indexNode
 
   assert(index < introspection.getXNodesRegisterSize(vm, runnable));
   RichNode node = introspection.getXNode(vm, runnable, index);
-  return buildNodeRecord(vm, node);
+  return Introspection::buildNode(vm, node);
 }
 
 UnstableNode ModIntrospection::getThreadNode(VM vm, In threadNode, In depthNode,
@@ -161,7 +100,7 @@ UnstableNode ModIntrospection::getThreadNode(VM vm, In threadNode, In depthNode,
     } default: assert(false);
   }
 
-  return buildNodeRecord(vm, node);
+  return Introspection::buildNode(vm, node);
 }
 
 // Nodes lists getters
@@ -179,7 +118,7 @@ UnstableNode ModIntrospection::getThreadXNodes(VM vm, In threadNode, In fromNode
   introspection.doForEachXNode(vm, runnable, from, to,
     Introspection::allNodes,
     [&builder](VM vm, Runnable* runnable, RichNode node) {
-      builder.push_back(vm, buildNodeRecord(vm, node));
+      builder.push_back(vm, Introspection::buildNode(vm, node));
     }
   );
   return builder.get(vm);
@@ -204,7 +143,7 @@ UnstableNode ModIntrospection::getThreadNodes(VM vm, In threadNode, In depthNode
       introspection.doForEachYNode(vm, runnable, depth, from, to,
         Introspection::allNodes,
         [&builder](VM vm, Runnable* runnable, RichNode node) {
-          builder.push_back(vm, buildNodeRecord(vm, node));
+          builder.push_back(vm, Introspection::buildNode(vm, node));
         }
       );
       break;
@@ -213,7 +152,7 @@ UnstableNode ModIntrospection::getThreadNodes(VM vm, In threadNode, In depthNode
       introspection.doForEachGNode(vm, runnable, depth, from, to,
         Introspection::allNodes,
         [&builder](VM vm, Runnable* runnable, RichNode node) {
-          builder.push_back(vm, buildNodeRecord(vm, node));
+          builder.push_back(vm, Introspection::buildNode(vm, node));
         }
       );
       break;
@@ -222,7 +161,7 @@ UnstableNode ModIntrospection::getThreadNodes(VM vm, In threadNode, In depthNode
       introspection.doForEachKNode(vm, runnable, depth, from, to,
         Introspection::allNodes,
         [&builder](VM vm, Runnable* runnable, RichNode node) {
-          builder.push_back(vm, buildNodeRecord(vm, node));
+          builder.push_back(vm, Introspection::buildNode(vm, node));
         }
       );
       break;
@@ -230,50 +169,6 @@ UnstableNode ModIntrospection::getThreadNodes(VM vm, In threadNode, In depthNode
   }
 
   return builder.get(vm);
-}
-
-void ModIntrospection::GetNodes::call(VM vm, In nodeFamily, In fromNode, In toNode, Out result) {
-  using namespace patternmatching;
-
-  Introspection& introspection = vm->getIntrospection();
-  Introspection::NodeBoolLambda filter;
-  if (matches(vm, nodeFamily, "variable")) {
-    filter = [&introspection](VM vm, RichNode node) {
-      return introspection.isVariableNode(vm, node);
-    };
-  } else if (matches(vm, nodeFamily, "token")) {
-    filter = [&introspection](VM vm, RichNode node) {
-      return introspection.isTokenNode(vm, node);
-    };
-  } else if (matches(vm, nodeFamily, "structural")) {
-    filter = [&introspection](VM vm, RichNode node) {
-      return introspection.isStructuralNode(vm, node);
-    };
-  } else if (matches(vm, nodeFamily, "value")) {
-    filter = [&introspection](VM vm, RichNode node) {
-      return introspection.isValueNode(vm, node);
-    };
-  } else {
-    filter = Introspection::allNodes;
-  }
-
-  size_t from = getArgument<size_t>(vm, fromNode);
-  size_t to = getArgument<size_t>(vm, toNode);
-  size_t i = 0;
-
-  OzListBuilder builder(vm);
-  vm->getIntrospection().doForEachNode(vm,
-    Introspection::allRunnables,
-    filter,
-    [&builder, from, to, &i](VM vm, Runnable* _, RichNode node) {
-      if (i >= from && i < to) { // TODO Ugly make it better
-        builder.push_back(vm, buildNodeRecord(vm, node));
-      }
-      i++;
-    }
-  );
-
-  result = builder.get(vm);
 }
 
 }

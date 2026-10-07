@@ -40,61 +40,13 @@ void ModIntrospection::GetNextScheduledThread::call(VM vm, In boolean, Out resul
   }
 }
 
-UnstableNode ModIntrospection::buildOperationArgumentRecord(VM vm, OperationArgument argument) {
-  using AT = Introspection::ArgumentType;
-
-  std::string type;
-
-  switch (argument.type) {
-    case AT::I: type = "Int"; break;
-    case AT::X: type = "X"; break;
-    case AT::Y: type = "Y"; break;
-    case AT::G: type = "G"; break;
-    case AT::K: type = "K"; break;
-    default: assert(false);
-  }
-
-  return buildRecord(vm,
-    buildArity(
-      vm,
-      "operationArgument",
-      "image",
-      "index",
-      "type"
-    ),
-    build(vm, argument.image.c_str()),
-    build(vm, argument.index),
-    build(vm, type.c_str())
-  );
-}
-
-UnstableNode ModIntrospection::buildOperationRecord(VM vm, Operation operation) {
-  OzListBuilder builder(vm);
-
-  for (OperationArgument opArgument : operation.arguments) {
-    builder.push_back(vm, buildOperationArgumentRecord(vm, opArgument));
-  }
-
-  return buildRecord(vm,
-    buildArity(vm,
-      "operation",
-      "arguments",
-      "name",
-      "opCode"
-    ),
-    builder.get(vm),
-    build(vm, operation.name.c_str()),
-    build(vm, operation.opCode)
-  );
-}
-
 void ModIntrospection::GetNextOperation::call(VM vm, In includeSystemThreadsNode, Out result) {
   bool includeSystemThreads = getArgument<bool>(vm, includeSystemThreadsNode);
 
-  Operation operation = vm->getIntrospection()
+  Introspection::Operation operation = vm->getIntrospection()
     .getNextExecutedOperation(vm, includeSystemThreads);
 
-  result = buildOperationRecord(vm, operation);
+  result = Introspection::buildOperation(vm, operation);
 }
 
 }

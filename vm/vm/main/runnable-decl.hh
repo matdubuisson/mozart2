@@ -182,9 +182,9 @@ public:
   }
 
   /** @returns The priority of the thread */
-  ThreadPriority getPriority() { return _priority; }
+  ThreadPriority getPriority() const { return _priority; }
 
-  Statistics getStatistics() { return _statistics; }
+  const Statistics& getStatistics() const { return _statistics; }
 
   /**
    * Sets the priority of the thread
@@ -204,29 +204,29 @@ public:
 
   /** Tells if the thread is runnable */
   inline
-  bool isRunnable() { return _runnable; }
+  bool isRunnable() const { return _runnable; }
 
   /** Tells if the thread is terminated */
   inline
-  bool isTerminated() { return _terminated; }
+  bool isTerminated() const { return _terminated; }
 
   /** Tells if the thread is dead */
   inline
-  bool isDead() { return _dead; }
+  bool isDead() const { return _dead; }
 
   inline
-  bool isAlive() {
+  bool isAlive() const {
     return !_dead && !_terminated;
   }
 
   inline
-  bool isPreempted() {
+  bool isPreempted() const {
     return _preempted || _terminated || _dead || !_runnable;
   }
 
   /** Tells if the thread is preemptible */
   inline
-  bool isPreemptible() { return _preemptible; }
+  bool isPreemptible() const { return _preemptible; }
 
   inline
   void setPreemptible(bool preemptible);

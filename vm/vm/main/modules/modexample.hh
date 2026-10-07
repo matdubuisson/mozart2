@@ -107,6 +107,25 @@ public:
       result = builder.get(vm);
     }
   };
+
+  class Test: public Builtin<Test> {
+  public:
+    Test(): Builtin("test") {}
+    
+    static void call(VM vm, Out result) {
+      // Introspection::Map<size_t, char*> map;
+      // map[0] = "test0";
+      // map[1] = "test1";
+      // map[10] = "test10";
+      // result = Introspection::buildMap(vm, map);
+      Introspection::Map<size_t, Introspection::Vector<size_t>> map;
+      map[0] = {1, 2, 3};
+      map[1] = {11, 22, 33};
+      map[10] = {1, 2, 3, 4, 5};
+      map[11] = {};
+      result = Introspection::buildMap(vm, map);
+    }
+  };
 };
 
 }

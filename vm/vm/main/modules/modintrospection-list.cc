@@ -30,7 +30,7 @@ namespace mozart {
 namespace builtins {
 
 UnstableNode ModIntrospection::buildListNodeRecord(VM vm, Introspection::OwnedRichNode& ownedNode) {
-  Introspection::RunnableVector runnables = ownedNode.runnables;
+  Introspection::RunnablesVector runnables = ownedNode.runnables;
   RichNode node = ownedNode.node;
 
   OzListBuilder builder(vm);
@@ -60,7 +60,7 @@ UnstableNode ModIntrospection::buildListNodeRecord(VM vm, Introspection::OwnedRi
   );
 }
 
-UnstableNode ModIntrospection::buildListNodesListRecord(VM vm, RichNode idsList, Introspection::NodesMap& map) {
+UnstableNode ModIntrospection::buildListNodesListRecord(VM vm, RichNode idsList, Introspection::IdToOwnedRichNodeMap& map) {
   std::unordered_set<size_t> set;
 
   bool isNil = ozListIsNil(vm, idsList);
@@ -90,13 +90,13 @@ UnstableNode ModIntrospection::buildListNodesListRecord(VM vm, RichNode idsList,
 
 void ModIntrospection::GetThreadLists::call(VM vm, In runnableNode, In idsList, Out result) {
   Runnable* runnable = getArgument<Runnable*>(vm, runnableNode);
-  Introspection::NodesMap map = vm->getIntrospection()
+  Introspection::IdToOwnedRichNodeMap map = vm->getIntrospection()
     .getLists(vm, runnable);
   result = buildListNodesListRecord(vm, idsList, map);
 }
 
 void ModIntrospection::GetLists::call(VM vm, In idsList, Out result) {
-  Introspection::NodesMap map = vm->getIntrospection().getLists(vm);
+  Introspection::IdToOwnedRichNodeMap map = vm->getIntrospection().getLists(vm);
   result = buildListNodesListRecord(vm, idsList, map);
 }
 

@@ -40,14 +40,6 @@ namespace builtins {
 class ModIntrospection: public Module {
 public:
   ModIntrospection(): Module("Introspection") {}
-  
-  static inline
-  std::string nodeToString(VM vm, RichNode node) {
-    auto& config = vm->getPropertyRegistry().config;
-    std::basic_stringstream<char> buffer;
-    buffer << repr(vm, node, config.printDepth, config.printWidth);
-    return buffer.str();
-  }
 
   /* ========== Virtual Machine stats ========== */  
 
@@ -108,15 +100,6 @@ public:
     static void call(VM vm, In boolean, Out result);
   };
 
-  using Operation = Introspection::Operation;
-  using OperationArgument = Introspection::OperationArgument;
-
-  static
-  UnstableNode buildOperationArgumentRecord(VM vm, OperationArgument argument);
-
-  static
-  UnstableNode buildOperationRecord(VM vm, Operation operation);
-
   class GetNextOperation: public Builtin<GetNextOperation> {
   public:
     GetNextOperation(): Builtin("getNextOperation") {}
@@ -142,6 +125,16 @@ public:
 
   /* ========== Threads ========== */
 
+  // Thread aggregates
+
+  static inline
+  UnstableNode buildThreadAggregatesList(VM vm, size_t from, size_t to,
+    std::function<void(VM vm, OzListBuilder& builder, Runnable* runnable)> lambda);
+
+  static inline
+  UnstableNode buildThreadRecordsList(VM vm, size_t from, size_t to,
+      std::function<UnstableNode(VM vm, Runnable* runnable)> recordBuilder);
+
   // Thread accessors
 
   class GetThreadIds: public Builtin<GetThreadIds> {
@@ -150,7 +143,6 @@ public:
 
     static void call(VM vm, In fromNode, In toNode, Out result);
   };
-
 
   class GetThread: public Builtin<GetThread> {
   public:
@@ -198,20 +190,7 @@ public:
     }
   };
 
-  // Thread aggregates
-
-  static
-  UnstableNode buildThreadAggregatesList(VM vm, size_t from, size_t to,
-    std::function<void(VM vm, OzListBuilder& builder, Runnable* runnable)> lambda);
-
-  static
-  UnstableNode buildThreadRecordsList(VM vm, size_t from, size_t to,
-      std::function<UnstableNode(VM vm, Runnable* runnable)> recordBuilder);
-
   // Thread state aggregate
-
-  static
-  UnstableNode buildThreadStateRecord(VM vm, Runnable* runnable);
 
   class GetThreadState: public Builtin<GetThreadState> {
   public:
@@ -220,17 +199,7 @@ public:
     static void call(VM vm, In threadNode, Out result);
   };
 
-  class GetAllThreadStates: public Builtin<GetAllThreadStates> {
-  public:
-    GetAllThreadStates(): Builtin("getAllThreadStates") {}
-
-    static void call(VM vm, In fromNode, In toNode, Out result);
-  };
-
   // Thread statistics aggregate
-
-  static
-  UnstableNode buildThreadStatisticsRecord(VM vm, Runnable* runnable);
 
   class GetThreadStatistics: public Builtin<GetThreadStatistics> {
   public:
@@ -239,17 +208,7 @@ public:
     static void call(VM vm, In threadNode, Out result);
   };
 
-  class GetAllThreadStatistics: public Builtin<GetAllThreadStatistics> {
-  public:
-    GetAllThreadStatistics(): Builtin("getAllThreadStatistics") {}
-
-    static void call(VM vm, In fromNode, In toNode, Out result);
-  };
-
   // Thread nodes aggregate
-
-  static
-  UnstableNode buildThreadNodesCountsRecord(VM vm, Runnable* runnable);
 
   class GetThreadNodesCounts: public Builtin<GetThreadNodesCounts> {
   public:
@@ -258,62 +217,9 @@ public:
     static void call(VM vm, In threadNode, Out result);
   };
 
-  class GetAllThreadNodesCounts: public Builtin<GetAllThreadNodesCounts> {
-  public:
-    GetAllThreadNodesCounts(): Builtin("getAllThreadNodesCounts") {}
-
-    static void call(VM vm, In fromNode, In toNode, Out result);
-  };
-
-  // Thread status aggregate
-
-  static
-  UnstableNode buildThreadStatusRecord(VM vm, Runnable* runnable);
-
-  class GetThreadStatus: public Builtin<GetThreadStatus> {
-  public:
-    GetThreadStatus(): Builtin("getThreadStatus") {}
-
-    static void call(VM vm, In threadNode, Out result);
-  };
-
-  class GetAllThreadStatus: public Builtin<GetAllThreadStatus> {
-  public:
-    GetAllThreadStatus(): Builtin("getAllThreadStatus") {}
-
-    static void call(VM vm, In fromNode, In toNode, Out result);
-  };
-
   /* ========== Nodes ========== */
 
-  static inline
-  std::string nodeStructuralBehaviorToString(StructuralBehavior behavior) {
-    switch (behavior) {
-      case sbVariable: return "variable";
-      case sbValue: return "value";
-      case sbStructural: return "structural";
-      case sbTokenEq: return "tokenEq";
-      default: assert(false); return "";
-    }
-  }
-
-  using NodesRegister = Introspection::NodesRegister;
-
-  static inline
-  std::string getRegisterName(NodesRegister nodesRegister) {
-    switch (nodesRegister) {
-      case NodesRegister::xRegister: return "X";
-      case NodesRegister::yRegister: return "Y";
-      case NodesRegister::gRegister: return "G";
-      case NodesRegister::kRegister: return "K";
-      default: assert(false); return "";
-    }
-  }
-
   // Nodes counters
-
-  static
-  UnstableNode buildNodesCountsRecord(VM vm, Introspection::NodesCounts& properties);
   
   class GetNodesCounts: public Builtin<GetNodesCounts> {
   public:
@@ -578,7 +484,7 @@ public:
 
   static
   UnstableNode getThreadNodesRegisterSize(VM vm, In threadNode, In depthNode,
-    NodesRegister nodesRegister);
+    Introspection::NodesRegister nodesRegister);
 
   class GetThreadXNodesRegisterSize: public Builtin<GetThreadXNodesRegisterSize> {
   public:
@@ -597,7 +503,7 @@ public:
 
     static void call(VM vm, In threadNode, In depthNode, Out result) {
       result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
-        NodesRegister::yRegister);
+        Introspection::NodesRegister::yRegister);
     }
   };
 
@@ -607,7 +513,7 @@ public:
 
     static void call(VM vm, In threadNode, In depthNode, Out result) {
       result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
-        NodesRegister::gRegister);
+        Introspection::NodesRegister::gRegister);
     }
   };
 
@@ -617,21 +523,18 @@ public:
 
     static void call(VM vm, In threadNode, In depthNode, Out result) {
       result = getThreadNodesRegisterSize(vm, threadNode, depthNode,
-        NodesRegister::kRegister);
+        Introspection::NodesRegister::kRegister);
     }
   };
 
   // Nodes getters
 
   static
-  UnstableNode buildNodeRecord(VM vm, RichNode node);
-
-  static
   UnstableNode getThreadXNode(VM vm, In threadNode, In indexNode);
 
   static
   UnstableNode getThreadNode(VM vm, In threadNode, In depthNode,
-    In indexNode, NodesRegister nodesRegister);
+    In indexNode, Introspection::NodesRegister nodesRegister);
 
   class GetThreadXNode: public Builtin<GetThreadXNode> {
   public:
@@ -647,7 +550,8 @@ public:
     GetThreadYNode(): Builtin("getThreadYNode") {}
 
     static void call(VM vm, In threadNode, In depthNode, In indexNode, Out result) {
-      result = getThreadNode(vm, threadNode, depthNode, indexNode, NodesRegister::yRegister);
+      result = getThreadNode(vm, threadNode, depthNode, indexNode,
+        Introspection::NodesRegister::yRegister);
     }
   };
 
@@ -656,7 +560,8 @@ public:
     GetThreadGNode(): Builtin("getThreadGNode") {}
 
     static void call(VM vm, In threadNode, In depthNode, In indexNode, Out result) {
-      result = getThreadNode(vm, threadNode, depthNode, indexNode, NodesRegister::gRegister);
+      result = getThreadNode(vm, threadNode, depthNode, indexNode,
+        Introspection::NodesRegister::gRegister);
     }
   };
 
@@ -665,7 +570,8 @@ public:
     GetThreadKNode(): Builtin("getThreadKNode") {}
 
     static void call(VM vm, In threadNode, In depthNode, In indexNode, Out result) {
-      result = getThreadNode(vm, threadNode, depthNode, indexNode, NodesRegister::kRegister);
+      result = getThreadNode(vm, threadNode, depthNode, indexNode,
+        Introspection::NodesRegister::kRegister);
     }
   };
 
@@ -676,7 +582,7 @@ public:
 
   static
   UnstableNode getThreadNodes(VM vm, In threadNode, In depthNode, In fromNode, In toNode,
-    NodesRegister nodesRegister);
+    Introspection::NodesRegister nodesRegister);
 
   class GetThreadXNodes: public Builtin<GetThreadXNodes> {
   public:
@@ -692,7 +598,7 @@ public:
     GetThreadYNodes(): Builtin("getThreadYNodes") {}
 
     static void call(VM vm, In threadNode, In depthNode, In fromNode, In toNode, Out result) {
-      result = getThreadNodes(vm, threadNode, depthNode, fromNode, toNode, NodesRegister::yRegister);
+      result = getThreadNodes(vm, threadNode, depthNode, fromNode, toNode, Introspection::NodesRegister::yRegister);
     }
   };
 
@@ -701,7 +607,7 @@ public:
     GetThreadGNodes(): Builtin("getThreadGNodes") {}
 
     static void call(VM vm, In threadNode, In depthNode, In fromNode, In toNode, Out result) {
-      result = getThreadNodes(vm, threadNode, depthNode, fromNode, toNode, NodesRegister::gRegister);
+      result = getThreadNodes(vm, threadNode, depthNode, fromNode, toNode, Introspection::NodesRegister::gRegister);
     }
   };
 
@@ -710,15 +616,8 @@ public:
     GetThreadKNodes(): Builtin("getThreadKNodes") {}
 
     static void call(VM vm, In threadNode, In depthNode, In fromNode, In toNode, Out result) {
-      result = getThreadNodes(vm, threadNode, depthNode, fromNode, toNode, NodesRegister::kRegister);
+      result = getThreadNodes(vm, threadNode, depthNode, fromNode, toNode, Introspection::NodesRegister::kRegister);
     }
-  };
-
-  class GetNodes: public Builtin<GetNodes> {
-  public:
-    GetNodes(): Builtin("getNodes") {}
-
-    static void call(VM vm, In nodeFamily, In fromNode, In toNode, Out result);
   };
 
   /* ========== Variables stats ========== */
@@ -758,17 +657,6 @@ public:
 
   // Variables getters
 
-  using Pendings = VMAllocatedList<StableNode*>;
-
-  static
-  void buildVariablePendingsList(VM vm, OzListBuilder& builder, Pendings& pendings);
-
-  static
-  UnstableNode buildVariableRecord(VM vm, Introspection::VariableCandidates& variableCandidates);
-
-  static
-  UnstableNode buildVariableRecordsList(VM vm, Introspection::VariableCandidatesMap& map);
-
   class GetVariable: public Builtin<GetVariable> {
   public:
     GetVariable(): Builtin("getVariable") {}
@@ -783,9 +671,9 @@ public:
     static void call(VM vm, In runnableNode, Out result);
   };
 
-  class GetAllVariables: public Builtin<GetAllVariables> {
+  class GetVariables: public Builtin<GetVariables> {
   public:
-    GetAllVariables(): Builtin("getAllVariables") {}
+    GetVariables(): Builtin("getVariables") {}
 
     static void call(VM vm, Out result);
   };
@@ -811,7 +699,7 @@ public:
   UnstableNode buildListNodeRecord(VM vm, Introspection::OwnedRichNode& ownedNode);
 
   static
-  UnstableNode buildListNodesListRecord(VM vm, RichNode idsList, Introspection::NodesMap& map);
+  UnstableNode buildListNodesListRecord(VM vm, RichNode idsList, Introspection::IdToOwnedRichNodeMap& map);
 
   class GetThreadLists: public Builtin<GetThreadLists> {
   public:
