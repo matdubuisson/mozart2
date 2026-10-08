@@ -74,25 +74,25 @@ define
         Command|Arguments = Inputs
       in
         case Command of "count" then
-          \insert ./commands/CountCommand
+          \insert ./commands/introspection/CountCommand
         [] "thread" then
-          \insert ./commands/ThreadCommand
+          \insert ./commands/introspection/ThreadCommand
         [] "threads" then
-          \insert ./commands/ThreadsCommand
+          \insert ./commands/introspection/ThreadsCommand
         [] "depth" then
-          \insert ./commands/DepthCommand
+          \insert ./commands/introspection/DepthCommand
         [] "register" then
-          \insert ./commands/RegisterCommand
+          \insert ./commands/introspection/RegisterCommand
         [] "registers" then
-          \insert ./commands/RegistersCommand
+          \insert ./commands/introspection/RegistersCommand
         [] "variable" then
-          \insert ./commands/VariableCommand
+          \insert ./commands/introspection/VariableCommand
         [] "variables" then
-          \insert ./commands/VariablesCommand
+          \insert ./commands/introspection/VariablesCommand
         [] "status" then
-          \insert ./commands/StatusCommand
+          \insert ./commands/introspection/StatusCommand
         [] "run" then
-          \insert ./commands/RunCommand
+          \insert ./commands/execution/RunCommand
         [] "continue" then
           {Cell.assign ModeCell false}
           {Boot_Thread.preempt This}
@@ -101,9 +101,9 @@ define
         % [] "alarm" then
         %   \insert AlarmCommand
         [] "nodes" then
-          \insert ./commands/NodesCommand
+          \insert ./commands/introspection/NodesCommand
         [] "lists" then
-          \insert ./commands/ListsCommand
+          \insert ./commands/introspection/ListsCommand
         [] "gc" then
           \insert ./commands/GCCommand
         else
