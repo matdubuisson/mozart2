@@ -40,17 +40,15 @@ define
   TRYHELP = ", try help to get more details"
 
   % All printers to display runtime data, infos and errors
-  \insert Util
+  \insert Utils
 
   \insert Printing
 
-  \insert Error
+  \insert Formatting
 
-  \insert Format
-
-  \insert Display
+  \insert Displaying
   
-  \insert Filter
+  \insert Filtering
 
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
@@ -75,6 +73,8 @@ define
       in
         case Command of "count" then
           \insert ./commands/introspection/CountCommand
+        [] "vm" then
+          \insert ./commands/introspection/VMCommand
         [] "thread" then
           \insert ./commands/introspection/ThreadCommand
         [] "threads" then
@@ -89,8 +89,6 @@ define
           \insert ./commands/introspection/VariableCommand
         [] "variables" then
           \insert ./commands/introspection/VariablesCommand
-        [] "status" then
-          \insert ./commands/introspection/StatusCommand
         [] "run" then
           \insert ./commands/execution/RunCommand
         [] "continue" then
