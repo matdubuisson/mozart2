@@ -119,11 +119,9 @@ define
   in
     if {Boot_Scheduler.isGCReady $} then
       CollectedThreadIds = {Boot_Introspection.getGarbageCollectedThreads $}
-      Todos = {Boot_Introspection.getGarbageCollectorTodos $}
     in
       {PrintWarning "GC ready"}
       {Boot_System.printRepr CollectedThreadIds false true}
-      {Boot_System.printRepr Todos false true}
     end
 
     % if {Boot_Scheduler.isGCDone $} then
@@ -146,43 +144,49 @@ define
       andthen {Boot_EventManager.isTrackingTriggered $} then
 
       local
-        Variables = {Boot_Introspection.getAllVariables $}
-
-        proc {FormatStateCase Variable ?Result}
-          case Variable of variable(
-            id: Id
-            kindId: KindId
-            generationId: GenerationId
-            type: Type
-            isBound: IsBound
-            isNeeded: IsNeeded
-            pendings: Pendings
-            candidates: Candidates
-            value: _
-          ) then
-            Result = [
-              {Int.toString Id $}
-              {Int.toString KindId $}
-              {Int.toString GenerationId $}
-              {Atom.toString Type $}
-              {Bool.toString IsBound $}
-              {Bool.toString IsNeeded $}
-              {Int.toString
-                {List.length Pendings $} $}
-              {Int.toString
-                {List.length Candidates $} $}
-            ]
-          end
-        end
-
+        Todos = {Boot_Introspection.getGarbageCollectorTodos $}
       in
-        {DisplayCSV
-          ["Id" "KindId" "GenerationId" "Type" "IsBound" "IsNeeded" "NPendings" "NCandidates"]
-          Variables
-          10
-          FormatStateCase
-        }
+        {Boot_System.printRepr Todos false true}
       end
+
+      % local
+      %   Variables = {Boot_Introspection.getAllVariables $}
+
+      %   proc {FormatStateCase Variable ?Result}
+      %     case Variable of variable(
+      %       id: Id
+      %       kindId: KindId
+      %       generationId: GenerationId
+      %       type: Type
+      %       isBound: IsBound
+      %       isNeeded: IsNeeded
+      %       pendings: Pendings
+      %       candidates: Candidates
+      %       value: _
+      %     ) then
+      %       Result = [
+      %         {Int.toString Id $}
+      %         {Int.toString KindId $}
+      %         {Int.toString GenerationId $}
+      %         {Atom.toString Type $}
+      %         {Bool.toString IsBound $}
+      %         {Bool.toString IsNeeded $}
+      %         {Int.toString
+      %           {List.length Pendings $} $}
+      %         {Int.toString
+      %           {List.length Candidates $} $}
+      %       ]
+      %     end
+      %   end
+
+      % in
+      %   {DisplayCSV
+      %     ["Id" "KindId" "GenerationId" "Type" "IsBound" "IsNeeded" "NPendings" "NCandidates"]
+      %     Variables
+      %     10
+      %     FormatStateCase
+      %   }
+      % end
 
       local
         % PingPong :
