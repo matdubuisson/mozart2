@@ -182,7 +182,20 @@ proc {GetPercentString Count Scale ?String}
   Percent DotPercent
 in
   {GetPercent Count Scale Percent DotPercent}
-  String = Percent#"."#DotPercent#"%"
+  local
+    Left = {List.append {Int.toString Percent $} "."}
+    Right = {List.append {Int.toString DotPercent $} "%"}
+  in
+    String = {List.append Left Right $}
+  end
+end
+
+proc {MakeStringWithPercent Label Count Scale ?String}
+  PercentString = {GetPercentString Count Scale $}
+  Left = {List.append Label " (" $}
+  Right = {List.append PercentString ")" $}
+in
+  String = {List.append Left Right $}
 end
 
 proc {ListToString ThisList ?String}

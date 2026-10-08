@@ -249,3 +249,32 @@ end
 proc {DisplayCSV Labels Rows Width Format}
   {MaskedDisplayCSV Labels Rows Width Format none}
 end
+
+proc {DisplayFrame Label Rows}
+  proc {GetMaxLength Rows Length ?Result}
+    case Rows of nil then Result = Length
+    [] Label|_|NextRows then
+      NewLength = {List.length Label $}
+    in
+      {GetMaxLength NextRows
+        if NewLength > Length then NewLength else Length end
+        Result}
+    end
+  end
+
+  proc {Display Rows Length}
+    case Rows of nil then skip
+    [] Label|Value|NextRows then
+      {PrintExactly Label Length}
+      {PrintLn ": "#Value}
+      {Display NextRows Length}
+    end
+  end
+
+  MaxLength = {GetMaxLength Rows 0 $}
+in
+  {PrintLn Label}
+  {PrintTab "─" {List.length Label $}}
+  {PrintLn ""}
+  {Display Rows (MaxLength + 1)}
+end
