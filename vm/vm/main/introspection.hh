@@ -918,10 +918,7 @@ void Introspection::computeReachabilityGraph(VM vm, ReachabilityGraph& graph, si
       Runnable* runnable = getArgument<Runnable*>(vm, node);
       size_t threadId = runnable->getId();
 
-      bool isNewVariableId =
-        graph.variableToThreads.find(variableId) == graph.variableToThreads.end();
-
-      if (isNewVariableId)
+      if (graph.variableToThreads.contains(variableId))
         graph.variableToThreads.insert({variableId, {threadId}});
       else
         graph.variableToThreads.at(variableId).push_back(threadId);
@@ -940,8 +937,8 @@ Introspection::ReachabilityGraph Introspection::computeReachabilityGraph(VM vm) 
       return this->isVariableNode(vm, node);
     },
     [this, &graph](VM vm, Runnable* runnable, RichNode node) {
-      size_t threadId = runnable->getId();
-      size_t variableId = SIZE_MAX;
+      Id threadId = runnable->getId();
+      Id variableId = SIZE_MAX;
       
       if (node.isNullNode()) return;
       else if (node.is<Variable>()) {
@@ -953,11 +950,8 @@ Introspection::ReachabilityGraph Introspection::computeReachabilityGraph(VM vm) 
         variableId = readOnlyVariable.getId();
         this->computeReachabilityGraph(vm, graph, variableId, readOnlyVariable.getPendings(vm));
       } else return;
-
-      bool isNewThreadId =
-        graph.threadToVariables.find(threadId) == graph.threadToVariables.end();
       
-      if (isNewThreadId)
+      if (graph.threadToVariables.contains(threadId))
         graph.threadToVariables.insert({threadId, {variableId}});
       else
         graph.threadToVariables.at(threadId).push_back(variableId);
