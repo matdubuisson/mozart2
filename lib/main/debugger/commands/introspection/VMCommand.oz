@@ -1,16 +1,10 @@
 local
   proc {DisplayOptions}
-    {DisplayNameDescriptions
-      [
-        "state"
-        "statistics"
-        "nodes"
-      ]
-      [
-        "display the state"
-        "display the statistics"
-        "display the nodes proportions"
-      ]}
+    {DisplayFrame "VM command options" [
+      "state" "display the state of the Virtual Machine"
+      "statistics" "display statistics related to the Virtual Machine"
+      "nodes" "display the state nodes proportions related to the Virtual Machine"
+    ]}
   end
 
   proc {HandleStateOption}
