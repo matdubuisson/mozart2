@@ -2,17 +2,11 @@ local
   % Common configuration for all aggregates
 
   proc {DisplayOptions}
-    {DisplayNameDescriptions
-      [
-        "state"
-        "statistics"
-        "nodes"
-      ]
-      [
-        "display the state for each thread"
-        "display the statistics for each thread"
-        "display the nodes for each thread"
-      ]}
+    {DisplayFrame "Thread command options" [
+      "state <condition>" "display the state of a selected set of threads"
+      "statistics <condition>" "display statistics related to a selection of threads"
+      "nodes <condition>" "display the state nodes proportions related to a selection of threads"
+    ]}
   end
 
   proc {HandleStateOption From To Conditions}
@@ -65,17 +59,9 @@ local
   end
 
   proc {HandleOption Option Arguments}
-    From To Conditions
+    Conditions = {ExtractConditions Arguments $}
   in
-    if {ExtractFilteringParameters Arguments From To Conditions $} then
-      case Option of state then
-        {HandleStateOption From To Conditions}
-      [] statistics then
-        {HandleStatisticsOption From To Conditions}
-      [] nodes then
-        {HandleNodesOption From To Conditions}
-      end
-    end
+    {Boot_System.printRepr Conditions false true}
   end
 in
   case Arguments of nil then
