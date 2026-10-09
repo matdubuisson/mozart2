@@ -54,6 +54,13 @@ public:
 
     static void call(VM vm, In object, In idNode);
   };
+
+  class GetIdFromName: public Builtin<GetIdFromName> {
+  public:
+    GetIdFromName(): Builtin("getIdFromName") {}
+
+    static void call(VM vm, In name, Out result);
+  };
 };
 
 }

@@ -53,6 +53,10 @@ void ModIdentity::SetId::call(VM vm, In object, In idNode) {
   }
 }
 
+void ModIdentity::GetIdFromName::call(VM vm, In nape, Out result) {
+  result = build(vm, "none");
+}
+
 }
 
 }
