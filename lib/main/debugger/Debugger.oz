@@ -32,6 +32,7 @@ define
   Boot_Thread = {Boot.getInternal 'Thread'}
   Boot_System = {Boot.getInternal 'System'}
   Boot_Time = {Boot.getInternal 'Time'}
+  Boot_Identity = {Boot.getInternal 'Identity'}
   Boot_Introspection = {Boot.getInternal 'Introspection'}
   Boot_EventManager = {Boot.getInternal 'EventManager'}
   Boot_Scheduler = {Boot.getInternal 'Scheduler'}
@@ -47,6 +48,8 @@ define
   \insert Formatting
 
   \insert Displaying
+
+  \insert Extracting
   
   \insert Filtering
 
@@ -75,6 +78,8 @@ define
           \insert ./commands/introspection/CountCommand
         [] "vm" then
           \insert ./commands/introspection/VMCommand
+        [] "this" then
+          {PrintInfo "Debugger thread id: "#ThisId}
         [] "thread" then
           \insert ./commands/introspection/ThreadCommand
         [] "threads" then
@@ -209,6 +214,18 @@ in
 
   {Loop}
 end
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

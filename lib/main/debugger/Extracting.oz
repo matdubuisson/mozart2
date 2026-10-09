@@ -1,27 +1,24 @@
 local
   X = unit
 in
-  proc {ExtractArguments Command Arguments ?Which ?What ?Who}
-    proc {ReturnError}
-      Which = none What = none Who = none
-    end
-  in
-    case Arguments of Wi|Wa|Wo then
-      if {List.member Wi WhichList $} then
-        if {List.member Wa WhatList $} then
-        
-        else
-          {PrintWrongArgumentError Wa 2 WhatList}
-          {ReturnError}
-        end
+  proc {ExtractIdentities Arguments ?Identities}
+    case Arguments of nil then Identities = nil
+    [] Argument|NextArguments then
+      NewIdentities
+    in
+      if {String.isInt Argument $} then
+        Identities = {String.toInt Argument $}|NewIdentities
       else
-        {PrintWrongArgumentError Wi 1 WhichList}
-        {ReturnError}
+        Id = {Boot_Identity.getIdFromName Argument $}
+      in
+        if Id \= none then
+          Identities = Id|NewIdentities
+        else
+          Identities = NewIdentities
+          {PrintError "Name '"#Argument#"' was referenced to no id"}
+        end
       end
-    else
-      {PrintError "Command '"#Command#"'' must be composed with "#
-        "at least 3 arguments"#TRYHELP}
-      {ReturnError}
+      {ExtractIdentities NextArguments NewIdentities}
     end
   end
 end

@@ -153,3 +153,7 @@ end
 proc {PrintVariableNotFoundError Id}
   {PrintError "Variable "#Id#" does not exist or has been garbage collected"}
 end
+
+proc {PrintInvalidOptionError InvalidOption}
+  {PrintError "Invalid option '"#InvalidOption#"'"#TRYHELP}
+end
