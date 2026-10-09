@@ -43,7 +43,9 @@ std::string Introspection::OperationArgument::toRepr(VM vm, RichNode value) {
 
 template<class Value>
 UnstableNode Introspection::build(VM vm, Value value) {
-  return build(vm, value);
+  // If there are not build() defined for Value inside Introspection
+  // then go look outside if there exists one.
+  return mozart::build(vm, value);
 }
 
 template<class Value>
@@ -226,12 +228,6 @@ UnstableNode Introspection::buildThreadState(VM vm, const Runnable* runnable) {
     default: assert(false);
   }
 
-  UnstableNode type;
-  if (const Thread* thread = dynamic_cast<const Thread*>(runnable))
-    type = build(vm, "thread");
-  else
-    type = build(vm, "runnable");
-
   return buildRecord(vm,
     buildArity(vm,
       "state",
@@ -243,8 +239,7 @@ UnstableNode Introspection::buildThreadState(VM vm, const Runnable* runnable) {
       "preemptible",
       "priority",
       "runnable",
-      "terminated",
-      "type"
+      "terminated"
     ),
     isDead,
     generationId,
@@ -254,8 +249,7 @@ UnstableNode Introspection::buildThreadState(VM vm, const Runnable* runnable) {
     isPreemptible,
     priority,
     isRunnable,
-    isTerminated,
-    type
+    isTerminated
   );
 }
 
