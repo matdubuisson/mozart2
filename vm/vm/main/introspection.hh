@@ -267,6 +267,7 @@ UnstableNode Introspection::buildThreadStatistics(VM vm, const Runnable* runnabl
     buildArity(vm,
       "statistics",
       "bindsCount",
+      "id",
       "operationsCount",
       "resumesCount",
       "runsCount",
@@ -274,6 +275,7 @@ UnstableNode Introspection::buildThreadStatistics(VM vm, const Runnable* runnabl
       "suspendsOnVarCount"
     ),
     build(vm, bindsCount),
+    build(vm, runnable->getId()),
     build(vm, operationsCount),
     build(vm, statistics.resumesCount),
     build(vm, statistics.runsCount),
@@ -367,6 +369,40 @@ size_t Introspection::getNodesRegisterSize(VM vm, Runnable* runnable,
 }
 
 /* ========== Nodes stats ========== */
+
+UnstableNode Introspection::buildThreadNodesCounts(VM vm, const Id id, const NodesCounts& counts) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "nodes",
+      "gNodesCount",
+      "id",
+      "kNodesCount",
+      "nodesCount",
+      "stableNodesCount",
+      "stackDepth",
+      "structuralNodesCount",
+      "tokenNodesCount",
+      "unstableNodesCount",
+      "valueNodesCount",
+      "variableNodesCount",
+      "xNodesCount",
+      "yNodesCount"
+    ),
+    build(vm, counts.gNodesCount),
+    build(vm, id),
+    build(vm, counts.kNodesCount),
+    build(vm, counts.nodesCount),
+    build(vm, counts.stableNodesCount),
+    build(vm, counts.stackDepth),
+    build(vm, counts.structuralNodesCount),
+    build(vm, counts.tokenNodesCount),
+    build(vm, counts.unstableNodesCount),
+    build(vm, counts.valueNodesCount),
+    build(vm, counts.variableNodesCount),
+    build(vm, counts.xNodesCount),
+    build(vm, counts.yNodesCount)
+  );
+}
 
 UnstableNode Introspection::buildNodesCounts(VM vm, const NodesCounts& counts) {
   return buildRecord(vm,

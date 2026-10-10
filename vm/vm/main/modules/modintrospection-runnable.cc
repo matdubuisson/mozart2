@@ -106,7 +106,8 @@ void ModIntrospection::GetThreadStatistics::call(VM vm, In threadNode, Out resul
 void ModIntrospection::GetThreadNodesCounts::call(VM vm, In threadNode, Out result) {
   Introspection introspection = vm->getIntrospection();
   Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
-  result = Introspection::buildNodesCounts(vm,
+  result = Introspection::buildThreadNodesCounts(vm,
+    runnable->getId(),
     introspection.getNodesCounts(vm, runnable));
 }
 

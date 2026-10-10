@@ -456,6 +456,9 @@ public:
   };
 
   static inline
+  UnstableNode buildThreadNodesCounts(VM vm, const Id id, const NodesCounts& count); // TODO make runnable const
+
+  static inline
   UnstableNode buildNodesCounts(VM vm, const NodesCounts& counts);
 
 public:
