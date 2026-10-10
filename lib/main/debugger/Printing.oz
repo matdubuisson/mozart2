@@ -157,3 +157,8 @@ end
 proc {PrintInvalidOptionError InvalidOption}
   {PrintError "Invalid option '"#InvalidOption#"'"#TRYHELP}
 end
+
+proc {PrintInvalidFeatureError InvalidFeature Features}
+  {PrintError "Invalid feature '"#InvalidFeature#"' provided, all valid features are : "#
+    {Boot_System.getRepr Features ~1 ~1 $}}
+end

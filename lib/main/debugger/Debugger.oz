@@ -47,10 +47,10 @@ define
 
   \insert Formatting
 
-  \insert Displaying
-
   \insert Extracting
   
+  \insert Displaying
+
   \insert Filtering
 
   This = {Boot_Thread.this $}
@@ -74,41 +74,41 @@ define
         Inputs = {String.tokens Input 32 $}
         Command|Arguments = Inputs
       in
-        case Command of "count" then
-          \insert ./commands/introspection/CountCommand
-        [] "vm" then
+        case Command of "vm" then
           \insert ./commands/introspection/VMCommand
+        % [] "count" then
+        %   \insert ./commands/introspection/CountCommand
         [] "this" then
           {PrintInfo "Debugger thread id: "#ThisId}
         [] "thread" then
           \insert ./commands/introspection/ThreadCommand
         [] "threads" then
           \insert ./commands/introspection/ThreadsCommand
-        [] "depth" then
-          \insert ./commands/introspection/DepthCommand
-        [] "register" then
-          \insert ./commands/introspection/RegisterCommand
-        [] "registers" then
-          \insert ./commands/introspection/RegistersCommand
-        [] "variable" then
-          \insert ./commands/introspection/VariableCommand
-        [] "variables" then
-          \insert ./commands/introspection/VariablesCommand
-        [] "run" then
-          \insert ./commands/execution/RunCommand
-        [] "continue" then
-          {Cell.assign ModeCell false}
-          {Boot_Thread.preempt This}
-        [] "reset" then
-          {Boot_Scheduler.reset}
+        % [] "depth" then
+        %   \insert ./commands/introspection/DepthCommand
+        % [] "register" then
+        %   \insert ./commands/introspection/RegisterCommand
+        % [] "registers" then
+        %   \insert ./commands/introspection/RegistersCommand
+        % [] "variable" then
+        %   \insert ./commands/introspection/VariableCommand
+        % [] "variables" then
+        %   \insert ./commands/introspection/VariablesCommand
+        % [] "run" then
+        %   \insert ./commands/execution/RunCommand
+        % [] "continue" then
+        %   {Cell.assign ModeCell false}
+        %   {Boot_Thread.preempt This}
+        % [] "reset" then
+        %   {Boot_Scheduler.reset}
         % [] "alarm" then
         %   \insert AlarmCommand
-        [] "nodes" then
-          \insert ./commands/introspection/NodesCommand
-        [] "lists" then
-          \insert ./commands/introspection/ListsCommand
-        [] "gc" then
-          \insert ./commands/GCCommand
+        % [] "nodes" then
+        %   \insert ./commands/introspection/NodesCommand
+        % [] "lists" then
+        %   \insert ./commands/introspection/ListsCommand
+        % [] "gc" then
+        %   \insert ./commands/GCCommand
         else
           {PrintError "Unknown command '"#Command#"'"#TRYHELP}
         end
@@ -214,6 +214,15 @@ in
 
   {Loop}
 end
+
+
+
+
+
+
+
+
+
 
 
 

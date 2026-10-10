@@ -9,59 +9,141 @@ local
     ]}
   end
 
-  proc {HandleStateOption From To Conditions}
-    States = {Boot_Introspection.getAllThreadStates From To $}
-    Inputs = {FilterInputsUsingFilteringParameters
-      States Conditions $}
-  in
+  proc {HandleStateOption Threads Conditions}
     {DisplayCSV
       [
-        "Id" "KindId" "GenerationId" % Ids
-        "Priority" "Type" % Importance
-        "Runnable" "Terminated" "Dead" "Preempted" "Preemptible" % State
+        "Id      " "KindId  " "GenerationId" % Ids
+        "Priority" % Importance
+        "Runnable" "Terminated" "Dead " "Preempted" "Preemptible" % State
       ]
-      Inputs
-      12
-      FormatThreadState}
+      Threads
+      proc {$ Thread ?Record} Record = {Boot_Introspection.getThreadState Thread $} end
+      proc {$ State ?Result} Result = {CheckConditions Conditions State $} end
+      proc {$ State ?Result}
+        case State of state(
+          id: Id
+          kindId: KindId
+          generationId: GenerationId
+
+          priority: Priority
+
+          runnable: Runnable
+          terminated: Terminated
+          dead: Dead
+          preempted: Preempted
+          preemptible: Preemptible
+        ) then
+          Result = [
+            {Int.toString Id $}
+            {Int.toString KindId $}
+            {Int.toString GenerationId $}
+            {Atom.toString Priority $}
+
+            {Bool.toString Runnable $}
+            {Bool.toString Terminated $}
+            {Bool.toString Dead $}
+            {Bool.toString Preempted $}
+            {Bool.toString Preemptible $}
+          ]
+        end
+      end}
   end
 
-  proc {HandleStatisticsOption From To Conditions}
-    Statistics = {Boot_Introspection.getAllThreadStatistics From To $}
-  in
+  proc {HandleStatisticsOption Threads Conditions}
     {DisplayCSV
       [
-        "Id"
+        "Id      "
         "RunsCount" "ResumesCount"
         "SuspendsCount" "SuspendsOnVarCount"
         "OperationsCount" "BindsCount"
       ]
-      {FilterInputsUsingFilteringParameters
-        Statistics Conditions $}
-      12
-      FormatThreadStatistics}
+      Threads
+      proc {$ Thread ?Record} Record = {Boot_Introspection.getThreadStatistics Thread $} end
+      proc {$ Statistics ?Result} Result = {CheckConditions Conditions Statistics $} end
+      proc {$ Statistics ?Result}
+        case Statistics of statistics(
+          id: Id
+          runsCount: RunsCount
+          resumesCount: ResumesCount
+          suspendsCount: SuspendsCount
+          suspendsOnVarCount: SuspendsOnVarCount
+          operationsCount: OperationsCount
+          bindsCount: BindsCount
+        ) then
+          Result = [
+            {Int.toString Id $}
+            {Int.toString RunsCount $}
+            {Int.toString ResumesCount $}
+            {Int.toString SuspendsCount $}
+            {Int.toString SuspendsOnVarCount $}
+            {Int.toString OperationsCount $}
+            {Int.toString BindsCount $}
+          ]
+        end
+      end}
   end
 
-  proc {HandleNodesOption From To Conditions}
-    Nodes = {Boot_Introspection.getAllThreadNodesCounts From To $}
-  in
+  proc {HandleNodesOption Threads Conditions}
     {DisplayCSV
       [
-        "Id"
+        "Id      "
         "Variables" "Values" "Structures" "Tokens" % Family
         "Stable" "Unstable" % Modifiable
-        "X" "Y" "G" "K" % Type
-        "StackDepth" "Total" % How many
+        "X     " "Y     " "G     " "K     " % Type
+        "StackDepth" "Total " % How many
       ]
-      {FilterInputsUsingFilteringParameters
-        Nodes Conditions $}
-      12
-      FormatThreadNodesCounts}
+      Threads
+      proc {$ Thread ?Record} Record = {Boot_Introspection.getThreadNodesCounts Thread $} end
+      proc {$ NodesCounts ?Result} Result = {CheckConditions Conditions NodesCounts $} end
+      proc {$ NodesCounts ?Result}
+        case NodesCounts of nodes(
+          id: Id
+          variableNodesCount: VariableNodesCount
+          valueNodesCount: ValueNodesCount
+          structuralNodesCount: StructuralNodesCount
+          tokenNodesCount: TokenNodesCount
+          stableNodesCount: StableNodesCount
+          unstableNodesCount: UnstableNodesCount
+          xNodesCount: XNodesCount
+          yNodesCount: YNodesCount
+          gNodesCount: GNodesCount
+          kNodesCount: KNodesCount
+          stackDepth: StackDepth
+          nodesCount: NodesCount
+        ) then
+          Result = [
+            {Int.toString Id $}
+            {Int.toString VariableNodesCount $}
+            {Int.toString ValueNodesCount $}
+            {Int.toString StructuralNodesCount $}
+            {Int.toString TokenNodesCount $}
+            {Int.toString StableNodesCount $}
+            {Int.toString UnstableNodesCount $}
+            {Int.toString XNodesCount $}
+            {Int.toString YNodesCount $}
+            {Int.toString GNodesCount $}
+            {Int.toString KNodesCount $}
+            {Int.toString StackDepth $}
+            {Int.toString NodesCount $}
+          ]
+        end
+      end}
   end
 
   proc {HandleOption Option Arguments}
     Conditions = {ExtractConditions Arguments $}
   in
-    {Boot_System.printRepr Conditions false true}
+    if Conditions \= none then
+      Threads = {Boot_Introspection.getThreads 0 10000 $}
+    in
+      case Option of state then
+        {HandleStateOption Threads Conditions}
+      [] statistics then
+        {HandleStatisticsOption Threads Conditions}
+      [] nodes then
+        {HandleNodesOption Threads Conditions}
+      end
+    end
   end
 in
   case Arguments of nil then
