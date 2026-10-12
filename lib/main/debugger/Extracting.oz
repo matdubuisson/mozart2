@@ -1,3 +1,20 @@
+proc {ExtractIdentity Argument ?Identity}
+  if Argument == "this" then
+    Identity = ThisId
+  elseif {String.isInt Argument $} then
+    Identity = {String.toInt Argument $}
+  else
+    Id = {Boot_Identity.getIdFromName Argument $}
+  in
+    if Id \= none then
+      Identity = Id
+    else
+      Identity = none
+      {PrintError "Name '"#Argument#"' was referenced to no id"}
+    end
+  end
+end
+
 proc {ExtractIdentities Arguments ?Identities}
   case Arguments of nil then Identities = nil
   [] Argument|NextArguments then
@@ -29,7 +46,9 @@ local
       then
         NewLeft = {String.toAtom Left $}
         NewRight = if IsRightInt then {String.toInt Right $}
-          else {String.toAtom Right $} end
+        elsecase Right of "true" then true
+        [] "false" then false
+        else {String.toAtom Right $} end
       in
         case Operation of "==" then
           NextArguments = Rest
@@ -144,7 +163,10 @@ local
 in
   proc {ExtractConditions Arguments ?Conditions}
     case Arguments of nil then Conditions = true
-    else Conditions = {ExtractBoolean Arguments _ $} end
+    else
+      Conditions = {ExtractBoolean Arguments _ $}
+      {Boot_System.printRepr Conditions false true}
+    end
   end
 end
 

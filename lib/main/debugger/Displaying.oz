@@ -30,6 +30,9 @@ end
 proc {DisplayCSV Labels Elements Get Filter Format}
   proc {DisplayLabels Labels}
     case Labels of nil then {PrintLn "|"}
+    [] flexible(Label)|NextLabels then
+      {Print "| "#Label#" "}
+      {DisplayLabels NextLabels}
     [] Label|NextLabels then
       {Print "| "#Label#" "}
       {DisplayLabels NextLabels}
@@ -39,6 +42,10 @@ proc {DisplayCSV Labels Elements Get Filter Format}
   proc {DisplayLine Labels}
     proc {GetTotalLength Labels Acc ?Result}
       case Labels of nil then Result = Acc
+      [] flexible(Label)|NextLabels then
+        NewAcc = Acc + {List.length Label $} + 3
+      in
+        {GetTotalLength NextLabels NewAcc Result}
       [] Label|NextLabels then
         NewAcc = Acc + {List.length Label $} + 3
       in
@@ -54,6 +61,11 @@ proc {DisplayCSV Labels Elements Get Filter Format}
 
   proc {DisplayFeatures Labels Features}
     case Labels#Features of nil#nil then {PrintLn "|"}
+    [] (flexible(Label)|NextLabels)#(Feature|NextFeatures) then
+      {Print "| "}
+      {Print Feature}
+      {Print " "}
+      {DisplayFeatures NextLabels NextFeatures}
     [] (Label|NextLabels)#(Feature|NextFeatures) then
       Length = {List.length Label $}
     in

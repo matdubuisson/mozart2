@@ -1,11 +1,13 @@
 local
   proc {DisplayOptions}
     {DisplayFrame "Thread command options" [
-      "state <identities>" "display the state of the specified thread(s)"
-      "statistics <identities>" "display statistics related to the thread(s)"
-      "nodes <identities>" "display the state nodes proportions related to thread(s)"
-      "all <identities>" "display all available options just listed before"
-      "depth <identities>" "display the thread stack depth"
+      "<id> state" "display the state of the specified thread(s)"
+      "<id> statistics" "display statistics related to the thread(s)"
+      "<id> nodes" "display the state nodes proportions related to thread(s)"
+      "<id> all" "display all available options just listed before"
+      "<id> depth" "display the thread stack depth"
+      "<id> register <type> (<depth>=0)" "display the state of a specific register owned by the specified thread"
+      "<id> registers" "display registers' nodes proportions towards the thread and the virtual machine"
     ]}
   end
 
@@ -111,40 +113,206 @@ local
     {PrintInfo "Thread "#Id#" stack depth : "#Depth}
   end
 
-  proc {HandleOptionForIdentity Option Id}
-    Thread = {GetThreadFromId Id $}
-  in
-    if Thread \= none then
-      case Option of state then
-        {DisplayState Id Thread}
-      [] statistics then
-        {DisplayStatistics Id Thread}
-      [] nodes then
-        {DisplayNodes Id Thread}
-      [] all then
-        {DisplayState Id Thread}
-        {DisplayStatistics Id Thread}
-        {DisplayNodes Id Thread}
-      [] depth then
-        {DisplayDepth Id Thread}
+  proc {DisplayRegister Id Thread Arguments}
+    StackDepth = {Boot_Introspection.getThreadStackDepth Thread $}
+
+    proc {DisplayOptions}
+      {DisplayFrame "Thread register types" [
+        "x" "Each thread possesses only one x register independant from the stack (no depth) that is used for local computation"
+        "y <depth> <condition>" "Threads use Y registers to save X register's values from a previous scope"
+        "g <depth> <condition>" "Threads use G registers to store the program defined constants for each scope"
+        "k <depth> <condition>" "Threads use K registers to access environment constants reachable at a certain scope"
+      ]}
+    end
+
+    proc {ExtractDepth Argument ?Depth}
+      if {String.isInt Argument $} then
+        D = {String.toInt Argument $}
+      in
+        if D < StackDepth then
+          Depth = D
+        else
+          Depth = none
+          {PrintError "Provided depth is too high, please enter a value below "#StackDepth}
+        end
+      else
+        Depth = none
+        {PrintError "Invalid depth '"#Argument#"' provided, please enter a value between 0 and "#(StackDepth - 1)}
       end
-    else
-      {PrintThreadNotFoundError Id}
     end
-  end
 
-  proc {HandleOptionForIdentities Option Identities}
-    case Identities of nil then skip
-    [] Id|NextIdentities then
-      {HandleOptionForIdentity Option Id}
-      {HandleOptionForIdentities Option NextIdentities}
+    proc {DisplayNodes Nodes Conditions}
+      {DisplayCSV
+        [
+          "Name            "
+          "BindingPriority" "StructuralBehavior" "Copyable" "Transient" "Feature"
+          flexible("Value")
+        ]
+        Nodes
+        proc {$ Node ?Result} Result = Node end
+        proc {$ Node ?Result} Result = {CheckConditions Conditions Node $} end
+        proc {$ Node ?Result}
+          case Node of node(
+            name: Name
+            bindingPriority: BindingPriority
+            structuralBehavior: StructuralBehavior
+            copyable: Copyable
+            transient: Transient
+            feature: Feature
+            uuid: _
+            value: Value
+          ) then
+            Result = [
+              {Atom.toString Name $}
+              {Int.toString BindingPriority $}
+              {Atom.toString StructuralBehavior $}
+              {Bool.toString Copyable $}
+              {Bool.toString Transient $}
+              {Bool.toString Feature $}
+              {ExtractString Value $}
+            ]
+          end
+        end}
     end
-  end
 
-  proc {HandleOption Option Arguments}
-    Identities = {ExtractIdentities Arguments $}
+    proc {DisplayNodesAux Type Arguments}
+      proc {Aux Arguments Get}
+        Conditions = {ExtractConditions Arguments $}
+      in
+        if Conditions \= none then
+          Nodes = {Get $}
+        in
+          {DisplayNodes Nodes Conditions}
+        end
+      end
+
+      proc {Aux2 Arguments Get}
+        case Arguments of nil then
+          {PrintError "Missing an integer depth value between 0 and "#(StackDepth - 1)}
+        [] Argument|NextArguments then
+          Depth = {ExtractDepth Argument $}
+        in
+          if Depth \= none then
+            {Aux NextArguments proc {$ ?Nodes}
+              Nodes = {Get Depth $}
+            end}
+          end
+        end
+      end
+    in
+      case Type of x then
+        {Aux Arguments proc {$ ?Nodes}
+          Nodes = {Boot_Introspection.getThreadXNodes Thread 0 10000 $}
+        end}
+      [] y then
+        {Aux2 Arguments proc {$ Depth ?Nodes}
+          Nodes = {Boot_Introspection.getThreadYNodes Thread Depth 0 10000 $}
+        end}
+      [] g then
+        {Aux2 Arguments proc {$ Depth ?Nodes}
+          Nodes = {Boot_Introspection.getThreadGNodes Thread Depth 0 10000 $}
+        end}
+      [] k then
+        {Aux2 Arguments proc {$ Depth ?Nodes}
+          Nodes = {Boot_Introspection.getThreadKNodes Thread Depth 0 10000 $}
+        end}
+      end
+    end
   in
-    {HandleOptionForIdentities Option Identities}
+    case Arguments of nil then
+      {DisplayOptions}
+    [] Argument|NextArguments then
+      case Argument of "help" then
+        {DisplayOptions}
+      [] "x" then
+        {DisplayNodesAux x NextArguments}
+      [] "y" then
+        {DisplayNodesAux y NextArguments}
+      [] "g" then
+        {DisplayNodesAux g NextArguments}
+      [] "k" then
+        {DisplayNodesAux k NextArguments}
+      else
+        {PrintInvalidOptionError Argument}
+      end
+    end
+  end
+
+  proc {DisplayRegisters Id Thread}
+    VMNodesCount = {Boot_Introspection.getNodesCount $}
+    NodesCount = {Boot_Introspection.getThreadNodesCount Thread $}
+    StackDepth = {Boot_Introspection.getThreadStackDepth Thread $}
+
+    proc {MakeStringWithDepth String Depth ?Result}
+      DepthString = {Int.toString Depth $}
+      Left = {List.append String " (depth " $}
+      Right = {List.append DepthString ")" $}
+    in
+      Result = {List.append Left Right $}
+    end
+
+    proc {MakeStringWithPercents String Count ?Result}
+      Result = {MakeStringWithPercent
+        {MakeStringWithPercent String Count NodesCount $}
+        Count VMNodesCount $}
+    end
+
+    proc {MakeString String Depth Count ?Result}
+      AtFirst = {MakeStringWithDepth String Depth $}
+    in
+      Result = {MakeStringWithPercents AtFirst Count $}
+    end
+
+    proc {GetFrameAux Depth ?Frame}
+      if Depth < StackDepth then
+        YRegisterSize = {Boot_Introspection.getThreadYNodesRegisterSize Thread Depth $}
+        GRegisterSize = {Boot_Introspection.getThreadGNodesRegisterSize Thread Depth $}
+        KRegisterSize = {Boot_Introspection.getThreadKNodesRegisterSize Thread Depth $}
+
+        NewFrame
+      in
+        Frame = {MakeString "Y register size" Depth YRegisterSize $}|YRegisterSize
+          | {MakeString "G register size" Depth GRegisterSize $}|GRegisterSize
+          | {MakeString "K register size" Depth KRegisterSize $}|KRegisterSize
+          | NewFrame
+
+        {GetFrameAux (Depth + 1) NewFrame}
+      else Frame = nil end
+    end
+
+    proc {GetFrame ?Frame}
+      XRegisterSize = {Boot_Introspection.getThreadXNodesRegisterSize Thread $}
+      NewFrame
+    in
+      Frame = {MakeStringWithPercents "X register size" XRegisterSize $}|XRegisterSize|NewFrame
+      {GetFrameAux 0 NewFrame}
+    end
+  in
+    {DisplayFrame "Thread registers (thread%) (vm%)" {GetFrame $}}
+  end
+
+  proc {HandleOption Id Thread Arguments}
+    case Arguments of nil then
+      {DisplayOptions}
+    [] Argument|NextArguments then
+      case Argument of "help" then
+        {DisplayOptions}
+      [] "state" then
+        {DisplayState Id Thread}
+      [] "statistics" then
+        {DisplayStatistics Id Thread}
+      [] "nodes" then
+        {DisplayNodes Id Thread}
+      [] "depth" then
+        {DisplayDepth Id Thread}
+      [] "register" then
+        {DisplayRegister Id Thread NextArguments}
+      [] "registers" then
+        {DisplayRegisters Id Thread}
+      else
+        {PrintInvalidOptionError Argument}
+      end
+    end
   end
 in
   case Arguments of nil then
@@ -152,16 +320,20 @@ in
   [] Argument|NextArguments then
     case Argument of "help" then
       {DisplayOptions}
-    [] "state" then
-      {HandleOption state NextArguments}
-    [] "statistics" then
-      {HandleOption statistics NextArguments}
-    [] "nodes" then
-      {HandleOption nodes NextArguments}
-    [] "depth" then
-      {HandleOption depth NextArguments}
     else
-      {PrintInvalidOptionError Argument}
+      Id = {ExtractIdentity Argument $}
+    in
+      if Id == none then
+        {PrintInvalidIdError Argument}
+      else
+        Thread = {GetThreadFromId Id $}
+      in
+        if Thread == none then
+          {PrintThreadNotFoundError Id}
+        else
+          {HandleOption Id Thread NextArguments}
+        end
+      end
     end
   end
 end

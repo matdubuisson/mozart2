@@ -126,8 +126,8 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-proc {PrintInvalidIdError Index}
-  {PrintError "Invalid provided "#{Int.toString Index $}#"th id"}
+proc {PrintInvalidIdError Argument}
+  {PrintError "Invalid provided id '"#Argument#"'"}
 end
 
 proc {PrintMissingArgumentError What Type}
