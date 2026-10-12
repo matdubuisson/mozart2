@@ -5,6 +5,7 @@ local
       "statistics <identities>" "display statistics related to the thread(s)"
       "nodes <identities>" "display the state nodes proportions related to thread(s)"
       "all <identities>" "display all available options just listed before"
+      "depth <identities>" "display the thread stack depth"
     ]}
   end
 
@@ -104,27 +105,46 @@ local
     end
   end
 
-  proc {HandleOption Option Identities}
+  proc {DisplayDepth Id Thread}
+    Depth = {Boot_Introspection.getThreadStackDepth Thread $}
+  in
+    {PrintInfo "Thread "#Id#" stack depth : "#Depth}
+  end
+
+  proc {HandleOptionForIdentity Option Id}
+    Thread = {GetThreadFromId Id $}
+  in
+    if Thread \= none then
+      case Option of state then
+        {DisplayState Id Thread}
+      [] statistics then
+        {DisplayStatistics Id Thread}
+      [] nodes then
+        {DisplayNodes Id Thread}
+      [] all then
+        {DisplayState Id Thread}
+        {DisplayStatistics Id Thread}
+        {DisplayNodes Id Thread}
+      [] depth then
+        {DisplayDepth Id Thread}
+      end
+    else
+      {PrintThreadNotFoundError Id}
+    end
+  end
+
+  proc {HandleOptionForIdentities Option Identities}
     case Identities of nil then skip
     [] Id|NextIdentities then
-      Thread = {GetThreadFromId Id $}
-    in
-      if Thread \= none then
-        case Option of state then
-          {DisplayState Id Thread}
-        [] statistics then
-          {DisplayStatistics Id Thread}
-        [] nodes then
-          {DisplayNodes Id Thread}
-        [] all then
-          {DisplayState Id Thread}
-          {DisplayStatistics Id Thread}
-          {DisplayNodes Id Thread}
-        end
-      else
-        {PrintThreadNotFoundError Id}
-      end
+      {HandleOptionForIdentity Option Id}
+      {HandleOptionForIdentities Option NextIdentities}
     end
+  end
+
+  proc {HandleOption Option Arguments}
+    Identities = {ExtractIdentities Arguments $}
+  in
+    {HandleOptionForIdentities Option Identities}
   end
 in
   case Arguments of nil then
@@ -133,17 +153,13 @@ in
     case Argument of "help" then
       {DisplayOptions}
     [] "state" then
-      Identities = {ExtractIdentities NextArguments $}
-    in
-      {HandleOption state Identities}
+      {HandleOption state NextArguments}
     [] "statistics" then
-      Identities = {ExtractIdentities NextArguments $}
-    in
-      {HandleOption statistics Identities}
+      {HandleOption statistics NextArguments}
     [] "nodes" then
-      Identities = {ExtractIdentities NextArguments $}
-    in
-      {HandleOption nodes Identities}
+      {HandleOption nodes NextArguments}
+    [] "depth" then
+      {HandleOption depth NextArguments}
     else
       {PrintInvalidOptionError Argument}
     end
