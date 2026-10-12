@@ -75,8 +75,8 @@ define
       in
         case Command of "vm" then
           \insert ./commands/introspection/VMCommand
-        % [] "count" then
-        %   \insert ./commands/introspection/CountCommand
+        [] "count" then
+          \insert ./commands/introspection/CountCommand
         [] "this" then
           {PrintInfo "Debugger thread id: "#ThisId}
         [] "thread" then
@@ -204,6 +204,9 @@ define
 in  
   {Loop}
 end
+
+
+
 
 
 

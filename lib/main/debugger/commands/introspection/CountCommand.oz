@@ -1,106 +1,76 @@
 local
-  proc {PrintCount Message Count}
-    String = {Int.toString Count $}
-  in
-    {PrintLog "\t=> "#Message#": "#String}
-  end
-
   % Aggregate options
 
   proc {DisplayOptions}
-    {DisplayNameDescriptions
-      [
-        "vm"
-        "threads"
-        "variables"
-        "nodes"
-      ]
-      [
-        "display counters related to the virtual machine in general"
-        "display counters related to threads"
-        "display counters related to variables"
-        "display counters related to nodes"
-      ]}
+    {DisplayFrame "Count command options" [
+      "vm <aggregates>" "display counters about the virtual machine"
+      "threads <aggregates>" "display counters about the threads"
+      "variables <aggregates>" "display counters about the variables"
+      "nodes <aggregates>" "display counters about the nodes"
+    ]}
   end
 
   % VM aggregates
 
   proc {DisplayVMOptions}
-    {DisplayNameDescriptions
-      [
-        "schedules"
-        "operations"
-        "systemSchedules"
-        "systemOperations"
-        "gcSchedules"
-        "all"
-      ]
-      [
-        "display the total schedules counter"
-        "display the total executed operations counter"
-        "display the gc executions number"
-        "display all VM counters"
-      ]}
+    {DisplayFrame "Count threads aggregates" [
+      "schedules (<nextAggregates>)" "display the total schedules counter"
+      "operations (<nextAggregates>)" "display the total executed operations counter"
+      "systemSchedules (<nextAggregates>)" "display the total schedules counter"
+      "systemOperations (<nextAggregates>)" "display the total executed operations counter"
+      "gcSchedules (<nextAggregates>)" "display the total number of garbage collections done"
+      "all" "display all VM counters"
+    ]}
   end
 
-  proc {HandleVMOption Arguments}
-    proc {PrintSchedulesCount}
-      {PrintCount
-        "Schedules count"
-        {Boot_Introspection.getSchedulesCount $}}
+  proc {GetVMCountsFrame Arguments ?Frame}
+    proc {GetSchedulesCount Frame NewFrame}
+      Frame = "Schedules count"|{Boot_Introspection.getSchedulesCount $}|NewFrame
     end
 
-    proc {PrintOperationsCount}
-      {PrintCount
-        "Operations count"
-        {Boot_Introspection.getOperationsCount $}}
+    proc {GetOperationsCount Frame NewFrame}
+      Frame = "Operations count"|{Boot_Introspection.getOperationsCount $}|NewFrame
     end
 
-    proc {PrintSystemSchedulesCount}
-      {PrintCount
-        "System schedules count"
-        {Boot_Introspection.getSystemSchedulesCount $}}
+    proc {GetSystemSchedulesCount Frame NewFrame}
+      Frame = "System schedules count"|{Boot_Introspection.getSystemSchedulesCount $}|NewFrame
     end
 
-    proc {PrintSystemOperationsCount}
-      {PrintCount
-        "System operations count"
-        {Boot_Introspection.getSystemOperationsCount $}}
+    proc {GetSystemOperationsCount Frame NewFrame}
+      Frame = "System operations count"|{Boot_Introspection.getSystemOperationsCount $}|NewFrame
     end
 
-    proc {PrintGCExecutionsCount}
-      {PrintCount
-        "GC schedules count"
-        {Boot_Introspection.getGCSchedulesCount $}}
+    proc {GetGCExecutionsCount Frame NewFrame}
+      Frame = "GC schedules count"|{Boot_Introspection.getGCSchedulesCount $}|NewFrame
     end
   in
     case Arguments of nil then
-      {DisplayVMOptions}
+      Frame = nil
     [] Argument|NextArguments then
-      case Argument of "help" then
-        {DisplayVMOptions}
-      [] "schedules" then
-        {PrintSchedulesCount}
-      [] "operations" then
-        {PrintOperationsCount}
-      [] "systemSchedules" then
-        {PrintSchedulesCount}
-      [] "systemOperations" then
-        {PrintOperationsCount}
-      [] "gcSchedules" then
-        {PrintGCExecutionsCount}
-      [] "all" then
-        {PrintSchedulesCount}
-        {PrintOperationsCount}
-        {PrintSystemSchedulesCount}
-        {PrintSystemOperationsCount}
-        {PrintGCExecutionsCount}
+      case Argument of "schedules" then NewFrame in
+        {GetSchedulesCount Frame NewFrame}
+        {GetVMCountsFrame NextArguments NewFrame}
+      [] "operations" then NewFrame in
+        {GetOperationsCount Frame NewFrame}
+        {GetVMCountsFrame NextArguments NewFrame}
+      [] "systemSchedules" then NewFrame in
+        {GetSchedulesCount Frame NewFrame}
+        {GetVMCountsFrame NextArguments NewFrame}
+      [] "systemOperations" then NewFrame in
+        {GetOperationsCount Frame NewFrame}
+        {GetVMCountsFrame NextArguments NewFrame}
+      [] "gcSchedules" then NewFrame in
+        {GetGCExecutionsCount Frame NewFrame}
+        {GetVMCountsFrame NextArguments NewFrame}
+      [] "all" then A B C D E in
+        {GetSchedulesCount Frame A}
+        {GetOperationsCount A B}
+        {GetSystemSchedulesCount B C}
+        {GetSystemOperationsCount C D}
+        {GetGCExecutionsCount D nil}
       else
+        Frame = nil
         {PrintError "Unexpected vm counter '"#Argument#"'"#TRYHELP}
-      end
-
-      if NextArguments \= nil then
-        {HandleVMOption NextArguments}
       end
     end
   end
@@ -108,56 +78,46 @@ local
   % Threads aggregates
 
   proc {DisplayThreadsOptions}
-    {DisplayNameDescriptions
-      ["active" "passive" "total" "all"]
-      [
-        "display active threads counter"
-        "display passive threads counter"
-        "display total threads counter"
-        "display all threads counters"
-      ]}
+    {DisplayFrame "Count threads aggregates" [
+      "active" "display active threads counter"
+      "passive" "display passive threads counter"
+      "total" "display total threads counter"
+      "all" "display all threads counters"
+    ]}
   end
-
-  proc {HandleThreadsOption Arguments}
-    proc {PrintActiveThreadsCount}
-      {PrintCount
-        "Active threads count"
-        {Boot_Introspection.getActiveThreadsCount $}}
+  
+  proc {GetThreadsCountsFrame Arguments ?Frame}
+    proc {GetActiveThreadsCount ?Frame NewFrame}
+      Frame = "Active threads count"|{Boot_Introspection.getActiveThreadsCount $}|NewFrame
     end
 
-    proc {PrintPassiveThreadsCount}
-      {PrintCount
-        "Passive threads count"
-        {Boot_Introspection.getPassiveThreadsCount $}}
+    proc {GetPassiveThreadsCount ?Frame NewFrame}
+      Frame = "Passive threads count"|{Boot_Introspection.getPassiveThreadsCount $}|NewFrame
     end
 
-    proc {PrintThreadsCount}
-      {PrintCount
-        "Threads count"
-        {Boot_Introspection.getThreadsCount $}}
+    proc {GetThreadsCount ?Frame NewFrame}
+      Frame = "Threads count"|{Boot_Introspection.getThreadsCount $}|NewFrame
     end
   in
     case Arguments of nil then
-      {DisplayThreadsOptions}
+      Frame = nil
     [] Argument|NextArguments then
-      case Argument of "help" then 
-        {DisplayThreadsOptions}
-      [] "active" then
-        {PrintActiveThreadsCount}
-      [] "passive" then
-        {PrintPassiveThreadsCount}
-      [] "total" then
-        {PrintThreadsCount}
-      [] "all" then
-        {PrintActiveThreadsCount}
-        {PrintPassiveThreadsCount}
-        {PrintThreadsCount}
+      case Argument of "active" then NewFrame in
+        {GetActiveThreadsCount Frame NewFrame}
+        {GetThreadsCountsFrame NextArguments NewFrame}
+      [] "passive" then NewFrame in
+        {GetActiveThreadsCount Frame NewFrame}
+        {GetThreadsCountsFrame NextArguments NewFrame}
+      [] "total" then NewFrame in
+        {GetActiveThreadsCount Frame NewFrame}
+        {GetThreadsCountsFrame NextArguments NewFrame}
+      [] "all" then A B in
+        {GetActiveThreadsCount Frame A}
+        {GetPassiveThreadsCount A B}
+        {GetThreadsCount B nil}
       else
+        Frame = nil
         {PrintError "Unexpected threads counter '"#Argument#"'"#TRYHELP}
-      end
-
-      if NextArguments \= nil then
-        {HandleThreadsOption NextArguments}
       end
     end
   end
@@ -165,55 +125,46 @@ local
   % Variables aggregates
 
   proc {DisplayVariablesOptions}
-    {DisplayNameDescriptions
-      ["REMARK:" "bound" "unbound" "total" "all"]
-      [
-        "All garbage collected variables are not parts of the aggregates"
-
-        "display the number of bound variables"
-        "display the number of unbound variables"
-        "display the number of variables"
-        "display every counter related to variables"
-      ]}
+    {DisplayFrame "Count variables aggregates" [
+      "bound" "display the number of bound variables"
+      "unbound" "display the number of unbound variables"
+      "total" "display the number of variables"
+      "all" "display every counter related to variables"
+    ]}
   end
 
-  proc {HandleVariablesOption Arguments}
-    proc {PrintBoundVariablesCount}
-      {PrintCount "Bound variables"
-        {Boot_Introspection.getBoundVariablesCount $}}
+  proc {GetVariablesCountsFrame Arguments ?Frame}
+    proc {GetBoundVariablesCount ?Frame NewFrame}
+      Frame = "Bound variables"|{Boot_Introspection.getBoundVariablesCount $}|NewFrame
     end
 
-    proc {PrintUnboundVariablesCount}
-      {PrintCount "Unbound variables"
-        {Boot_Introspection.getUnBoundVariablesCount $}}
+    proc {GetUnboundVariablesCount ?Frame NewFrame}
+      Frame = "Unbound variables"|{Boot_Introspection.getUnBoundVariablesCount $}|NewFrame
     end
 
-    proc {PrintVariablesCount}
-      {PrintCount "Variables"
-        {Boot_Introspection.getVariablesCount $}}
+    proc {GetVariablesCount ?Frame NewFrame}
+      Frame = "Variables"|{Boot_Introspection.getVariablesCount $}|NewFrame
     end
   in
     case Arguments of nil then
-      {DisplayVariablesOptions}
+      Frame = nil
     [] Argument|NextArguments then
-      case Argument of "help" then 
-        {DisplayVariablesOptions}
-      [] "bound" then
-        {PrintBoundVariablesCount}
-      [] "unbound" then
-        {PrintUnboundVariablesCount}
-      [] "total" then
-        {PrintVariablesCount}
-      [] "all" then
-        {PrintBoundVariablesCount}
-        {PrintUnboundVariablesCount}
-        {PrintVariablesCount}
+      case Argument of "bound" then NewFrame in
+        {GetBoundVariablesCount Frame NewFrame}
+        {GetVariablesCountsFrame NextArguments NewFrame}
+      [] "unbound" then NewFrame in
+        {GetUnboundVariablesCount Frame NewFrame}
+        {GetVariablesCountsFrame NextArguments NewFrame}
+      [] "total" then NewFrame in
+        {GetVariablesCount Frame NewFrame}
+        {GetVariablesCountsFrame NextArguments NewFrame}
+      [] "all" then A B in
+        {GetBoundVariablesCount Frame A}
+        {GetUnboundVariablesCount A B}
+        {GetVariablesCount B nil}
       else
+        Frame = nil
         {PrintError "Unexpected variables counter '"#Argument#"'"#TRYHELP}
-      end
-
-      if NextArguments \= nil then
-        {HandleVariablesOption NextArguments}
       end
     end
   end
@@ -221,142 +172,127 @@ local
   % Nodes aggregates
 
   proc {DisplayNodesOptions}
-    {DisplayNameDescriptions
-      [
-        "variable" "value" "structural" "token"
-        "stable" "unstable"
-        "x" "y" "g" "k"
-        "stackDepth" "total" "all"
-      ]
-      [
-        "display the counter of nodes behaving as variables"
-        "display the counter of nodes behaving as values"
-        "display the counter of nodes behaving as structures"
-        "display the counter of nodes behaving as tokens"
-
-        "display the stable nodes counter"
-        "display the unstable nodes counter"
-
-        "display the counter of nodes stored inside X registers"
-        "display the counter of nodes stored inside Y registers"
-        "display the counter of nodes stored inside G registers"
-        "display the counter of nodes stored inside K registers"
-
-        "display the depth of YGK registers, for several threads it is a sum of all"
-        "display the total count of nodes from anywhere and of any type"
-        "display every counter related to nodes"
-      ]}
+    {DisplayFrame "Count nodes aggregates" [
+      "variable" "display the counter of nodes behaving as variables"
+      "value" "display the counter of nodes behaving as values"
+      "structural" "display the counter of nodes behaving as structures"
+      "token" "display the counter of nodes behaving as tokens"
+      "stable" "display the stable nodes counter"
+      "unstable" "display the unstable nodes counter"
+      "x" "display the counter of nodes stored inside X registers"
+      "y" "display the counter of nodes stored inside Y registers"
+      "g" "display the counter of nodes stored inside G registers"
+      "k" "display the counter of nodes stored inside K registers"
+      "stackDepth" "display the depth of YGK registers, for several threads it is a sum of all"
+      "total" "display the total count of nodes from anywhere and of any type"
+      "all" "display every counter related to nodes"
+    ]}
   end
 
-  proc {HandleNodesOption Arguments}
-    proc {PrintVariableNodesCount}
-      {PrintCount "Variable nodes count"
-        {Boot_Introspection.getVariableNodesCount $}}
+  proc {GetNodesCountsFrame Arguments ?Frame}
+    proc {GetVariableNodesCount Frame NewFrame}
+      Frame = "Variable nodes count"|{Boot_Introspection.getVariableNodesCount $}|NewFrame
     end
 
-    proc {PrintValueNodesCount}
-      {PrintCount "Value nodes count"
-        {Boot_Introspection.getValueNodesCount $}}
+    proc {GetValueNodesCount Frame NewFrame}
+      Frame = "Value nodes count"|{Boot_Introspection.getValueNodesCount $}|NewFrame
     end
 
-    proc {PrintStructuralNodesCount}
-      {PrintCount "Structural nodes count"
-        {Boot_Introspection.getStructuralNodesCount $}}
+    proc {GetStructuralNodesCount Frame NewFrame}
+      Frame = "Structural nodes count"|{Boot_Introspection.getStructuralNodesCount $}|NewFrame
     end
 
-    proc {PrintTokenNodesCount}
-      {PrintCount "Token nodes count"
-        {Boot_Introspection.getTokenNodesCount $}}
+    proc {GetTokenNodesCount Frame NewFrame}
+      Frame = "Token nodes count"|{Boot_Introspection.getTokenNodesCount $}|NewFrame
     end
 
-    proc {PrintStableNodesCount}
-      {PrintCount "Stable nodes count"
-        {Boot_Introspection.getStableNodesCount $}}
+    proc {GetStableNodesCount Frame NewFrame}
+      Frame = "Stable nodes count"|{Boot_Introspection.getStableNodesCount $}|NewFrame
     end
 
-    proc {PrintUnstableNodesCount}
-      {PrintCount "Unstable nodes count"
-        {Boot_Introspection.getUnstableNodesCount $}}
+    proc {GetUnstableNodesCount Frame NewFrame}
+      Frame = "Unstable nodes count"|{Boot_Introspection.getUnstableNodesCount $}|NewFrame
     end
 
-    proc {PrintXNodesCount}
-      {PrintCount "X nodes count"
-        {Boot_Introspection.getXNodesCount $}}
+    proc {GetXNodesCount Frame NewFrame}
+      Frame = "X nodes count"|{Boot_Introspection.getXNodesCount $}|NewFrame
     end
 
-    proc {PrintYNodesCount}
-      {PrintCount "Y nodes count"
-        {Boot_Introspection.getYNodesCount $}}
+    proc {GetYNodesCount Frame NewFrame}
+      Frame = "Y nodes count"|{Boot_Introspection.getYNodesCount $}|NewFrame
     end
 
-    proc {PrintGNodesCount}
-      {PrintCount "G nodes count"
-        {Boot_Introspection.getGNodesCount $}}
+    proc {GetGNodesCount Frame NewFrame}
+      Frame = "G nodes count"|{Boot_Introspection.getGNodesCount $}|NewFrame
     end
 
-    proc {PrintKNodesCount}
-      {PrintCount "K nodes count"
-        {Boot_Introspection.getKNodesCount $}}
+    proc {GetKNodesCount Frame NewFrame}
+      Frame = "K nodes count"|{Boot_Introspection.getKNodesCount $}|NewFrame
     end
 
-    proc {PrintStackDepth}
-      {PrintCount "Stack depth"
-        {Boot_Introspection.getStackDepth $}}
+    proc {GetStackDepth Frame NewFrame}
+      Frame = "Stack depth"|{Boot_Introspection.getStackDepth $}|NewFrame
     end
 
-    proc {PrintNodesCount}
-      {PrintCount "Nodes count"
-        {Boot_Introspection.getNodesCount $}}
+    proc {GetNodesCount Frame NewFrame}
+      Frame = "Nodes count"|{Boot_Introspection.getNodesCount $}|NewFrame
     end
   in
     case Arguments of nil then
-      {DisplayNodesOptions}
+      Frame = nil
     [] Argument|NextArguments then
-      case Argument of "help" then 
-        {DisplayNodesOptions}
-      [] "variable" then
-        {PrintVariableNodesCount}
-      [] "value" then
-        {PrintValueNodesCount}
-      [] "structural" then
-        {PrintStructuralNodesCount}
-      [] "token" then
-        {PrintTokenNodesCount}
-      [] "stable" then
-        {PrintStableNodesCount}
-      [] "unstable" then
-        {PrintUnstableNodesCount}
-      [] "x" then
-        {PrintXNodesCount}
-      [] "y" then
-        {PrintYNodesCount}
-      [] "g" then
-        {PrintGNodesCount}
-      [] "k" then
-        {PrintKNodesCount}
-      [] "stackDepth" then
-        {PrintStackDepth}
-      [] "total" then
-        {PrintNodesCount}
-      [] "all" then
-        {PrintVariableNodesCount}
-        {PrintValueNodesCount}
-        {PrintStructuralNodesCount}
-        {PrintTokenNodesCount}
-        {PrintStableNodesCount}
-        {PrintUnstableNodesCount}
-        {PrintXNodesCount}
-        {PrintYNodesCount}
-        {PrintGNodesCount}
-        {PrintKNodesCount}
-        {PrintStackDepth}
-        {PrintNodesCount}
+      case Argument of "variable" then NewFrame in
+        {GetVariableNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "value" then NewFrame in
+        {GetValueNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "structural" then NewFrame in
+        {GetStructuralNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "token" then NewFrame in
+        {GetTokenNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "stable" then NewFrame in
+        {GetStableNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "unstable" then NewFrame in
+        {GetUnstableNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "x" then NewFrame in
+        {GetXNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "y" then NewFrame in
+        {GetYNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "g" then NewFrame in
+        {GetGNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "k" then NewFrame in
+        {GetKNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "stackDepth" then NewFrame in
+        {GetStackDepth Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "total" then NewFrame in
+        {GetNodesCount Frame NewFrame}
+        {GetNodesCountsFrame NextArguments NewFrame}
+      [] "all" then A B C D E F G H I J K in
+        {GetVariableNodesCount Frame A}
+        {GetValueNodesCount A B}
+        {GetStructuralNodesCount B C}
+        {GetTokenNodesCount C D}
+        {GetStableNodesCount D E}
+        {GetUnstableNodesCount E F}
+        {GetXNodesCount F G}
+        {GetYNodesCount G H}
+        {GetGNodesCount H I}
+        {GetKNodesCount I J}
+        {GetStackDepth J K}
+        {GetNodesCount K nil}
       else
+        Frame = nil
         {PrintError "Unexpected nodes counter '"#Argument#"'"#TRYHELP}
-      end
-
-      if NextArguments \= nil then
-        {HandleNodesOption NextArguments}
       end
     end
   end
@@ -367,13 +303,29 @@ in
     case Argument of "help" then
       {DisplayOptions}
     [] "vm" then
-      {HandleVMOption NextArguments}
+      case NextArguments of nil then {DisplayVMOptions}
+      [] "help"|_ then {DisplayVMOptions}
+      else
+        {DisplayFrame "VM counters" {GetVMCountsFrame NextArguments $}}
+      end
     [] "threads" then
-      {HandleThreadsOption NextArguments}
+      case NextArguments of nil then {DisplayThreadsOptions}
+      [] "help"|_ then {DisplayThreadsOptions}
+      else
+        {DisplayFrame "Threads counters" {GetThreadsCountsFrame NextArguments $}}
+      end
     [] "variables" then
-      {HandleVariablesOption NextArguments}
+      case NextArguments of nil then {DisplayVariablesOptions}
+      [] "help"|_ then {DisplayVariablesOptions}
+      else
+        {DisplayFrame "Variables counters" {GetVariablesCountsFrame NextArguments $}}
+      end
     [] "nodes" then
-      {HandleNodesOption NextArguments}
+      case NextArguments of nil then {DisplayNodesOptions}
+      [] "help"|_ then {DisplayNodesOptions}
+      else
+        {DisplayFrame "Nodes counters" {GetNodesCountsFrame NextArguments $}}
+      end
     else
       {PrintError "Unexpected count option '"#Argument#"'"#TRYHELP}
     end
