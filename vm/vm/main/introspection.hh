@@ -464,7 +464,6 @@ UnstableNode Introspection::buildNode(VM vm, RichNode node) {
       "bindingPriority",
       "copyable",
       "feature",
-      "id",
       "name",
       "structuralBehavior",
       "transient",
@@ -474,7 +473,6 @@ UnstableNode Introspection::buildNode(VM vm, RichNode node) {
     build(vm, type->getBindingPriority()),
     build(vm, type->isCopyable()),
     build(vm, type->isFeature()),
-    build(vm, node.getId()),
     build(vm, type->getName().c_str()),
     build(vm,
       nodeStructuralBehaviorToString(
