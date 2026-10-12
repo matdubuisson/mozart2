@@ -25,7 +25,6 @@
 
 functor
 
-
 import
   Boot        at 'x-oz://boot/Boot'
 define
@@ -84,12 +83,6 @@ define
           \insert ./commands/introspection/ThreadCommand
         [] "threads" then
           \insert ./commands/introspection/ThreadsCommand
-        % [] "depth" then
-        %   \insert ./commands/introspection/DepthCommand
-        % [] "register" then
-        %   \insert ./commands/introspection/RegisterCommand
-        % [] "registers" then
-        %   \insert ./commands/introspection/RegistersCommand
         % [] "variable" then
         %   \insert ./commands/introspection/VariableCommand
         % [] "variables" then
@@ -103,8 +96,6 @@ define
         %   {Boot_Scheduler.reset}
         % [] "alarm" then
         %   \insert AlarmCommand
-        % [] "nodes" then
-        %   \insert ./commands/introspection/NodesCommand
         % [] "lists" then
         %   \insert ./commands/introspection/ListsCommand
         % [] "gc" then
@@ -210,10 +201,23 @@ define
     {Boot_Thread.preempt This}
     {Loop}
   end
-in
-
+in  
   {Loop}
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
