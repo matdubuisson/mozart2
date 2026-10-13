@@ -53,6 +53,9 @@ void GraphReplicator::copySpace(SpaceRef& to, SpaceRef from) {
 void GraphReplicator::copyThread(Runnable*& to, Runnable* from) {
   to = from;
   todos.threads.push_front(sourceMM, &to);
+
+  vm->getEventManager().announceRunnable(vm, to,
+    VirtualMachineEventManager::RunnableAnnounce::Collected);
 }
 
 void GraphReplicator::copyStableNode(StableNode& to, StableNode& from) {

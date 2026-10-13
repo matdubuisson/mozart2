@@ -108,7 +108,7 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
 
   vm->threads.insert(this);
   vm->eventManager.announceRunnable(vm, this,
-    VirtualMachineEventManager::RunnableAnnounce::Inserted);
+    VirtualMachineEventManager::RunnableAnnounce::Created);
 }
 
 Runnable::Runnable(GR gr, Runnable& from) :
@@ -134,8 +134,6 @@ Runnable::Runnable(GR gr, Runnable& from) :
   }
 }
 
-Runnable::~Runnable() {}
-
 size_t Runnable::run(size_t maxInstructionsNumber) {
   _statistics.runsCount++;
   _statistics.resumesCount++;
@@ -151,12 +149,16 @@ size_t Runnable::run(size_t maxInstructionsNumber) {
 void Runnable::setPriority(ThreadPriority priority) {
   if (priority != _priority) {
     _priority = priority;
-
-    if (_runnable && vm->getCurrentThread() != this)
-      vm->threadPool.reschedule(this);
-
+    
     vm->eventManager.announceRunnable(vm, this,
       VirtualMachineEventManager::RunnableAnnounce::Updated);
+
+    if (_runnable && vm->getCurrentThread() != this) {
+      vm->threadPool.reschedule(this);
+      
+      vm->eventManager.announceRunnable(vm, this,
+        VirtualMachineEventManager::RunnableAnnounce::Rescheduled);
+    }
   }
 }
 
@@ -177,8 +179,12 @@ void Runnable::resume(bool skipSchedule) {
   _runnable = true;
   _space->notifyThreadResumed();
 
-  if (!skipSchedule)
+  if (!skipSchedule) {
     vm->getThreadPool().schedule(this);
+
+    vm->eventManager.announceRunnable(vm, this,
+      VirtualMachineEventManager::RunnableAnnounce::Scheduled);
+  }
 
   vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Updated);
@@ -194,8 +200,12 @@ void Runnable::suspend(bool skipUnschedule) {
   _runnable = false;
   _space->notifyThreadSuspended();
 
-  if (!skipUnschedule)
+  if (!skipUnschedule) {
     vm->getThreadPool().unschedule(this);
+
+    vm->eventManager.announceRunnable(vm, this,
+      VirtualMachineEventManager::RunnableAnnounce::Unscheduled);
+  }
 
   vm->eventManager.announceRunnable(vm, this,
     VirtualMachineEventManager::RunnableAnnounce::Updated);
@@ -268,7 +278,7 @@ void Runnable::dispose() {
 
   // vm->threads.remove(this);
   vm->eventManager.announceRunnable(vm, this,
-    VirtualMachineEventManager::RunnableAnnounce::Removed);
+    VirtualMachineEventManager::RunnableAnnounce::Updated);
 }
 
 }
