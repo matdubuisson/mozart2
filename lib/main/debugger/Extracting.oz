@@ -165,7 +165,7 @@ in
     case Arguments of nil then Conditions = true
     else
       Conditions = {ExtractBoolean Arguments _ $}
-      {Boot_System.printRepr Conditions false true}
+      % {Boot_System.printRepr Conditions false true}
     end
   end
 end
