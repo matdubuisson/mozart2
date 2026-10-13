@@ -85,8 +85,8 @@ define
           \insert ./commands/introspection/ThreadsCommand
         % [] "variable" then
         %   \insert ./commands/introspection/VariableCommand
-        % [] "variables" then
-        %   \insert ./commands/introspection/VariablesCommand
+        [] "variables" then
+          \insert ./commands/introspection/VariablesCommand
         % [] "run" then
         %   \insert ./commands/execution/RunCommand
         % [] "continue" then
@@ -204,6 +204,12 @@ define
 in  
   {Loop}
 end
+
+
+
+
+
+
 
 
 

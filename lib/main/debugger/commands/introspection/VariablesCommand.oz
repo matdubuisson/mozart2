@@ -1,158 +1,136 @@
 local
   proc {DisplayOptions}
-    {DisplayNameDescriptions
+    {DisplayFrame "Variables command options" [
+      "state <condition>" "displays variables' states"
+      "pendings <condition>" "displays pending threads on the variable"
+      "candidates <condition>" "displays candidate threads to bind the variable"
+    ]}
+  end
+
+  proc {HandleStateOption VariableIds VariablesMap Conditions}
+    {DisplayCSV
       [
-        "state (optional: <id0> .... <idN>)"
-        "pendings (optional: <id0> .... <idN>)"
-        "candidates (optional: <id0> .... <idN>)"
-        "value (optional: <id0> .... <idN>)"
+        "Id      " "KindId  " "GenerationId"
+        "Type    " "Bound " "Needed"
+        "Candidates Count" "Pendings Count"
+        flexible("Value")
       ]
-      [
-        "displays variables' states"
-        "displays pending threads on the variable"
-        "displays candidate threads to bind the variable"
-        "displays variables' values"
-      ]
-    }
-  end
-
-  proc {FormatStateCase Variable ?Result}
-    case Variable of variable(
-      id: Id
-      type: Type
-      isBound: IsBound
-      isNeeded: IsNeeded
-      pendings: Pendings
-      candidates: Candidates
-      value: _
-    ) then
-      Result = [
-        {Int.toString Id $}
-        {Atom.toString Type $}
-        {Bool.toString IsBound $}
-        {Bool.toString IsNeeded $}
-        {Int.toString
-          {List.length Pendings $} $}
-        {Int.toString
-          {List.length Candidates $} $}
-      ]
-    end
-  end
-
-  proc {FormatPendingsCase Variable ?Result}
-    case Variable of variable(
-      id: Id
-      type: _
-      isBound: IsBound
-      isNeeded: IsNeeded
-      pendings: Pendings
-      candidates: _
-      value: _
-    ) then
-      Result = [
-        {Int.toString Id $}
-        {Bool.toString IsBound $}
-        {Bool.toString IsNeeded $}
-        {IdsToString Pendings $}
-      ]
-    end
-  end
-
-  proc {FormatCandidatesCase Variable ?Result}
-    case Variable of variable(
-      id: Id
-      type: _
-      isBound: IsBound
-      isNeeded: IsNeeded
-      pendings: _
-      candidates: Candidates
-      value: _
-    ) then
-      Result = [
-        {Int.toString Id $}
-        {Bool.toString IsBound $}
-        {Bool.toString IsNeeded $}
-        {IdsToString Candidates $}
-      ]
-    end
-  end
-
-  proc {FormatValueCase Variable ?Result}
-    case Variable of variable(
-      id: Id
-      type: Type
-      isBound: IsBound
-      isNeeded: IsNeeded
-      pendings: _
-      candidates: _
-      value: Value
-    ) then
-      Result = [
-        {Int.toString Id $}
-        {Atom.toString Type $}
-        {Bool.toString IsBound $}
-        {Bool.toString IsNeeded $}
-        Value
-      ]
-    end
-  end
-
-  proc {HandleCase Aggregate Variables}
-    case Aggregate of state then
-      {DisplayCSV
-        ["Id" "Type" "IsBound" "IsNeeded" "NPendings" "NCandidates"]
-        Variables
-        10
-        FormatStateCase
-      }
-    [] pendings then
-      {MaskedDisplayCSV
-        ["Id" "IsBound" "IsNeeded" "Pendings"]
-        Variables
-        10
-        FormatPendingsCase
-        [true true true false]
-      }
-    [] candidates then
-      {MaskedDisplayCSV
-        ["Id" "IsBound" "IsNeeded" "Candidates"]
-        Variables
-        10
-        FormatCandidatesCase
-        [true true true false]
-      }
-    [] value then
-      {MaskedDisplayCSV
-        ["Id" "Type" "IsBound" "IsNeeded" "Value"]
-        Variables
-        10
-        FormatValueCase
-        [true true true true false]
-      }
-    end
-  end
-
-  proc {HandleOption Arguments Aggregate}
-    proc {Execute I Id}
-      if {ValidId Id $} then
-        Thread = {GetThreadFromId Id $}
-      in
-        if Thread \= none then
-          Variables = {Boot_Introspection.getThreadVariables Thread $}
-        in
-          {HandleCase Aggregate Variables}
+      VariableIds
+      proc {$ Id ?Record} Record = VariablesMap.Id end
+      proc {$ Variable ?Result} Result = {CheckConditions Conditions Variable $} end
+      proc {$ Variable ?Result}
+        case Variable of variable(
+          id: Id
+          kindId: KindId
+          generationId: GenerationId
+          type: Type
+          isBound: IsBound
+          isNeeded: IsNeeded
+          candidates: Candidates
+          pendings: Pendings
+          value: Value
+        ) then
+          Result = [
+            {Int.toString Id $}
+            {Int.toString KindId $}
+            {Int.toString GenerationId $}
+            {Atom.toString Type $}
+            {Bool.toString IsBound $}
+            {Bool.toString IsNeeded $}
+            {Int.toString
+              {List.length Candidates $} $}
+            {Int.toString
+              {List.length Pendings $} $}
+            {Atom.toString Value $}
+          ]
         end
-      else {PrintInvalidIdError I} end
-    end
+      end}
+  end
+
+  proc {HandleCandidatesOption VariableIds VariablesMap Conditions}
+    {DisplayCSV
+      [
+        "Id      " "Bound " "Needed"
+        "Candidates Count" "Pendings Count"
+        flexible("Candidates")
+      ]
+      VariableIds
+      proc {$ Id ?Record} Record = VariablesMap.Id end
+      proc {$ Variable ?Result} Result = {CheckConditions Conditions Variable $} end
+      proc {$ Variable ?Result}
+        case Variable of variable(
+          id: Id
+          isBound: IsBound
+          isNeeded: IsNeeded
+          candidates: Candidates
+          pendings: Pendings
+          ...
+        ) then
+          Result = [
+            {Int.toString Id $}
+            {Bool.toString IsBound $}
+            {Bool.toString IsNeeded $}
+            {Int.toString
+              {List.length Candidates $} $}
+            {Int.toString
+              {List.length Pendings $} $}
+            {ListToString Candidates $}
+          ]
+        end
+      end}
+  end
+
+  proc {HandlePendingsOption VariableIds VariablesMap Conditions}
+    {DisplayCSV
+      [
+        "Id      " "Bound " "Needed"
+        "Candidates Count" "Pendings Count"
+        flexible("Pendings")
+      ]
+      VariableIds
+      proc {$ Id ?Record} Record = VariablesMap.Id end
+      proc {$ Variable ?Result} Result = {CheckConditions Conditions Variable $} end
+      proc {$ Variable ?Result}
+        case Variable of variable(
+          id: Id
+          isBound: IsBound
+          isNeeded: IsNeeded
+          candidates: Candidates
+          pendings: Pendings
+          ...
+        ) then
+          Result = [
+            {Int.toString Id $}
+            {Bool.toString IsBound $}
+            {Bool.toString IsNeeded $}
+            {Int.toString
+              {List.length Candidates $} $}
+            {Int.toString
+              {List.length Pendings $} $}
+            {ListToString Pendings $}
+          ]
+        end
+      end}
+  end
+
+  proc {HandleOption Option Arguments}
+    Conditions = {ExtractConditions Arguments $}
   in
-    if Arguments == nil then
-      Variables = {Boot_Introspection.getAllVariables $}
+    if Conditions \= none then
+      VariablesMap = {Boot_Introspection.getVariables $}
     in
-      {HandleCase Aggregate Variables}
-    else
-      Ids = {ExtractInputs int Arguments none $}
-    in
-      {ForEachI Ids Execute}
+      % {Boot_System.printRepr VariablesMap false true}
+
+      case Option of state then
+        {HandleStateOption
+          {Record.arity VariablesMap $} VariablesMap Conditions}
+      [] candidates then
+        {HandleCandidatesOption
+          {Record.arity VariablesMap $} VariablesMap Conditions}
+      [] pendings then
+        {HandlePendingsOption
+          {Record.arity VariablesMap $} VariablesMap Conditions}
+      end
     end
   end
 in
@@ -162,13 +140,11 @@ in
     case Argument of "help" then
       {DisplayOptions}
     [] "state" then
-      {HandleOption NextArguments state}
-    [] "pendings" then
-      {HandleOption NextArguments pendings}
+      {HandleOption state NextArguments}
     [] "candidates" then
-      {HandleOption NextArguments candidates}
-    [] "value" then
-      {HandleOption NextArguments value}
+      {HandleOption candidates NextArguments}
+    [] "pendings" then
+      {HandleOption pendings NextArguments}
     else
       {PrintError "Unexpected variables aggregate '"#Argument#"'"#TRYHELP}
     end
