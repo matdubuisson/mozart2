@@ -62,8 +62,10 @@ proc {DisplayCSV Labels Elements Get Filter Format}
   proc {DisplayFeatures Labels Features}
     case Labels#Features of nil#nil then {PrintLn "|"}
     [] (flexible(Label)|NextLabels)#(Feature|NextFeatures) then
+      Length = {List.length Label $}
+    in
       {Print "| "}
-      {Print Feature}
+      {PrintAtLeast Feature Length}
       {Print " "}
       {DisplayFeatures NextLabels NextFeatures}
     [] (Label|NextLabels)#(Feature|NextFeatures) then
