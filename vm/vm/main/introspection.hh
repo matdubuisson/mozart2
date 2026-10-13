@@ -914,15 +914,11 @@ Introspection::IdToVariableStateMap Introspection::getVariables(VM vm) {
 
   doForEachVariable(vm,
     [this, &map](VM vm, Runnable* runnable, RichNode node) {
-      Id id;
-      if (node.is<Variable>()) {
-        Variable variable = Accessor<Variable>::get(node.value());
-        id = variable.getId();
-      } else if (node.is<ReadOnlyVariable>()) {
-        ReadOnlyVariable variable = Accessor<ReadOnlyVariable>::get(node.value());
-        id = variable.getId();
-      } else assert(false);
+      if (node.type() != Variable::type()
+        && node.type() != ReadOnlyVariable::type())
+        return;
 
+      Id id = Identifiable(node).getId(vm);
       if (!map.contains(id)) {
         VariableState state = VariableState(node);
         this->getVariablePartially(vm, state, node);
