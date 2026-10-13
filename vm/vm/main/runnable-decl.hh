@@ -172,9 +172,6 @@ public:
   inline
   Runnable(GR gr, Runnable& from);
 
-  inline
-  ~Runnable();
-
 public:
   /** Gets the space of the thread */
   Space* getSpace() {
