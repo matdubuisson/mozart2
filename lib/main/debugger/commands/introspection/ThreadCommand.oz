@@ -1,13 +1,13 @@
 local
   proc {DisplayOptions}
     {DisplayFrame "Thread command options" [
-      "<id> state" "display the state of the specified thread(s)"
-      "<id> statistics" "display statistics related to the thread(s)"
-      "<id> nodes" "display the state nodes proportions related to thread(s)"
-      "<id> all" "display all available options just listed before"
-      "<id> depth" "display the thread stack depth"
-      "<id> register <type> (<depth>=0)" "display the state of a specific register owned by the specified thread"
-      "<id> registers" "display registers' nodes proportions towards the thread and the virtual machine"
+      "<identity> state" "display the state of the specified thread(s)"
+      "<identity> statistics" "display statistics related to the thread(s)"
+      "<identity> nodes" "display the state nodes proportions related to thread(s)"
+      "<identity> all" "display all available options just listed before"
+      "<identity> depth" "display the thread stack depth"
+      "<identity> register <type> (<depth>=0)" "display the state of a specific register owned by the specified thread"
+      "<identity> registers" "display registers' nodes proportions towards the thread and the virtual machine"
     ]}
   end
 
