@@ -326,7 +326,7 @@ in
       if Id == none then
         {PrintInvalidIdError Argument}
       else
-        Thread = {GetThreadFromId Id $}
+        Thread = {Boot_Introspection.getThread Id $}
       in
         if Thread == none then
           {PrintThreadNotFoundError Id}

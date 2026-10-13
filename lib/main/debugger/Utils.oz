@@ -147,32 +147,6 @@ in
   {Loop 0 List List2}
 end
 
-proc {ValidId Id ?Result}
-  Result = (Id \= none andthen {Int.is Id $})
-end
-
-proc {GetThreadFromId Id ?Result}
-  Thread = {Boot_Introspection.getThread Id $}
-in
-  if Thread == none then
-    Result = none
-    {PrintThreadNotFoundError Id}
-  else
-    Result = Thread
-  end
-end
-
-proc {GetVariableFromId Id ?Result}
-  Variable = {Boot_Introspection.getVariable Id $}
-in
-  if Variable == none then
-    Result = none
-    {PrintVariableNotFoundError Id}
-  else
-    Result = Variable
-  end
-end
-
 proc {GetPercent Count Scale ?Percent ?DotPercent}
   Percent = (Count * 100) div Scale
   DotPercent = (Count * 10000) mod Scale
