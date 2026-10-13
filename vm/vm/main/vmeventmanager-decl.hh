@@ -43,56 +43,201 @@ class VirtualMachineEventManager {
 public:
   VirtualMachineEventManager() : trackingTriggered(false) {}
 
+public:
+  using Id = size_t;
+  using IdsVector = std::vector<Id>;
+
+public:
+  struct Tracking {
+  protected:
+    Tracking(VM vm, Id authorId, IdsVector victimIds) :
+      authorId(authorId), victimIds(victimIds) {}
+  public:
+    Id authorId;
+    IdsVector victimIds;
+  };
+
+  /**
+   * Note tracking rules could be composed as for example
+   * Runnable vectors where there is one vector for each type of event
+   * making event lighter (minus one announce to store) and faster to
+   * filter based on the announce.
+   * 
+   * However tracking rules are hand written and will be probably less
+   * numberous compared to events thus the iteration of the tracking vector
+   * should be quite short.
+   */
+  using TrackingVector = std::vector<Tracking>;
+
 private:
   static inline
   Runnable* getCurrentThread(VM vm);
 
+  bool contains(IdsVector& idsVector, Id id);
+
+  /** ================ Runnable events ================ */
 public:
-  enum class RunnableAnnounce {
-    Inserted,
-    Removed,
+  enum RunnableAnnounce {
+    Created,
     Updated,
-    Collected
+    Collected,
+    Scheduled,
+    Unscheduled,
+    Rescheduled
   };
 
-  struct RunnableInfo {
-    explicit RunnableInfo(VM vm, Runnable* runnable) : runnable(runnable) {
+  struct RunnableEvent {
+    explicit RunnableEvent(VM vm, Runnable* runnable) : author(nullptr), runnable(runnable) {
       author = getCurrentThread(vm);
     }
+
+    explicit RunnableEvent(VM vm, Id id) : id(id) {}
     
-    Runnable *author;
-    Runnable* runnable;
+    union {
+      struct {
+        Runnable* author;
+        Runnable* runnable;
+      };
+
+      struct {
+        Id id;
+      };
+    };
   };
 
-  using RunnablesVector = std::vector<RunnableInfo>;
+  static inline
+  UnstableNode buildRunnableEvent(VM vm,
+    const RunnableEvent& event, RunnableAnnounce announce);
+
+  using RunnableEventsVector = std::vector<RunnableEvent>;
+
+  static inline
+  UnstableNode buildRunnableEventsVector(VM vm,
+    const RunnableEventsVector& vector, RunnableAnnounce announce);
+
+  struct RunnableEventsVectors {
+    RunnableEventsVector created;
+    RunnableEventsVector updated;
+    RunnableEventsVector collected; // When event is read, the collected thread state has been destroyed
+    RunnableEventsVector scheduled;
+    RunnableEventsVector unscheduled;
+    RunnableEventsVector rescheduled;
+
+    void clear() {
+      created.clear();
+      updated.clear();
+      collected.clear();
+      scheduled.clear();
+      unscheduled.clear();
+      rescheduled.clear();
+    }
+  };
+
+  static inline
+  UnstableNode buildRunnableEventsVectors(VM vm,
+    const RunnableEventsVectors& vectors);
+
 public:
   void announceRunnable(VM vm, Runnable* runnable, RunnableAnnounce announce) {
-    RunnableInfo info = RunnableInfo(vm, runnable);
+    RunnableEvent info = RunnableEvent(vm, runnable);
 
     detectTriggeredRunnableTracking(vm, info, announce);
 
     switch (announce) {
-      case RunnableAnnounce::Inserted: insertedRunnables.push_back(info); break;
-      case RunnableAnnounce::Removed: removedRunnables.push_back(info); break;
-      case RunnableAnnounce::Updated: updatedRunnables.push_back(info); break;
-      case RunnableAnnounce::Collected: collectedRunnables.push_back(info); break;
+      case Created:
+        runnableEventsVectors.created.push_back(RunnableEvent(vm, runnable));
+        break;
+      case Updated:
+        runnableEventsVectors.updated.push_back(RunnableEvent(vm, runnable));
+        break;
+      case Collected:
+        runnableEventsVectors.collected.push_back(
+          RunnableEvent(vm, runnable->getId()));
+        break;
+      case Scheduled:
+        runnableEventsVectors.scheduled.push_back(RunnableEvent(vm, runnable));
+        break;
+      case Unscheduled:
+        runnableEventsVectors.unscheduled.push_back(RunnableEvent(vm, runnable));
+        break;
+      case Rescheduled:
+        runnableEventsVectors.rescheduled.push_back(RunnableEvent(vm, runnable));
+        break;
       default: assert(false);
     }
   }
 
-  RunnablesVector& getRunnables(RunnableAnnounce announce) {
+  RunnableEventsVector& getRunnables(RunnableAnnounce announce) {
     switch (announce) {
-      case RunnableAnnounce::Inserted: return insertedRunnables;
-      case RunnableAnnounce::Removed: return removedRunnables;
-      case RunnableAnnounce::Updated: return updatedRunnables;
-      case RunnableAnnounce::Collected: return collectedRunnables;
-      default: assert(false); return insertedRunnables;
+      case Created:
+        return runnableEventsVectors.created;
+      case Updated:
+        return runnableEventsVectors.updated;
+      case Collected:
+        return runnableEventsVectors.collected;
+      case Scheduled:
+        return runnableEventsVectors.scheduled;
+      case Unscheduled:
+        return runnableEventsVectors.unscheduled;
+      case Rescheduled:
+        return runnableEventsVectors.rescheduled;
+      default: assert(false); return getRunnables(Created);
     }
   }
 
   bool empty(RunnableAnnounce announce) {
     return getRunnables(announce).empty();
   }
+
+private:
+  RunnableEventsVectors runnableEventsVectors;
+
+  /** ================ Runnable tracks ================ */
+public:
+  struct RunnableTracking : public Tracking {
+    explicit RunnableTracking(VM vm, size_t authorId,
+      IdsVector victimIds, RunnableAnnounce announce) :
+      Tracking(vm, authorId, victimIds),
+      announce(announce) {}
+
+    RunnableAnnounce announce;
+  };
+
+  using RunnableTrackingVector = std::vector<RunnableTracking>;
+
+private:
+  inline
+  bool matchTracking(VM vm, RunnableTracking& tracking, RunnableEvent info);
+
+  inline
+  void detectTriggeredRunnableTracking(VM vm, RunnableEvent info, RunnableAnnounce announce) {
+    for (RunnableTracking tracking : runnableTrackingVector) {
+      if (tracking.announce == announce && matchTracking(vm, tracking, info)) {
+        trackingTriggered = true;
+        break;
+      }
+    }
+  }
+
+  inline
+  void detectTriggeredRunnableTracking(VM vm, RunnableTracking& tracking) {
+    for (RunnableEvent info : getRunnables(tracking.announce)) {
+      if (matchTracking(vm, tracking, info)) {
+        trackingTriggered = true;
+        break;
+      }
+    }
+  }
+
+public:
+  void track(VM vm, RunnableTracking tracking) {
+    runnableTrackingVector.push_back(tracking);
+  }
+
+private:
+  RunnableTrackingVector runnableTrackingVector;
+
+  /** ================ Variable events ================ */
 public:
   enum class VariableAnnounce {
     Created,
@@ -413,19 +558,10 @@ public:
   }
 
 public:
-  enum class Event {
-    Runnable,
-    Variable,
-    Structure
-  };
-
   void clear() {
     trackingTriggered = false;
 
-    insertedRunnables.clear();
-    removedRunnables.clear();
-    updatedRunnables.clear();
-    collectedRunnables.clear();
+    runnableEventsVectors.clear();
 
     aggregatedVariables.clear();
     aggregatedReadOnlyVariables.clear();
@@ -435,32 +571,6 @@ public:
     tupleStructuresVectors.clear();
     recordStructuresVectors.clear();
   }
-
-public:
-  using IdsVector = std::vector<size_t>;
-
-  struct Tracking {
-  protected:
-    Tracking(VM vm, Event event, size_t announcerThreadId, IdsVector idsVector) :
-      event(event), announcerThreadId(announcerThreadId), idsVector(idsVector) {}
-  public:
-    Event event;
-    size_t announcerThreadId;
-    IdsVector idsVector;
-  };
-
-  using TrackingVector = std::vector<Tracking>;
-
-  struct RunnableTracking : public Tracking {
-    explicit RunnableTracking(VM vm, size_t announcerThreadId, IdsVector idsVector,
-      RunnableAnnounce announce) :
-      Tracking(vm, Event::Runnable, announcerThreadId, idsVector),
-      announce(announce) {}
-
-    RunnableAnnounce announce;
-  };
-
-  using RunnableTrackingVector = std::vector<RunnableTracking>;
 
   enum class VariableType {
     All,
@@ -501,23 +611,6 @@ public:
   using StructureTrackingVector = std::vector<StructureTracking>;
 
 public:
-  RunnableTrackingVector& getRunnableTrackingVector() {
-    return runnableTrackingVector;
-  }
-
-  VariableTrackingVector& getVariableTrackingVector() {
-    return variableTrackingVector;
-  }
-
-  StructureTrackingVector& getStructureTrackingVector() {
-    return structureTrackingVector;
-  }
-
-private:
-  inline
-  bool contains(IdsVector& idsVector, size_t id);
-
-public:
   void track(VM vm, RunnableTracking tracking) {
     runnableTrackingVector.push_back(tracking);
   }
@@ -533,7 +626,7 @@ public:
 private:
   inline
   bool matchTracking(VM vm, RunnableTracking& tracking,
-    RunnableInfo info, RunnableAnnounce announce);
+    RunnableEvent info);
 
   template<class V>
   inline
@@ -554,43 +647,6 @@ private:
   inline
   bool matchTracking(VM vm, StructureTracking tracking,
     StructureInfo<S> info, StructureAnnounce announce);
-
-private:
-  inline
-  void detectTriggeredRunnableTracking(VM vm, RunnableInfo info, RunnableAnnounce announce) {
-    for (auto iter = runnableTrackingVector.begin();
-      iter != runnableTrackingVector.end(); ++iter) {
-      RunnableTracking tracking = *iter;
-      if (matchTracking(vm, tracking, info, announce)) {
-        trackingTriggered = true;
-        break;
-      }
-    }
-  }
-
-  inline
-  void detectTriggeredRunnableTracking(VM vm, RunnableTracking& tracking,
-    RunnablesVector& vector, RunnableAnnounce announce) {
-    for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
-      RunnableInfo info = *iter;
-      if (matchTracking(vm, tracking, info, announce)) {
-        trackingTriggered = true;
-        break;
-      }
-    }
-  }
-
-  inline
-  void detectTriggeredRunnableTracking(VM vm, RunnableTracking& tracking) {
-    detectTriggeredRunnableTracking(vm, tracking,
-      insertedRunnables, RunnableAnnounce::Inserted);
-    detectTriggeredRunnableTracking(vm, tracking,
-      removedRunnables, RunnableAnnounce::Removed);
-    detectTriggeredRunnableTracking(vm, tracking,
-      updatedRunnables, RunnableAnnounce::Updated);
-    detectTriggeredRunnableTracking(vm, tracking,
-      collectedRunnables, RunnableAnnounce::Collected);
-  }
 
 private:
   template<class V, class VInfo>
@@ -742,11 +798,6 @@ public:
   }
 
 private:
-  RunnablesVector insertedRunnables;
-  RunnablesVector removedRunnables;
-  RunnablesVector updatedRunnables;
-  RunnablesVector collectedRunnables;
-
   VariablesVectors<Variable> aggregatedVariables;
   VariablesVectors<ReadOnlyVariable> aggregatedReadOnlyVariables;
 
@@ -756,7 +807,6 @@ private:
   StructuresVectors<Record> recordStructuresVectors;
 
   bool trackingTriggered;
-  RunnableTrackingVector runnableTrackingVector;
   VariableTrackingVector variableTrackingVector;
   StructureTrackingVector structureTrackingVector;
 };

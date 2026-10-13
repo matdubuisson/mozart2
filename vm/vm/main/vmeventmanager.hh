@@ -39,24 +39,85 @@ Runnable* VirtualMachineEventManager::getCurrentThread(VM vm) {
   return vm->getCurrentThread();
 }
 
-bool VirtualMachineEventManager::contains(IdsVector& idsVector, size_t id) {
+bool VirtualMachineEventManager::contains(IdsVector& idsVector, Id id) {
   return id != SIZE_MAX && count(idsVector.begin(), idsVector.end(), id) > 0;
 }
 
-bool VirtualMachineEventManager::matchTracking(VM vm, RunnableTracking& tracking,
-  RunnableInfo info, RunnableAnnounce announce) {
+/** ================ Runnable events ================ */
 
-  if (tracking.announce != announce)
-    return false;
-  else if (tracking.announcerThreadId != SIZE_MAX
+UnstableNode VirtualMachineEventManager::buildRunnableEvent(VM vm,
+  const RunnableEvent& event, RunnableAnnounce announce) {
+
+  if (announce == Collected) {
+    return buildRecord(vm,
+      buildArity(vm,
+        "event",
+        "id"
+      ),
+      build(vm, event.id)
+    );
+  } else {
+    return buildRecord(vm,
+      buildArity(vm,
+        "event",
+        "authorId",
+        "victimId"
+      ),
+      event.author == nullptr ?
+        build(vm, "none") : build(vm, event.author->getId()),
+      build(vm, event.runnable->getId())
+    );
+  }
+}
+
+UnstableNode VirtualMachineEventManager::buildRunnableEventsVector(VM vm,
+  const RunnableEventsVector& vector, RunnableAnnounce announce) {
+  OzListBuilder builder(vm);
+  for (const RunnableEvent event : vector) {
+    builder.push_back(vm, buildRunnableEvent(vm, event, announce));
+  }
+  return builder.get(vm);
+}
+
+UnstableNode VirtualMachineEventManager::buildRunnableEventsVectors(VM vm,
+  const RunnableEventsVectors& vectors) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "events",
+      "collected",
+      "created",
+      "rescheduled",
+      "scheduled",
+      "unscheduled",
+      "updated"
+    ),
+    buildRunnableEventsVector(vm, vectors.collected, Collected),
+    buildRunnableEventsVector(vm, vectors.created, Created),
+    buildRunnableEventsVector(vm, vectors.rescheduled, Rescheduled),
+    buildRunnableEventsVector(vm, vectors.scheduled, Scheduled),
+    buildRunnableEventsVector(vm, vectors.unscheduled, Unscheduled),
+    buildRunnableEventsVector(vm, vectors.updated, Updated)
+  );
+}
+
+/** ================ Runnable tracks ================ */
+
+bool VirtualMachineEventManager::matchTracking(VM vm,
+  RunnableTracking& tracking, RunnableEvent info) {
+
+  if (tracking.authorId != SIZE_MAX
     && info.author != nullptr
-    && tracking.announcerThreadId != info.author->getId())
+    && tracking.authorId != info.author->getId())
     return false;
-  else if (tracking.idsVector.empty())
+  else if (tracking.victimIds.empty())
     return true;
   else
-    return contains(tracking.idsVector, info.runnable->getId());
+    return contains(tracking.victimIds, info.runnable->getId());
 }
+
+/** ================ Variable events ================ */
+
+/** ================ Variable tracks ================ */
 
 template<class V>
 bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking,
