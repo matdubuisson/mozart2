@@ -198,8 +198,24 @@ in
   String = {List.append Left Right $}
 end
 
-proc {ListToString ThisList ?String}
-  String = ""
+proc {ListToString Lst ?String}
+  proc {Aux Lst Acc}
+    case Lst of nil then String = Acc
+    [] Head|Tail then
+      Repr = {Boot_System.getRepr Head ~1 ~1 $}    
+      StringRepr = if {Atom.is Repr $} then {Atom.toString Repr $}
+        else Repr end  
+      NewAcc = {List.append Acc StringRepr $}
+    in  
+      case Tail of nil then  
+        String = NewAcc
+      else        
+        {Aux Tail {List.append NewAcc ", " $}}
+      end
+    end  
+  end  
+in
+  {Aux Lst ""}
 end
 
 proc {ToString Something ?String}
