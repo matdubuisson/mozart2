@@ -1,11 +1,9 @@
 local
   proc {DisplayOptions}
-    {DisplayNameDescriptions
-      ["on" "off"]
-      [
-        "Allows the garbage collector to run"
-        "Prevents the garbage collector to run, warning with this mode"
-      ]}
+    {DisplayFrame "GC command controls" [
+      "on" "Turn on the garbage collector"
+      "off" "Turn off the garbage collector but be aware the VM has a risk to accumulate too much memory and therefore to crash however very usefull when we need to debug data out of scope"
+    ]}
   end
 in
   case Arguments of nil then

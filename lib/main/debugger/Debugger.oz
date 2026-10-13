@@ -77,6 +77,7 @@ define
 
         thread {Wait InjectAVariable} {Boot_System.printVS "test" false true} end
       in
+        % Everything concerning the introspection of the VM
         case Command of "vm" then
           \insert ./commands/introspection/VMCommand
         [] "count" then
@@ -102,8 +103,11 @@ define
         %   \insert AlarmCommand
         % [] "lists" then
         %   \insert ./commands/introspection/ListsCommand
-        % [] "gc" then
-        %   \insert ./commands/GCCommand
+
+        % Everything concerning the control of the VM
+        [] "gc" then
+          \insert ./commands/GCCommand
+        
         else
           {PrintError "Unknown command '"#Command#"'"#TRYHELP}
         end
