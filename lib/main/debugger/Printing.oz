@@ -61,6 +61,13 @@ in
     end
   end
 
+  proc {PrintAtLeast String Size}
+    Length = {List.length String $}
+  in
+    if Length > Size then {Print String}
+    else {PrintExactly String Size} end
+  end
+
   proc {PrintList List}
     proc {Loop List}
       case List of nil then skip
