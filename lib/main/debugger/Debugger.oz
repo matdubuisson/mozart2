@@ -72,6 +72,10 @@ define
       if Input \= "" then
         Inputs = {String.tokens Input 32 $}
         Command|Arguments = Inputs
+
+        InjectAVariable
+
+        thread {Wait InjectAVariable} {Boot_System.printVS "test" false true} end
       in
         case Command of "vm" then
           \insert ./commands/introspection/VMCommand
@@ -83,8 +87,8 @@ define
           \insert ./commands/introspection/ThreadCommand
         [] "threads" then
           \insert ./commands/introspection/ThreadsCommand
-        % [] "variable" then
-        %   \insert ./commands/introspection/VariableCommand
+        [] "variable" then
+          \insert ./commands/introspection/VariableCommand
         [] "variables" then
           \insert ./commands/introspection/VariablesCommand
         % [] "run" then
@@ -103,6 +107,7 @@ define
         else
           {PrintError "Unknown command '"#Command#"'"#TRYHELP}
         end
+        InjectAVariable = unit
       end
     end
   end
@@ -204,6 +209,7 @@ define
 in  
   {Loop}
 end
+
 
 
 
