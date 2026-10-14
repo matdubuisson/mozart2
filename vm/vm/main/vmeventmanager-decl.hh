@@ -457,8 +457,11 @@ public:
 private:
   VariableTrackingVector variableTrackingVector;
 
-  /** ================ Flags ================ */
+  /** ================ Other ================ */
 public:
+  static inline
+  UnstableNode buildEventsJournal(VM vm, const VirtualMachineEventManager& eventManager);
+
   bool isTrackingTriggered() {
     return trackingTriggered;
   }

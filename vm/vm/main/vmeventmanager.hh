@@ -183,6 +183,22 @@ bool VirtualMachineEventManager::matchTracking(VM vm,
   else return false;
 }
 
+/** ================ Other ================ */
+
+UnstableNode VirtualMachineEventManager::buildEventsJournal(VM vm, const VirtualMachineEventManager& eventManager) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "journal",
+      "readOnlyVariable",
+      "runnable",
+      "variable"
+    ),
+    buildVariableEventsVectors<ReadOnlyVariable>(vm, eventManager.readOnlyVariableEventsVectors),
+    buildRunnableEventsVectors(vm, eventManager.runnableEventsVectors),
+    buildVariableEventsVectors<Variable>(vm, eventManager.variableEventsVectors)
+  );
+}
+
 }
 
 #endif // MOZART_GENERATOR
