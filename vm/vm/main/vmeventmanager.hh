@@ -39,7 +39,7 @@ Runnable* VirtualMachineEventManager::getCurrentThread(VM vm) {
   return vm->getCurrentThread();
 }
 
-bool VirtualMachineEventManager::contains(IdsVector& idsVector, Id id) {
+bool VirtualMachineEventManager::contains(const IdsVector& idsVector, Id id) {
   return id != SIZE_MAX && count(idsVector.begin(), idsVector.end(), id) > 0;
 }
 
@@ -103,31 +103,74 @@ UnstableNode VirtualMachineEventManager::buildRunnableEventsVectors(VM vm,
 /** ================ Runnable tracks ================ */
 
 bool VirtualMachineEventManager::matchTracking(VM vm,
-  RunnableTracking& tracking, RunnableEvent info) {
+  const RunnableTracking& tracking, const RunnableEvent& event) {
 
   if (tracking.authorId != SIZE_MAX
-    && info.author != nullptr
-    && tracking.authorId != info.author->getId())
+    && event.author != nullptr
+    && tracking.authorId != event.author->getId())
     return false;
   else if (tracking.victimIds.empty())
     return true;
   else
-    return contains(tracking.victimIds, info.runnable->getId());
+    return contains(tracking.victimIds, event.runnable->getId());
 }
 
 /** ================ Variable events ================ */
 
+template<class V>
+UnstableNode VirtualMachineEventManager::buildVariableEvent(VM vm,
+  const VariableEvent<V>& event, VariableAnnounce announce) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "event",
+      "authorId",
+      "variableId"
+    ),
+    event.author == nullptr ? build(vm, "none") :
+      build(vm, event.author->getId()),
+    build(vm, event.variable->getId())
+  );
+}
+
+template<class V>
+UnstableNode VirtualMachineEventManager::buildVariableEventsVector(VM vm,
+  const VariableEventsVector<V>& vector, VariableAnnounce announce) {
+  OzListBuilder builder(vm);
+  for (const VariableEvent<V> event : vector) {
+    builder.push_back(vm, buildVariableEvent<V>(vm, event, announce));
+  }
+  return builder.get(vm);
+}
+
+template<class V>
+UnstableNode VirtualMachineEventManager::buildVariableEventsVectors(VM vm,
+  const VariableEventsVectors<V>& vectors) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "events",
+      "bound",
+      "collected",
+      "created",
+      "needed",
+      "waited"
+    ),
+    buildVariableEventsVector<V>(vm, vectors.bound, Bound),
+    buildVariableEventsVector<V>(vm, vectors.collected, VCollected),
+    buildVariableEventsVector<V>(vm, vectors.created, VCreated),
+    buildVariableEventsVector<V>(vm, vectors.needed, Needed),
+    buildVariableEventsVector<V>(vm, vectors.waited, Waited)
+  );
+}
+
 /** ================ Variable tracks ================ */
 
 template<class V>
-bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking,
-  VariableInfo<V> info, VariableAnnounce announce) {
+bool VirtualMachineEventManager::matchTracking(VM vm,
+  const VariableTracking& tracking, const VariableEvent<V>& event) {
 
-  IdsVector& ids = tracking.idsVector;
+  const IdsVector& ids = tracking.idsVector;
 
-  if (tracking.announce != announce)
-    return false;
-  else if (tracking.announcerThreadId != SIZE_MAX
+  if (tracking.announcerThreadId != SIZE_MAX
     && info.author != nullptr
     && tracking.announcerThreadId != info.author->getId())
     return false;
@@ -140,42 +183,22 @@ bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking
   else return false;
 }
 
-template<class V>
-bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking,
-  BoundVariableInfo<V> info, VariableAnnounce announce) {
+// template<class S>
+// bool VirtualMachineEventManager::matchTracking(VM vm, StructureTracking tracking,
+//   StructureInfo<S> info, StructureAnnounce announce) {
 
-  if (matchTracking<V>(vm, tracking,
-    static_cast<VariableInfo<V>>(info), announce))
-    return true;
-  else return false;
-}
-
-template<class V>
-bool VirtualMachineEventManager::matchTracking(VM vm, VariableTracking& tracking,
-  WaitedVariableInfo<V> info, VariableAnnounce announce) {
-
-  if (matchTracking<V>(vm, tracking,
-    static_cast<VariableInfo<V>>(info), announce))
-    return true;
-  else return false;
-}
-
-template<class S>
-bool VirtualMachineEventManager::matchTracking(VM vm, StructureTracking tracking,
-  StructureInfo<S> info, StructureAnnounce announce) {
-
-  if (tracking.announce != announce)
-    return false;
-  else if (tracking.announcerThreadId != SIZE_MAX
-    && info.author != nullptr
-    && tracking.announcerThreadId != info.author->getId())
-    return false;
-  else if (tracking.idsVector.empty())
-    return true;
-  else
-    return contains(tracking.idsVector, info.structure->getId())
-      || contains(tracking.idsVector, info.structure->getKindId());
-}
+//   if (tracking.announce != announce)
+//     return false;
+//   else if (tracking.announcerThreadId != SIZE_MAX
+//     && info.author != nullptr
+//     && tracking.announcerThreadId != info.author->getId())
+//     return false;
+//   else if (tracking.idsVector.empty())
+//     return true;
+//   else
+//     return contains(tracking.idsVector, info.structure->getId())
+//       || contains(tracking.idsVector, info.structure->getKindId());
+// }
 
 }
 

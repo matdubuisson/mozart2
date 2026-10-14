@@ -73,7 +73,7 @@ private:
   static inline
   Runnable* getCurrentThread(VM vm);
 
-  bool contains(IdsVector& idsVector, Id id);
+  bool contains(const IdsVector& idsVector, Id id);
 
   /** ================ Runnable events ================ */
 public:
@@ -207,12 +207,12 @@ public:
 
 private:
   inline
-  bool matchTracking(VM vm, RunnableTracking& tracking, RunnableEvent info);
+  bool matchTracking(VM vm, const RunnableTracking& tracking, const RunnableEvent& event);
 
   inline
-  void detectTriggeredRunnableTracking(VM vm, RunnableEvent info, RunnableAnnounce announce) {
+  void detectTriggeredRunnableTracking(VM vm, const RunnableEvent& event, RunnableAnnounce announce) {
     for (RunnableTracking tracking : runnableTrackingVector) {
-      if (tracking.announce == announce && matchTracking(vm, tracking, info)) {
+      if (tracking.announce == announce && matchTracking(vm, tracking, event)) {
         trackingTriggered = true;
         break;
       }
@@ -220,9 +220,9 @@ private:
   }
 
   inline
-  void detectTriggeredRunnableTracking(VM vm, RunnableTracking& tracking) {
-    for (RunnableEvent info : getRunnables(tracking.announce)) {
-      if (matchTracking(vm, tracking, info)) {
+  void detectTriggeredRunnableTracking(VM vm, const RunnableTracking& tracking) {
+    for (const RunnableEvent event : getRunnables(tracking.announce)) {
+      if (matchTracking(vm, tracking, event)) {
         trackingTriggered = true;
         break;
       }
@@ -230,7 +230,7 @@ private:
   }
 
 public:
-  void track(VM vm, RunnableTracking tracking) {
+  void track(RunnableTracking tracking) {
     runnableTrackingVector.push_back(tracking);
   }
 
@@ -239,220 +239,127 @@ private:
 
   /** ================ Variable events ================ */
 public:
-  enum class VariableAnnounce {
-    Created,
-    Collected,
+  enum VariableAnnounce {
+    VCreated,
+    VCollected,
     Needed,
     Waited,
     Bound
   };
 
-  template<typename V>
-  struct VariableInfo {
-    explicit VariableInfo(VM vm, V* v) : variable(v) {
+  template<class V>
+  struct VariableEvent {
+    explicit VariableEvent(VM vm, V* v) :
+      author(nullptr), variable(v), waiter(nullptr) {
       author = getCurrentThread(vm);
     }
+
+    explicit VariableEvent(VM vm, V* v, RichNode node) :
+      VariableEvent(vm, v), waiter(node.getStableRef(vm)) {}
 
     Runnable* author;
     V* variable;
   };
 
-  template<typename V>
-  using VariablesVector = std::vector<VariableInfo<V>>;
+  template<class V>
+  static inline
+  UnstableNode buildVariableEvent(VM vm,
+    const VariableEvent<V>& event, VariableAnnounce announce);
 
-  template<typename V>
-  struct BoundVariableInfo : public VariableInfo<V> {
-    explicit BoundVariableInfo(VM vm, V* v, RichNode self, RichNode src) :
-      VariableInfo<V>(vm, v), self(self), src(src) {}
+  template<class V>
+  using VariableEventsVector = std::vector<VariableEvent<V>>;
 
-    RichNode self, src;
-  };
+  template<class V>
+  static inline
+  UnstableNode buildVariableEventsVector(VM vm,
+    const VariableEventsVector<V>& vector, VariableAnnounce announce);
 
-  template<typename V>
-  using BoundVariablesVector = std::vector<BoundVariableInfo<V>>;
-
-  template<typename V>
-  struct WaitedVariableInfo : public VariableInfo<V>{
-    explicit WaitedVariableInfo(VM vm, V* v, RichNode w) :
-      VariableInfo<V>(vm, v), waiter(w) {}
-
-    RichNode waiter;
-  };
-
-  template<typename V>
-  using WaitedVariablesVector = std::vector<WaitedVariableInfo<V>>;
-
-  template<typename V>
-  struct VariablesVectors {
-    VariablesVector<V> createds;
-    VariablesVector<V> collecteds;
-    VariablesVector<V> neededs;
-    BoundVariablesVector<V> bounds;
-    WaitedVariablesVector<V> waiteds;
+  template<class V>
+  struct VariableEventsVectors {
+    VariableEventsVector<V> created;
+    VariableEventsVector<V> collected;
+    VariableEventsVector<V> needed;
+    VariableEventsVector<V> bound;
+    VariableEventsVector<V> waited;
 
     void clear() {
-      createds.clear();
-      collecteds.clear();
-      neededs.clear();
-      bounds.clear();
-      waiteds.clear();
+      created.clear();
+      collected.clear();
+      needed.clear();
+      bound.clear();
+      waited.clear();
     }
   };
 
+  template<class V>
+  static inline
+  UnstableNode buildVariableEventsVectors(VM vm,
+    const VariableEventsVectors<V>& vectors);
+
 private:
-  template<typename V>
-  void announceVariable(VM vm, VariablesVectors<V>& vector, V* variable, VariableAnnounce announce) {
-    VariableInfo<V> info = VariableInfo(vm, variable);
-
-    detectTriggeredVariableTracking<V, VariableInfo<V>>(vm, info, announce);
-
-    switch (announce) {
-      case VariableAnnounce::Created:
-        vector.createds.push_back(info);
-        break;
-      case VariableAnnounce::Collected:
-        vector.collecteds.push_back(info);
-        break;
-      case VariableAnnounce::Needed:
-        vector.neededs.push_back(info);
-        break;
-      default: assert(false);
-    }
-  }
-
-  template<typename V>
-  void announceBoundVariable(VM vm, VariablesVectors<V>& vector, V* variable, RichNode self, RichNode src) {
-    BoundVariableInfo<V> info = BoundVariableInfo(vm, variable, self, src);
-
-    detectTriggeredVariableTracking<V, BoundVariableInfo<V>>(vm, info, VariableAnnounce::Bound);
-    vector.bounds.push_back(info);
-  }
-
-  template<typename V>
-  void announceWaitedVariable(VM vm, VariablesVectors<V>& vector, V* variable, RichNode waiter) {
-    WaitedVariableInfo<V> info = WaitedVariableInfo(vm, variable, waiter);
-    detectTriggeredVariableTracking<V, WaitedVariableInfo<V>>(vm, info, VariableAnnounce::Waited);
-    vector.waiteds.push_back(info);
+  template<class V>
+  inline
+  VariableEventsVectors<V>& getVariableEventsVectors() {
+    if consexpr (std::is_same_v<V, Variable>)
+      return variableEventsVectors;
+    else
+      return readOnlyVariableEventsVectors;
   }
 
 public:
   template<class V>
-  void announceVariableBase(VM vm, VariableBase<V>* variable, VariableAnnounce announce) {
-    if constexpr (std::is_same_v<V, Variable>) {
-      announceVariable(vm, aggregatedVariables,
-        static_cast<Variable*>(variable), announce);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      announceVariable(vm, aggregatedReadOnlyVariables,
-        static_cast<ReadOnlyVariable*>(variable), announce);
-    } else assert(false);
-  }
-
-  template<class V>
-  void announceBoundVariableBase(VM vm, VariableBase<V>* variable, RichNode self, RichNode src) {
-    if constexpr (std::is_same_v<V, Variable>) {
-      announceBoundVariable(vm, aggregatedVariables,
-        static_cast<Variable*>(variable), self, src);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      announceBoundVariable(vm, aggregatedReadOnlyVariables,
-        static_cast<ReadOnlyVariable*>(variable), self, src);
-    } else assert(false);
-  }
-
-  template<class V>
-  void announceWaitedVariableBase(VM vm, VariableBase<V>* variable, RichNode waiter) {
-    if constexpr (std::is_same_v<V, Variable>) {
-      announceWaitedVariable(vm, aggregatedVariables,
-        static_cast<Variable*>(variable), waiter);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      announceWaitedVariable(vm, aggregatedReadOnlyVariables,
-        static_cast<ReadOnlyVariable*>(variable), waiter);
-    } else assert(false);
-  }
-
-  template<class V>
+  inline
   void announceVariable(VM vm, V* variable, VariableAnnounce announce) {
-    if constexpr (std::is_same_v<V, Variable>) {
-      announceVariable(vm, aggregatedVariables, variable, announce);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      announceVariable(vm, aggregatedReadOnlyVariables, variable, announce);
-    } else assert(false);
-  }
+    VariableEventsVectors<V>& vectors = getVariableEventsVectors<V>();
 
-  template<class V>
-  void announceBoundVariable(VM vm, V* variable, RichNode self, RichNode src) {
-    if constexpr (std::is_same_v<V, Variable>) {
-      announceBoundVariable(vm, aggregatedVariables, variable, self, src);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      announceBoundVariable(vm, aggregatedReadOnlyVariables, variable, self, src);
-    } else assert(false);
-  }
+    detectTriggeredVariableTracking(vm, VariableEvent(vm, variable), announce);
 
-  template<class V>
-  void announceWaitedVariable(VM vm, V* variable, RichNode waiter) {
-    if constexpr (std::is_same_v<V, Variable>) {
-      announceWaitedVariable(vm, aggregatedVariables, variable, waiter);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      announceWaitedVariable(vm, aggregatedReadOnlyVariables, variable, waiter);
-    } else assert(false);
+    switch (announce) {
+      case VCreated:
+        vectors.created.push_back(VariableEvent(vm, variable));
+        break;
+      case VCollected:
+        vectors.collected.push_back(VariableEvent(vm, variable));
+        break;
+      case Needed:
+        vectors.needed.push_back(VariableEvent(vm, variable));
+        break;
+      case Bound:
+        vectors.bound.push_back(VariableEvent(vm, variable));
+        break;
+      case Waited:
+        vectors.waited.push_back(VariableEvent(vm, variable));
+        break;
+    }
   }
 
 private:
   template<typename V>
-  VariablesVector<V>& getVariables(VariablesVectors<V>& vector, VariableAnnounce announce) {
+  VariableEventsVector<V>& getVariables(VariableEventsVectors<V>& vectors, VariableAnnounce announce) {
     switch (announce) {
-      case VariableAnnounce::Created: return vector.createds;
-      case VariableAnnounce::Collected: return vector.collecteds;
-      case VariableAnnounce::Needed: return vector.neededs;
-      default: assert(false); return vector.createds;
+      case VCreated:
+        return vectors.created;
+      case VCollected:
+        return vectors.collected;
+      case Needed:
+        return vectors.needed;
+      case Bound:
+        return vectors.bound;
+      case Waited:
+        return vectors.waited;
+      default: assert(false); return vector.created;
     }
-  }
-
-  template<typename V>
-  BoundVariablesVector<V>& getBoundVariables(VariablesVectors<V>& vector) {
-    return vector.bounds;
-  }
-
-  template<typename V>
-  WaitedVariablesVector<V>& getWaitedVariables(VariablesVectors<V>& vector) {
-    return vector.waiteds;
   }
 
 public:
   template<typename V>
-  VariablesVector<V>& getVariables(VariableAnnounce announce) {
-    if constexpr (std::is_same_v<V, Variable>) {
-      return getVariables(aggregatedVariables, announce);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      return getVariables(aggregatedReadOnlyVariables, announce);
-    } else assert(false);
-  }
-
-  template<typename V>
-  BoundVariablesVector<V>& getBoundVariables() {
-    if constexpr (std::is_same_v<V, Variable>) {
-      return getBoundVariables(aggregatedVariables);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      return getBoundVariables(aggregatedReadOnlyVariables);
-    } else assert(false);
-  }
-
-  template<typename V>
-  WaitedVariablesVector<V>& getWaitedVariables() {
-    if constexpr (std::is_same_v<V, Variable>) {
-      return getWaitedVariables(aggregatedVariables);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      return getWaitedVariables(aggregatedReadOnlyVariables);
-    } else assert(false);
+  VariableEventsVector<V>& getVariables(VariableAnnounce announce) {
+    return getVariables<V>(getVariableEventsVectors<V>(), announce);
   }
 
   template<typename V>
   bool empty(VariableAnnounce announce) {
-    if (announce == VariableAnnounce::Bound)
-      return getBoundVariables<V>().empty();
-    else if (announce == VariableAnnounce::Waited)
-      return getWaitedVariables<V>().empty();
-    else
-      return getVariables<V>(announce).empty();
+    return getVariables<V>(announce).empty();
   }
 
   bool empty(VariableAnnounce announce) {
@@ -460,337 +367,289 @@ public:
       && empty<ReadOnlyVariable>(announce);
   }
 
-public:
-  enum class StructureAnnounce {
-    Created,
-    Collected
-  };
-
-  template<class S>
-  struct StructureInfo {
-    explicit StructureInfo(VM vm, S* structure) : structure(structure) {
-      author = getCurrentThread(vm);
-    }
-
-    Runnable* author;
-    S* structure;
-  };
-
-  template<class S>
-  using StructuresVector = std::vector<StructureInfo<S>>;
-
-  template<class S>
-  struct StructuresVectors {
-    StructuresVector<S> createds;
-    StructuresVector<S> collecteds;
-
-    void clear() {
-      createds.clear();
-      collecteds.clear();
-    }
-  };
-
 private:
-  template<class S>
-  void announceStructure(VM vm, StructuresVectors<S>& vectors,
-    StructureInfo<S> info, StructureAnnounce announce) {
-    switch (announce) {
-      case StructureAnnounce::Created:
-        vectors.createds.push_back(info);
-        break;
-      case StructureAnnounce::Collected:
-        vectors.collecteds.push_back(info);
-        break;
-      default: assert(false);
-    }
-  }
+  VariableEventsVectors<Variable> variableEventsVectors;
+  VariableEventsVectors<ReadOnlyVariable> readOnlyVariableEventsVectors;
 
+  /** ================ Variable tracks ================ */
 public:
-  template<class S>
-  void announceStructure(VM vm, S* structure, StructureAnnounce announce) { 
-    StructureInfo<S> info = StructureInfo<S>(vm, structure);
-    detectTriggeredStructureTracking<S>(vm, info, announce);
-
-    if constexpr (std::is_same_v<S, Abstraction>) {
-      announceStructure<S>(vm, abstractionStructuresVectors, info, announce);
-    } else if constexpr (std::is_same_v<S, Cons>) {
-      announceStructure<S>(vm, consStructuresVectors, info, announce);
-    } else if constexpr (std::is_same_v<S, Tuple>) {
-      announceStructure<S>(vm, tupleStructuresVectors, info, announce);
-    } else if constexpr (std::is_same_v<S, Record>) {
-      announceStructure<S>(vm, recordStructuresVectors, info, announce);
-    } else assert(false);
-  }
-
-  template<class S>
-  StructuresVector<S>& getStructures(StructuresVectors<S>& vectors, StructureAnnounce announce) {
-    switch (announce) {
-      case StructureAnnounce::Created: return vectors.createds;
-      case StructureAnnounce::Collected: return vectors.collecteds;
-      default: assert(false); return vectors.createds;
-    }
-  }
-
-  template<class S>
-  StructuresVector<S>& getStructures(StructureAnnounce announce) {
-    if constexpr (std::is_same_v<S, Abstraction>) {
-      return getStructures<Abstraction>(abstractionStructuresVectors, announce);
-    } else if constexpr (std::is_same_v<S, Cons>) {
-      return getStructures<Cons>(consStructuresVectors, announce);
-    } else if constexpr (std::is_same_v<S, Tuple>) {
-      return getStructures<Tuple>(tupleStructuresVectors, announce);
-    } else if constexpr (std::is_same_v<S, Record>) {
-      return getStructures<Record>(recordStructuresVectors, announce);
-    } else {
-      assert(false);
-      return getStructures<S>(StructureAnnounce::Created); // Anti-warning and never executed
-    }
-  }
-
-  template<class S>
-  bool empty(StructureAnnounce announce) {
-    return getStructures<S>(announce).empty();
-  }
-
-  bool empty(StructureAnnounce announce) {
-    return empty<Abstraction>(announce) && empty<Cons>(announce)
-      && empty<Tuple>(announce) && empty<Record>(announce);
-  }
-
-public:
-  void clear() {
-    trackingTriggered = false;
-
-    runnableEventsVectors.clear();
-
-    aggregatedVariables.clear();
-    aggregatedReadOnlyVariables.clear();
-
-    abstractionStructuresVectors.clear();
-    consStructuresVectors.clear();
-    tupleStructuresVectors.clear();
-    recordStructuresVectors.clear();
-  }
-
-  enum class VariableType {
-    All,
-    Variable,
-    ReadOnlyVariable
-  };
-
   struct VariableTracking : public Tracking {
-    explicit VariableTracking(VM vm, size_t announcerThreadId, IdsVector idsVector,
-      VariableAnnounce announce) :
-      Tracking(vm, Event::Variable, announcerThreadId, idsVector),
-      announce(announce), type(VariableType::All) {}
+    explicit VariableTracking(VM vm, Id authorId,
+      IdsVector victimIds, VariableAnnounce announce) :
+      Tracking(vm, authorId, victimIds),
+      announce(announce) {}
 
     VariableAnnounce announce;
-    VariableType type;
   };
 
   using VariableTrackingVector = std::vector<VariableTracking>;
 
-  enum class StructureType {
-    All,
-    Abstraction,
-    Cons,
-    Tuple,
-    Record
-  };
+private:
+  template<class V>
+  inline
+  bool matchTracking(VM vm, const VariableTracking& tracking, const VariableEvent<V>& event);
 
-  struct StructureTracking : public Tracking {
-    explicit StructureTracking(VM vm, size_t announcerThreadId, IdsVector idsVector,
-      StructureAnnounce announce) :
-      Tracking(vm, Event::Structure, announcerThreadId, idsVector),
-      announce(announce), type(StructureType::All) {}
-
-    StructureAnnounce announce;
-    StructureType type;
-  };
-
-  using StructureTrackingVector = std::vector<StructureTracking>;
-
-public:
-  void track(VM vm, RunnableTracking tracking) {
-    runnableTrackingVector.push_back(tracking);
+  template<class V>
+  inline
+  void detectTriggeredVariableTracking(VM vm, const VariableEvent<V>& event, VariableAnnounce announce) {
+    for (VariableTracking tracking : variableTrackingVector) {
+      if (tracking.announce == announce && matchTracking(vm, tracking, event)) {
+        trackingTriggered = true;
+        break;
+      }
+    }
   }
 
-  void track(VM vm, VariableTracking tracking) {
+  template<class V>
+  inline
+  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking,
+    VariableEventsVector<V>& vector, VariableAnnounce announce) {
+    for (VariableEvent<V> event : vector) {
+      if (matchTracking(vm, tracking, event)) {
+        trackingTriggered = true;
+        break;
+      }
+    }
+  }
+
+  template<class V>
+  inline
+  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking,
+    VariableEventsVectors<V>& vectors) {
+    switch (tracking.announce) {
+      case VCreated:
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.created, VariableAnnounce::Created);
+        break;
+      case VCollected:
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.collected, VariableAnnounce::Collected);
+        break;
+      case Needed:
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.needed, VariableAnnounce::Needed);
+        break;
+      case Waited:
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.waited, VariableAnnounce::Waited);
+        break;
+      case Bound:
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.bound, VariableAnnounce::Bound);
+        break;
+    }
+  }
+
+  template<class V>
+  inline
+  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking) {
+    VariableEventsVectors<V> vectors = getVariableEventsVectors<V>();
+    detectTriggeredVariableTracking<V>(vm, tracking, vectors);
+  }
+
+
+  inline
+  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking) {
+    detectTriggeredVariableTracking<Variable>(vm, tracking);
+    detectTriggeredVariableTracking<ReadOnlyVariable>(vm, tracking);
+  }
+
+public:
+  void track(VariableTracking tracking) {
     variableTrackingVector.push_back(tracking);
   }
 
-  void track(VM vm, StructureTracking tracking) {
-    structureTrackingVector.push_back(tracking);
-  }
-
 private:
-  inline
-  bool matchTracking(VM vm, RunnableTracking& tracking,
-    RunnableEvent info);
+  VariableTrackingVector variableTrackingVector;
 
-  template<class V>
-  inline
-  bool matchTracking(VM vm, VariableTracking& tracking,
-    VariableInfo<V> info, VariableAnnounce announce);
+// public:
+//   enum class StructureAnnounce {
+//     Created,
+//     Collected
+//   };
 
-  template<class V>
-  inline
-  bool matchTracking(VM vm, VariableTracking& tracking,
-    BoundVariableInfo<V> info, VariableAnnounce announce);
+//   template<class S>
+//   struct StructureInfo {
+//     explicit StructureInfo(VM vm, S* structure) : structure(structure) {
+//       author = getCurrentThread(vm);
+//     }
 
-  template<class V>
-  inline
-  bool matchTracking(VM vm, VariableTracking& tracking,
-    WaitedVariableInfo<V> info, VariableAnnounce announce);
+//     Runnable* author;
+//     S* structure;
+//   };
 
-  template<class S>
-  inline
-  bool matchTracking(VM vm, StructureTracking tracking,
-    StructureInfo<S> info, StructureAnnounce announce);
+//   template<class S>
+//   using StructuresVector = std::vector<StructureInfo<S>>;
 
-private:
-  template<class V, class VInfo>
-  inline
-  void detectTriggeredVariableTracking(VM vm, VInfo info, VariableAnnounce announce) {
-    for (auto iter = variableTrackingVector.begin();
-      iter != variableTrackingVector.end(); ++iter) {
-      VariableTracking tracking = *iter;
-      if (matchTracking(vm, tracking, info, announce)) {
-        trackingTriggered = true;
-        break;
-      }
-    }
-  }
+//   template<class S>
+//   struct StructuresVectors {
+//     StructuresVector<S> createds;
+//     StructuresVector<S> collecteds;
 
-  template<class V>
-  inline
-  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking,
-    VariablesVector<V>& vector, VariableAnnounce announce) {
-    for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
-      VariableInfo<V> info = *iter;
-      if (matchTracking(vm, tracking, info, announce)) {
-        trackingTriggered = true;
-        break;
-      }
-    }
-  }
+//     void clear() {
+//       createds.clear();
+//       collecteds.clear();
+//     }
+//   };
 
-  template<class V>
-  inline
-  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking,
-    WaitedVariablesVector<V>& vector, VariableAnnounce announce) {
-    for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
-      WaitedVariableInfo<V> info = *iter;
-      if (matchTracking(vm, tracking, info, announce)) {
-        trackingTriggered = true;
-        break;
-      }
-    }
-  }
+// private:
+//   template<class S>
+//   void announceStructure(VM vm, StructuresVectors<S>& vectors,
+//     StructureInfo<S> info, StructureAnnounce announce) {
+//     switch (announce) {
+//       case StructureAnnounce::Created:
+//         vectors.createds.push_back(info);
+//         break;
+//       case StructureAnnounce::Collected:
+//         vectors.collecteds.push_back(info);
+//         break;
+//       default: assert(false);
+//     }
+//   }
 
-  template<class V>
-  inline
-  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking,
-    BoundVariablesVector<V>& vector, VariableAnnounce announce) {
-    for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
-      BoundVariableInfo<V> info = *iter;
-      if (matchTracking(vm, tracking, info, announce)) {
-        trackingTriggered = true;
-        break;
-      }
-    }
-  }
+// public:
+//   template<class S>
+//   void announceStructure(VM vm, S* structure, StructureAnnounce announce) { 
+//     StructureInfo<S> info = StructureInfo<S>(vm, structure);
+//     detectTriggeredStructureTracking<S>(vm, info, announce);
 
-  template<class V>
-  inline
-  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking,
-    VariablesVectors<V>& vectors) {
-    detectTriggeredVariableTracking<V>(vm, tracking, vectors.createds, VariableAnnounce::Created);
-    detectTriggeredVariableTracking<V>(vm, tracking, vectors.collecteds, VariableAnnounce::Collected);
-    detectTriggeredVariableTracking<V>(vm, tracking, vectors.neededs, VariableAnnounce::Needed);
-    detectTriggeredVariableTracking<V>(vm, tracking, vectors.waiteds, VariableAnnounce::Waited);
-    detectTriggeredVariableTracking<V>(vm, tracking, vectors.bounds, VariableAnnounce::Bound);
-  }
+//     if constexpr (std::is_same_v<S, Abstraction>) {
+//       announceStructure<S>(vm, abstractionStructuresVectors, info, announce);
+//     } else if constexpr (std::is_same_v<S, Cons>) {
+//       announceStructure<S>(vm, consStructuresVectors, info, announce);
+//     } else if constexpr (std::is_same_v<S, Tuple>) {
+//       announceStructure<S>(vm, tupleStructuresVectors, info, announce);
+//     } else if constexpr (std::is_same_v<S, Record>) {
+//       announceStructure<S>(vm, recordStructuresVectors, info, announce);
+//     } else assert(false);
+//   }
 
-  template<class V>
-  inline
-  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking) {
-    if constexpr (std::is_same_v<V, Variable>) {
-      detectTriggeredVariableTracking(vm, tracking, aggregatedVariables);
-    } else if constexpr (std::is_same_v<V, ReadOnlyVariable>) {
-      detectTriggeredVariableTracking(vm, tracking, aggregatedReadOnlyVariables);
-    } else assert(false);
-  }
+//   template<class S>
+//   StructuresVector<S>& getStructures(StructuresVectors<S>& vectors, StructureAnnounce announce) {
+//     switch (announce) {
+//       case StructureAnnounce::Created: return vectors.createds;
+//       case StructureAnnounce::Collected: return vectors.collecteds;
+//       default: assert(false); return vectors.createds;
+//     }
+//   }
 
+//   template<class S>
+//   StructuresVector<S>& getStructures(StructureAnnounce announce) {
+//     if constexpr (std::is_same_v<S, Abstraction>) {
+//       return getStructures<Abstraction>(abstractionStructuresVectors, announce);
+//     } else if constexpr (std::is_same_v<S, Cons>) {
+//       return getStructures<Cons>(consStructuresVectors, announce);
+//     } else if constexpr (std::is_same_v<S, Tuple>) {
+//       return getStructures<Tuple>(tupleStructuresVectors, announce);
+//     } else if constexpr (std::is_same_v<S, Record>) {
+//       return getStructures<Record>(recordStructuresVectors, announce);
+//     } else {
+//       assert(false);
+//       return getStructures<S>(StructureAnnounce::Created); // Anti-warning and never executed
+//     }
+//   }
 
-  inline
-  void detectTriggeredVariableTracking(VM vm, VariableTracking& tracking) {
-    switch (tracking.type) {
-      case VariableType::Variable:
-        detectTriggeredVariableTracking<Variable>(vm, tracking);
-        break;
-      case VariableType::ReadOnlyVariable:
-        detectTriggeredVariableTracking<ReadOnlyVariable>(vm, tracking);
-        break;
-      case VariableType::All:
-        detectTriggeredVariableTracking<Variable>(vm, tracking);
-        detectTriggeredVariableTracking<ReadOnlyVariable>(vm, tracking);
-        break;
-      default: assert(false);
-    }
-  }
+//   template<class S>
+//   bool empty(StructureAnnounce announce) {
+//     return getStructures<S>(announce).empty();
+//   }
 
-private:
-  template<class S>
-  inline
-  void detectTriggeredStructureTracking(VM vm, StructureInfo<S> structure,
-    StructureAnnounce announce) {
-    for (auto iter = structureTrackingVector.begin();
-      iter != structureTrackingVector.end(); ++iter) {
-      StructureTracking tracking = *iter;
-      if (matchTracking<S>(vm, tracking, structure, announce)) {
-        trackingTriggered = true;
-        break;
-      }
-    }
-  }
+//   bool empty(StructureAnnounce announce) {
+//     return empty<Abstraction>(announce) && empty<Cons>(announce)
+//       && empty<Tuple>(announce) && empty<Record>(announce);
+//   }
 
-  template<class S>
-  inline
-  void detectTriggeredStructureTracking(VM vm, StructureTracking& tracking,
-    StructuresVector<S>& vector, StructureAnnounce announce) {
-    for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
-      StructureInfo<S> structure = *iter;
-      if (matchTracking<S>(vm, tracking, structure, announce)) {
-        trackingTriggered = true;
-        break;
-      }
-    }
-  }
+// public:
+//   void clear() {
+//     trackingTriggered = false;
 
-  template<class S>
-  inline
-  void detectTriggeredStructureTracking(VM vm, StructuresVectors<S>& vectors,
-    StructureTracking& tracking) {
-    detectTriggeredStructureTracking<S>(vm, tracking,
-      vectors.createds, StructureAnnounce::Created);
-    detectTriggeredStructureTracking<S>(vm, tracking,
-      vectors.collecteds, StructureAnnounce::Collected);
-  }
+//     runnableEventsVectors.clear();
 
-  template<class S>
-  inline
-  void detectTriggeredStructureTracking(VM vm, StructureTracking& tracking) {
-    if constexpr (std::is_same_v<S, Abstraction>) {
-      detectTriggeredStructureTracking<S>(vm, abstractionStructuresVectors, tracking);
-    } else if constexpr (std::is_same_v<S, Cons>) {
-      detectTriggeredStructureTracking<S>(vm, abstractionStructuresVectors, tracking);
-    } else if constexpr (std::is_same_v<S, Tuple>) {
-      detectTriggeredStructureTracking<S>(vm, abstractionStructuresVectors, tracking);
-    } else if constexpr (std::is_same_v<S, Record>) {
-      detectTriggeredStructureTracking<S>(vm, abstractionStructuresVectors, tracking);
-    } else assert(false);
-  }
+//     variableEventsVectorsear();
+//     readOnlyVariableEventsVectors.clear();
+
+//     abstractionStructuresVectors.clear();
+//     consStructuresVectors.clear();
+//     tupleStructuresVectors.clear();
+//     recordStructuresVectors.clear();
+//   }
+
+//   enum class StructureType {
+//     All,
+//     Abstraction,
+//     Cons,
+//     Tuple,
+//     Record
+//   };
+
+//   struct StructureTracking : public Tracking {
+//     explicit StructureTracking(VM vm, size_t announcerThreadId, IdsVector idsVector,
+//       StructureAnnounce announce) :
+//       Tracking(vm, Event::Structure, announcerThreadId, idsVector),
+//       announce(announce), type(StructureType::All) {}
+
+//     StructureAnnounce announce;
+//     StructureType type;
+//   };
+
+//   using StructureTrackingVector = std::vector<StructureTracking>;
+
+// public:
+//   void track(StructureTracking tracking) {
+//     structureTrackingVector.push_back(tracking);
+//   }
+
+//   template<class S>
+//   inline
+//   bool matchTracking(VM vm, StructureTracking tracking,
+//     StructureInfo<S> info, StructureAnnounce announce);
+
+// private:
+//   template<class S>
+//   inline
+//   void detectTriggeredStructureTracking(VM vm, StructureInfo<S> structure,
+//     StructureAnnounce announce) {
+//     for (auto iter = structureTrackingVector.begin();
+//       iter != structureTrackingVector.end(); ++iter) {
+//       StructureTracking tracking = *iter;
+//       if (matchTracking<S>(vm, tracking, structure, announce)) {
+//         trackingTriggered = true;
+//         break;
+//       }
+//     }
+//   }
+
+//   template<class S>
+//   inline
+//   void detectTriggeredStructureTracking(VM vm, StructureTracking& tracking,
+//     StructuresVector<S>& vector, StructureAnnounce announce) {
+//     for (auto iter = vector.begin(); iter != vector.end(); ++iter) {
+//       StructureInfo<S> structure = *iter;
+//       if (matchTracking<S>(vm, tracking, structure, announce)) {
+//         trackingTriggered = true;
+//         break;
+//       }
+//     }
+//   }
+
+//   template<class S>
+//   inline
+//   void detectTriggeredStructureTracking(VM vm, StructuresVectors<S>& vectors,
+//     StructureTracking& tracking) {
+//     detectTriggeredStructureTracking<S>(vm, tracking,
+//       vectors.createds, StructureAnnounce::Created);
+//     detectTriggeredStructureTracking<S>(vm, tracking,
+//       vectors.collecteds, StructureAnnounce::Collected);
+//   }
+
+//   template<class S>
+//   inline
+//   void detectTriggeredStructureTracking(VM vm, StructureTracking& tracking) {
+//     if constexpr (std::is_same_v<S, Abstraction>) {
+//       detectTriggeredStructureTracking<S>(vm, abstractionStructuresVectors, tracking);
+//     } else if constexpr (std::is_same_v<S, Cons>) {
+//       detectTriggeredStructureTracking<S>(vm, abstractionStructuresVectors, tracking);
+//     } else if constexpr (std::is_same_v<S, Tuple>) {
+//       detectTriggeredStructureTracking<S>(vm, abstractionStructuresVectors, tracking);
+//     } else if constexpr (std::is_same_v<S, Record>) {
+//       detectTriggeredStructureTracking<S>(vm, abstractionStructuresVectors, tracking);
+//     } else assert(false);
+//   }
 
 public:
   bool isTrackingTriggered() {
@@ -798,17 +657,13 @@ public:
   }
 
 private:
-  VariablesVectors<Variable> aggregatedVariables;
-  VariablesVectors<ReadOnlyVariable> aggregatedReadOnlyVariables;
-
-  StructuresVectors<Abstraction> abstractionStructuresVectors;
-  StructuresVectors<Cons> consStructuresVectors;
-  StructuresVectors<Tuple> tupleStructuresVectors;
-  StructuresVectors<Record> recordStructuresVectors;
+  // StructuresVectors<Abstraction> abstractionStructuresVectors;
+  // StructuresVectors<Cons> consStructuresVectors;
+  // StructuresVectors<Tuple> tupleStructuresVectors;
+  // StructuresVectors<Record> recordStructuresVectors;
 
   bool trackingTriggered;
-  VariableTrackingVector variableTrackingVector;
-  StructureTrackingVector structureTrackingVector;
+  // StructureTrackingVector structureTrackingVector;
 };
 
 }
