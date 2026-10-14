@@ -55,8 +55,11 @@ VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
 template <class This>
 void VariableBase<This>::addToSuspendList(VM vm, RichNode variable) {
   pendings.push_back(vm, variable.getStableRef(vm));
-  vm->getEventManager().announceVariable(vm, static_cast<This*>(this),
-    VirtualMachineEventManager::VariableAnnounce::Waited);
+
+  if constexpr (std::is_same_v<This, Variable> || std::is_same_v<This, ReadOnlyVariable>) {
+    vm->getEventManager().announceVariable(vm, static_cast<This*>(this),
+      VirtualMachineEventManager::VariableAnnounce::Waited);
+  }
 }
 
 template <class This>
@@ -73,8 +76,11 @@ void VariableBase<This>::markNeeded(VM vm) {
   if (!_needed) {
     _needed = true;
     wakeUpPendings(vm);
-    vm->getEventManager().announceVariable(vm, static_cast<This*>(this),
-      VariableAnnounce::Needed);
+
+    if constexpr (std::is_same_v<This, Variable> || std::is_same_v<This, ReadOnlyVariable>) {
+      vm->getEventManager().announceVariable(vm, static_cast<This*>(this),
+        VariableAnnounce::Needed);
+    }
   }
 }
 
