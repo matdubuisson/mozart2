@@ -73,6 +73,7 @@ private:
   static inline
   Runnable* getCurrentThread(VM vm);
 
+  static inline
   bool contains(const IdsVector& idsVector, Id id);
 
   /** ================ Runnable events ================ */
@@ -250,12 +251,9 @@ public:
   template<class V>
   struct VariableEvent {
     explicit VariableEvent(VM vm, V* v) :
-      author(nullptr), variable(v), waiter(nullptr) {
+      author(nullptr), variable(v) {
       author = getCurrentThread(vm);
     }
-
-    explicit VariableEvent(VM vm, V* v, RichNode node) :
-      VariableEvent(vm, v), waiter(node.getStableRef(vm)) {}
 
     Runnable* author;
     V* variable;
@@ -300,7 +298,7 @@ private:
   template<class V>
   inline
   VariableEventsVectors<V>& getVariableEventsVectors() {
-    if consexpr (std::is_same_v<V, Variable>)
+    if constexpr (std::is_same_v<V, Variable>)
       return variableEventsVectors;
     else
       return readOnlyVariableEventsVectors;
@@ -347,7 +345,7 @@ private:
         return vectors.bound;
       case Waited:
         return vectors.waited;
-      default: assert(false); return vector.created;
+      default: assert(false); return vectors.created;
     }
   }
 
@@ -418,19 +416,19 @@ private:
     VariableEventsVectors<V>& vectors) {
     switch (tracking.announce) {
       case VCreated:
-        detectTriggeredVariableTracking<V>(vm, tracking, vectors.created, VariableAnnounce::Created);
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.created, VCreated);
         break;
       case VCollected:
-        detectTriggeredVariableTracking<V>(vm, tracking, vectors.collected, VariableAnnounce::Collected);
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.collected, VCollected);
         break;
       case Needed:
-        detectTriggeredVariableTracking<V>(vm, tracking, vectors.needed, VariableAnnounce::Needed);
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.needed, Needed);
         break;
       case Waited:
-        detectTriggeredVariableTracking<V>(vm, tracking, vectors.waited, VariableAnnounce::Waited);
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.waited, Waited);
         break;
       case Bound:
-        detectTriggeredVariableTracking<V>(vm, tracking, vectors.bound, VariableAnnounce::Bound);
+        detectTriggeredVariableTracking<V>(vm, tracking, vectors.bound, Bound);
         break;
     }
   }
@@ -464,6 +462,12 @@ public:
 
   bool isTrackingTriggered() {
     return trackingTriggered;
+  }
+
+  void clear() {
+    runnableEventsVectors.clear();
+    variableEventsVectors.clear();
+    readOnlyVariableEventsVectors.clear();
   }
 
 private:

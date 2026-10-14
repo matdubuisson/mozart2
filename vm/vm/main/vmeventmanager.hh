@@ -168,17 +168,17 @@ template<class V>
 bool VirtualMachineEventManager::matchTracking(VM vm,
   const VariableTracking& tracking, const VariableEvent<V>& event) {
 
-  const IdsVector& ids = tracking.idsVector;
+  const IdsVector& ids = tracking.victimIds;
 
-  if (tracking.announcerThreadId != SIZE_MAX
-    && info.author != nullptr
-    && tracking.announcerThreadId != info.author->getId())
+  if (tracking.authorId != SIZE_MAX
+    && event.author != nullptr
+    && tracking.authorId != event.author->getId())
     return false;
   else if (ids.empty())
     return true;
-  else if (contains(ids, info.variable->getId()))
+  else if (contains(ids, event.variable->getId()))
     return true;
-  else if (contains(ids, info.variable->getKindId()))
+  else if (contains(ids, event.variable->getKindId()))
     return true;
   else return false;
 }
