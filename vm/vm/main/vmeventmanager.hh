@@ -183,23 +183,6 @@ bool VirtualMachineEventManager::matchTracking(VM vm,
   else return false;
 }
 
-// template<class S>
-// bool VirtualMachineEventManager::matchTracking(VM vm, StructureTracking tracking,
-//   StructureInfo<S> info, StructureAnnounce announce) {
-
-//   if (tracking.announce != announce)
-//     return false;
-//   else if (tracking.announcerThreadId != SIZE_MAX
-//     && info.author != nullptr
-//     && tracking.announcerThreadId != info.author->getId())
-//     return false;
-//   else if (tracking.idsVector.empty())
-//     return true;
-//   else
-//     return contains(tracking.idsVector, info.structure->getId())
-//       || contains(tracking.idsVector, info.structure->getKindId());
-// }
-
 }
 
 #endif // MOZART_GENERATOR
