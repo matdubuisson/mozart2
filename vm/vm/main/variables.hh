@@ -73,7 +73,7 @@ void VariableBase<This>::markNeeded(VM vm) {
   if (!_needed) {
     _needed = true;
     wakeUpPendings(vm);
-    vm->getEventManager().announceVariableBase(vm, this, VariableAnnounce::Needed);
+    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Needed);
   }
 }
 
