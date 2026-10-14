@@ -240,17 +240,11 @@ Cons::Cons(VM vm, Head&& head, Tail&& tail) {
   // AdvancedIdentifiable identifiable = AdvancedIdentifiable(tail);
   // if (identifiable.is(vm))
   //   identifiable.followIdentity(vm, *this, true);
-
-  vm->getEventManager().announceStructure<Cons>(vm, this,
-    VirtualMachineEventManager::StructureAnnounce::Created);
 }
 
 Cons::Cons(VM vm) {
   _elements[0].init(vm);
   _elements[1].init(vm);
-
-  vm->getEventManager().announceStructure<Cons>(vm, this,
-    VirtualMachineEventManager::StructureAnnounce::Created);
 }
 
 Cons::Cons(VM vm, GR gr, Cons& from) : AdvancedIdentity(from) {
