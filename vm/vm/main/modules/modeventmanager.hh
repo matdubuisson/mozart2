@@ -41,141 +41,17 @@ class ModEventManager: public Module {
 public:
   ModEventManager(): Module("EventManager") {}
 
-  static inline
-  std::string nodeToString(VM vm, RichNode node) {
-    auto& config = vm->getPropertyRegistry().config;
-    std::basic_stringstream<char> buffer;
-    buffer << repr(vm, node, config.printDepth, config.printWidth);
-    return buffer.str();
-  }
-
-private:
-  using RunnableInfo = VirtualMachineEventManager::RunnableInfo;
-  using RunnablesVector = VirtualMachineEventManager::RunnablesVector;
-  using RunnableAnnounce = VirtualMachineEventManager::RunnableAnnounce;
-  // using RunnableToRecordLambda = std::function<UnstableNode(VM, Runnable*)>;
-
-  static
-  UnstableNode buildThreadStateRecord(VM vm, Runnable* runnable);
-
-  static
-  UnstableNode buildRunnablesList(VM vm, RunnablesVector& runnables);
-
-  static
-  UnstableNode buildRunnablesJournalRecord(VM vm, VirtualMachineEventManager& journal);
-
-private:
-  template<typename V>
-  using VariableInfo = VirtualMachineEventManager::VariableInfo<V>;  
-  template<typename V>
-  using VariablesVector = VirtualMachineEventManager::VariablesVector<V>;
-  template<typename V>
-  using BoundVariableInfo = VirtualMachineEventManager::BoundVariableInfo<V>;
-  template<typename V>
-  using BoundVariablesVector = VirtualMachineEventManager::BoundVariablesVector<V>;
-  template<typename V>
-  using WaitedVariableInfo = VirtualMachineEventManager::WaitedVariableInfo<V>;
-  template<typename V>
-  using WaitedVariablesVector = VirtualMachineEventManager::WaitedVariablesVector<V>;
-  template<typename V>
-  using VariablesVectors = VirtualMachineEventManager::VariablesVectors<V>;
-  using VariableAnnounce = VirtualMachineEventManager::VariableAnnounce;
-
-  // template<typename V>
-  // using VariableToRecordLambda = std::function<UnstableNode(VM, V*)>;
-  // template<typename V>
-  // using WaitedVariableToRecordLambda = std::function<UnstableNode(VM, WaitedVariable<V>*)>;
-
-  template<typename V>
-  static
-  void fillInfo(VM vm, V* variable, size_t& id, std::string& type,
-    bool& isNeeded, bool& isBound, bool& isWaited);
-
-  template<typename V>
-  static
-  UnstableNode buildVariableStateRecord(VM vm, V* variable);
-
-  template<typename V>
-  static
-  UnstableNode buildVariableStateRecord(VM vm, V* variable, RichNode self, RichNode src);
-
-  static
-  UnstableNode buildWaiterStateRecord(VM vm, RichNode waiter);
-
-
-  template<typename V>
-  static
-  UnstableNode buildVariableStateRecord(VM vm, V* variable, RichNode waiter);
-
-  template<typename V>
-  static
-  UnstableNode buildVariablesList(VM vm, VariablesVector<V>& variables);
-
-  template<typename V>
-  static
-  UnstableNode buildBoundVariablesList(VM vm, BoundVariablesVector<V>& variables);
-
-  template<typename V>
-  static
-  UnstableNode buildWaitedVariablesList(VM vm, WaitedVariablesVector<V>& variables);
-
-  template<typename V>
-  static
-  UnstableNode buildVariablesSubJournalRecord(VM vm, VirtualMachineEventManager& journal);
-
-  static
-  UnstableNode buildVariablesJournalRecord(VM vm, VirtualMachineEventManager& journal);
-
-  template<class S>
-  using StructureInfo = VirtualMachineEventManager::StructureInfo<S>;
-  template<class S>
-  using StructuresVector = VirtualMachineEventManager::StructuresVector<S>;
-  template<class S>
-  using StructuresVectors = VirtualMachineEventManager::StructuresVectors<S>;
-
-  template<class S>
-  static
-  UnstableNode buildStructuresList(VM vm, StructuresVector<S>& vector);
-
-  template<class S>
-  static
-  UnstableNode buildStructuresSubJournalRecord(VM vm, VirtualMachineEventManager& journal);
-
-  static
-  UnstableNode buildStructuresJournalRecord(VM vm, VirtualMachineEventManager& journal);
-
 public:
-  class GetJournal: public Builtin<GetJournal> {
+  class GetEventsJournal: public Builtin<GetEventsJournal> {
   public:
-    GetJournal(): Builtin("getJournal") {}
+    GetEventsJournal(): Builtin("getEventsJournal") {}
 
-    static void call(VM vm, Out result);
+    static void call(VM vm, Out result) {
+      result = VirtualMachineEventManager::buildEventsJournal(vm, vm->getEventManager());
+    }
   };
 
-  // class GetAggregatedJournal: public Builtin<GetAggregatedJournal> {
-  // public:
-  //   GetAggregatedJournal(): Builtin("getAggregatedJournal") {}
-
-  //   static void call(VM vm, Out result) {
-  //     VirtualMachineEventManager& journal = vm->getEventManager();
-      
-  //     result = buildRecord(vm,
-  //       buildArity(vm,
-  //         "journal",
-  //         "runnables",
-  //         "structures",
-  //         "variables"
-  //       ),
-  //       buildRunnablesJournalRecord(vm, journal),
-  //       buildStructuresJournalRecord(vm, journal),
-  //       buildVariablesJournalRecord(vm, journal)
-  //     );
-  //   }
-  // };
-
-
 public:
-
   class Track: public Builtin<Track> {
   public:
     Track(): Builtin("track") {}
