@@ -55,7 +55,8 @@ VariableBase<This>::VariableBase(VM vm, GR gr, This& from):
 template <class This>
 void VariableBase<This>::addToSuspendList(VM vm, RichNode variable) {
   pendings.push_back(vm, variable.getStableRef(vm));
-  vm->getEventManager().announceWaitedVariableBase(vm, this, variable);
+  vm->getEventManager().announceVariable(vm, static_cast<This*>(this),
+    VirtualMachineEventManager::VariableAnnounce::Waited);
 }
 
 template <class This>
@@ -165,7 +166,8 @@ void Variable::bind(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
   if (AdvancedIdentifiable(self).is(vm))
     AdvancedIdentifiable(self).followIdentity(vm, *this, true);
-  vm->getEventManager().announceBoundVariable(vm, this, self, src);
+  vm->getEventManager().announceVariable(vm, this,
+    VirtualMachineEventManager::VariableAnnounce::Bound);
 }
 
 //////////////////////
@@ -182,14 +184,16 @@ void ReadOnlyVariable::bind(RichNode self, VM vm, RichNode src) {
   waitFor(vm, self);
   if (AdvancedIdentifiable(self).is(vm))
     AdvancedIdentifiable(self).followIdentity(vm, *this, true);
-  vm->getEventManager().announceBoundVariable(vm, this, self, src);
+  vm->getEventManager().announceVariable(vm, this,
+    VirtualMachineEventManager::VariableAnnounce::Bound);
 }
 
 void ReadOnlyVariable::bindReadOnly(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
   if (AdvancedIdentifiable(self).is(vm))
     AdvancedIdentifiable(self).followIdentity(vm, *this, true);
-  vm->getEventManager().announceBoundVariable(vm, this, self, src);
+  vm->getEventManager().announceVariable(vm, this,
+    VirtualMachineEventManager::VariableAnnounce::Bound);
 }
 
 ////////////

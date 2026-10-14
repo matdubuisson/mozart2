@@ -182,7 +182,8 @@ public:
    * @note The variable is not needed by default
    */
   explicit Variable(VM vm): VariableBase(vm) {
-    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(vm, this,
+      VariableAnnounce::VCreated);
   }
 
   /**
@@ -192,7 +193,8 @@ public:
    * @note The variable is not needed by default
    */
   Variable(VM vm, Space* home): VariableBase(vm, home) {
-    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(vm, this,
+      VariableAnnounce::VCreated);
   }
 
   /**
@@ -276,7 +278,8 @@ public:
    * @note The variable is not needed by default
    */
   explicit ReadOnlyVariable(VM vm): VariableBase(vm) {
-    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(vm, this,
+      VariableAnnounce::VCreated);
   }
 
   /**
@@ -286,7 +289,8 @@ public:
    * @note The variable is not needed by default
    */
   ReadOnlyVariable(VM vm, Space* home): VariableBase(vm, home) {
-    vm->getEventManager().announceVariable(vm, this, VariableAnnounce::Created);
+    vm->getEventManager().announceVariable(vm, this,
+      VariableAnnounce::VCreated);
   }
 
   /**
