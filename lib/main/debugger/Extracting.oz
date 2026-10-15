@@ -22,17 +22,18 @@ proc {ExtractIdentities Arguments ?Identities}
   in
     if {String.isInt Argument $} then
       Identities = {String.toInt Argument $}|NewIdentities
+      {ExtractIdentities NextArguments NewIdentities}
     else
       Id = {Boot_Identity.getIdFromName Argument $}
     in
       if Id \= none then
         Identities = Id|NewIdentities
+        {ExtractIdentities NextArguments NewIdentities}
       else
-        Identities = NewIdentities
+        Identities = none
         {PrintError "Name '"#Argument#"' was referenced to no id"}
       end
     end
-    {ExtractIdentities NextArguments NewIdentities}
   end
 end
 
