@@ -104,6 +104,10 @@ define
         % [] "lists" then
         %   \insert ./commands/introspection/ListsCommand
 
+        % Journal and event management
+        [] "journal" then
+          \insert ./commands/JournalCommand
+
         % Everything concerning the control of the VM
         [] "gc" then
           \insert ./commands/GCCommand
@@ -213,6 +217,10 @@ define
 in  
   {Loop}
 end
+
+
+
+
 
 
 
