@@ -116,7 +116,7 @@ UnstableNode VirtualMachineEventManager::buildVariableEvent(VM vm,
     buildArity(vm,
       "event",
       "authorId",
-      "variableId"
+      "victimId"
     ),
     event.author == nullptr ? build(vm, "none") :
       build(vm, event.author->getId()),
