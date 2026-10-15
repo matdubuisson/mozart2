@@ -112,15 +112,18 @@ bool VirtualMachineEventManager::matchTracking(VM vm,
 template<class V>
 UnstableNode VirtualMachineEventManager::buildVariableEvent(VM vm,
   const VariableEvent<V>& event, VariableAnnounce announce) {
+
+  bool isCollected = announce == VCollected;
+
   return buildRecord(vm,
     buildArity(vm,
       "event",
       "authorId",
       "victimId"
     ),
-    event.author == nullptr ? build(vm, "none") :
+    event.author == nullptr || isCollected ? build(vm, "none") :
       build(vm, event.author->getId()),
-    build(vm, event.variable->getId())
+    isCollected ? build(vm, event.id) : build(vm, event.variable->getId())
   );
 }
 

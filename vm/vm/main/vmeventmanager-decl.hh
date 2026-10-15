@@ -255,8 +255,18 @@ public:
       author = getCurrentThread(vm);
     }
 
-    Runnable* author;
-    V* variable;
+    explicit VariableEvent(VM vm, Id id) : id(id) {}
+    
+    union {
+      struct {
+        Runnable* author;
+        V* variable;
+      };
+
+      struct {
+        Id id;
+      };
+    };
   };
 
   template<class V>
