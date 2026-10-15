@@ -59,6 +59,15 @@ public:
     static void call(VM vm, In event, In announce, In announcerId, In idsList);
   };
 
+  class GetTracks: public Builtin<GetTracks> {
+  public:
+    GetTracks(): Builtin("getTracks") {}
+
+    static void call(VM vm, Out result) {
+      result = VirtualMachineEventManager::buildTracks(vm, vm->getEventManager());
+    }
+  };
+
   class IsTrackingTriggered: public Builtin<IsTrackingTriggered> {
   public:
     IsTrackingTriggered(): Builtin("isTrackingTriggered") {}

@@ -45,7 +45,11 @@ public:
 
 public:
   using Id = size_t;
+
   using IdsVector = std::vector<Id>;
+
+  static inline
+  UnstableNode buildIdsVector(VM vm, const IdsVector& vector);
 
 public:
   struct Tracking {
@@ -204,7 +208,13 @@ public:
     RunnableAnnounce announce;
   };
 
+  static inline
+  UnstableNode buildRunnableTrack(VM vm, const RunnableTracking& track);
+
   using RunnableTrackingVector = std::vector<RunnableTracking>;
+
+  static inline
+  UnstableNode buildRunnableTracks(VM vm, const RunnableTrackingVector& vector);
 
 private:
   inline
@@ -390,7 +400,13 @@ public:
     VariableAnnounce announce;
   };
 
+  static inline
+  UnstableNode buildVariableTrack(VM vm, const VariableTracking& track);
+
   using VariableTrackingVector = std::vector<VariableTracking>;
+
+  static inline
+  UnstableNode buildVariableTracks(VM vm, const VariableTrackingVector& vector);
 
 private:
   template<class V>
@@ -469,6 +485,9 @@ private:
 public:
   static inline
   UnstableNode buildEventsJournal(VM vm, const VirtualMachineEventManager& eventManager);
+
+  static inline
+  UnstableNode buildTracks(VM vm, const VirtualMachineEventManager& eventManager);
 
   bool isTrackingTriggered() {
     return trackingTriggered;

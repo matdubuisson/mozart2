@@ -35,6 +35,14 @@ namespace mozart {
 // VirtualMachineEventManager //
 ////////////////////////////////
 
+UnstableNode VirtualMachineEventManager::buildIdsVector(VM vm, const IdsVector& vector) {
+  OzListBuilder builder(vm);
+  for (const Id id : vector) {
+    builder.push_back(vm, build(vm, id));
+  }
+  return builder.get(vm);
+}
+
 Runnable* VirtualMachineEventManager::getCurrentThread(VM vm) {
   return vm->getCurrentThread();
 }
@@ -65,7 +73,7 @@ UnstableNode VirtualMachineEventManager::buildRunnableEvent(VM vm,
 UnstableNode VirtualMachineEventManager::buildRunnableEventsVector(VM vm,
   const RunnableEventsVector& vector, RunnableAnnounce announce) {
   OzListBuilder builder(vm);
-  for (const RunnableEvent event : vector) {
+  for (const RunnableEvent& event : vector) {
     builder.push_back(vm, buildRunnableEvent(vm, event, announce));
   }
   return builder.get(vm);
@@ -93,6 +101,70 @@ UnstableNode VirtualMachineEventManager::buildRunnableEventsVectors(VM vm,
 }
 
 /** ================ Runnable tracks ================ */
+
+UnstableNode VirtualMachineEventManager::buildRunnableTrack(VM vm,
+  const RunnableTracking& track) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "track",
+      "authorId",
+      "victimIds"
+    ),
+    track.authorId == SIZE_MAX ? build(vm, "none") : build(vm, track.authorId),
+    buildIdsVector(vm, track.victimIds)
+  );
+}
+
+UnstableNode VirtualMachineEventManager::buildRunnableTracks(VM vm,
+  const RunnableTrackingVector& vector) {
+  OzListBuilder created(vm);
+  OzListBuilder collected(vm);
+  OzListBuilder updated(vm);
+  OzListBuilder scheduled(vm);
+  OzListBuilder unscheduled(vm);
+  OzListBuilder rescheduled(vm);
+
+  for (const RunnableTracking& track : vector) {
+    switch (track.announce) {
+      case Created:
+        created.push_back(vm, buildRunnableTrack(vm, track));
+        break;
+      case Collected:
+        collected.push_back(vm, buildRunnableTrack(vm, track));
+        break;
+      case Updated:
+        updated.push_back(vm, buildRunnableTrack(vm, track));
+        break;
+      case Scheduled:
+        scheduled.push_back(vm, buildRunnableTrack(vm, track));
+        break;
+      case Unscheduled:
+        unscheduled.push_back(vm, buildRunnableTrack(vm, track));
+        break;
+      case Rescheduled:
+        rescheduled.push_back(vm, buildRunnableTrack(vm, track));
+        break;
+    }
+  }
+  
+  return buildRecord(vm,
+    buildArity(vm,
+      "events",
+      "collected",
+      "created",
+      "rescheduled",
+      "scheduled",
+      "unscheduled",
+      "updated"
+    ),
+    collected.get(vm),
+    created.get(vm),
+    rescheduled.get(vm),
+    scheduled.get(vm),
+    unscheduled.get(vm),
+    updated.get(vm)
+  );
+}
 
 bool VirtualMachineEventManager::matchTracking(VM vm,
   const RunnableTracking& tracking, const RunnableEvent& event) {
@@ -131,7 +203,7 @@ template<class V>
 UnstableNode VirtualMachineEventManager::buildVariableEventsVector(VM vm,
   const VariableEventsVector<V>& vector, VariableAnnounce announce) {
   OzListBuilder builder(vm);
-  for (const VariableEvent<V> event : vector) {
+  for (const VariableEvent<V>& event : vector) {
     builder.push_back(vm, buildVariableEvent<V>(vm, event, announce));
   }
   return builder.get(vm);
@@ -158,6 +230,64 @@ UnstableNode VirtualMachineEventManager::buildVariableEventsVectors(VM vm,
 }
 
 /** ================ Variable tracks ================ */
+
+UnstableNode VirtualMachineEventManager::buildVariableTrack(VM vm,
+  const VariableTracking& track) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "track",
+      "authorId",
+      "victimIds"
+    ),
+    track.authorId == SIZE_MAX ? build(vm, "none") : build(vm, track.authorId),
+    buildIdsVector(vm, track.victimIds)
+  );
+}
+
+UnstableNode VirtualMachineEventManager::buildVariableTracks(VM vm,
+  const VariableTrackingVector& vector) {
+  OzListBuilder created(vm);
+  OzListBuilder collected(vm);
+  OzListBuilder needed(vm);
+  OzListBuilder waited(vm);
+  OzListBuilder bound(vm);
+  
+  for (const VariableTracking& track : vector) {
+    switch (track.announce) {
+      case VCreated:
+        created.push_back(vm, buildVariableTrack(vm, track));
+        break;
+      case VCollected:
+        collected.push_back(vm, buildVariableTrack(vm, track));
+        break;
+      case Needed:
+        needed.push_back(vm, buildVariableTrack(vm, track));
+        break;
+      case Waited:
+        waited.push_back(vm, buildVariableTrack(vm, track));
+        break;
+      case Bound:
+        bound.push_back(vm, buildVariableTrack(vm, track));
+        break;
+    }
+  }
+
+  return buildRecord(vm,
+    buildArity(vm,
+      "events",
+      "bound",
+      "collected",
+      "created",
+      "needed",
+      "waited"
+    ),
+    bound.get(vm),
+    collected.get(vm),
+    created.get(vm),
+    needed.get(vm),
+    waited.get(vm)
+  );
+}
 
 template<class V>
 bool VirtualMachineEventManager::matchTracking(VM vm,
@@ -191,6 +321,18 @@ UnstableNode VirtualMachineEventManager::buildEventsJournal(VM vm, const Virtual
     buildVariableEventsVectors<ReadOnlyVariable>(vm, eventManager.readOnlyVariableEventsVectors),
     buildRunnableEventsVectors(vm, eventManager.runnableEventsVectors),
     buildVariableEventsVectors<Variable>(vm, eventManager.variableEventsVectors)
+  );
+}
+
+UnstableNode VirtualMachineEventManager::buildTracks(VM vm, const VirtualMachineEventManager& eventManager) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "tracks",
+      "runnable",
+      "variable"
+    ),
+    buildRunnableTracks(vm, eventManager.runnableTrackingVector),
+    buildVariableTracks(vm, eventManager.variableTrackingVector)
   );
 }
 
