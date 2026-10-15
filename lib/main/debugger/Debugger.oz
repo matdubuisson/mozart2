@@ -109,6 +109,9 @@ define
           \insert ./commands/JournalCommand
         [] "track" then
           \insert ./commands/TrackCommand
+        [] "tracks" then
+          \insert ./commands/TracksCommand
+          skip
 
         % Everything concerning the control of the VM
         [] "gc" then
@@ -219,6 +222,7 @@ define
 in  
   {Loop}
 end
+
 
 
 
