@@ -107,6 +107,8 @@ define
         % Journal and event management
         [] "journal" then
           \insert ./commands/JournalCommand
+        [] "track" then
+          \insert ./commands/TrackCommand
 
         % Everything concerning the control of the VM
         [] "gc" then
@@ -217,6 +219,7 @@ define
 in  
   {Loop}
 end
+
 
 
 
