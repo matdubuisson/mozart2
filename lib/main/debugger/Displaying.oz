@@ -27,7 +27,7 @@ in
   {Display Rows (MaxLength + 1)}
 end
 
-proc {DisplayCSV Labels Elements Get Filter Format}
+local
   proc {DisplayLabels Labels}
     case Labels of nil then {PrintLn "|"}
     [] flexible(Label)|NextLabels then
@@ -78,7 +78,7 @@ proc {DisplayCSV Labels Elements Get Filter Format}
     end
   end
   
-  proc {DisplayElements Elements Acc ?Total}
+  proc {DisplayElements Labels Elements Get Filter Format Acc ?Total}
     case Elements of nil then Total = Acc
     [] Element|NextElements then
       Record = {Get Element $}
@@ -87,20 +87,64 @@ proc {DisplayCSV Labels Elements Get Filter Format}
       if Predicate == none then Total = ~1
       elseif Predicate then
         {DisplayFeatures Labels {Format Record $}}
-        {DisplayElements NextElements (Acc + 1) Total}
-      else {DisplayElements NextElements Acc Total} end
+        {DisplayElements Labels NextElements Get Filter Format (Acc + 1) Total}
+      else
+        {DisplayElements Labels NextElements Get Filter Format Acc Total}
+      end
     end
   end
 in
-  {DisplayLabels Labels}
-  {DisplayLine Labels}
+  proc {DisplayCSV Labels Elements Get Filter Format}
+    {DisplayLabels Labels}
+    {DisplayLine Labels}
 
-  local
-    HowMany = {DisplayElements Elements 0 $}
+    local
+      HowMany = {DisplayElements Labels Elements Get Filter Format 0 $}
+    in
+      if HowMany > 0 then
+        {PrintLn ""}
+        {PrintLn HowMany#" elements listed"}
+      end
+    end
+  end
+
+  proc {DisplayJournalCSV Labels Journal Get Filter Format}
+    Types = {Record.arity Journal $}
+
+    proc {ForEachCategory Type Categories Acc ?Total}
+      case Categories of nil then Total = Acc
+      [] Category|NextCategories then
+        HowMany = {DisplayElements Labels Journal.Type.Category
+        proc {$ Record ?Result}
+          Result = {Get Type Category Record $}
+        end
+        Filter Format 0 $}
+      in
+        {ForEachCategory Type NextCategories (Acc + HowMany) Total}
+      end
+    end
+
+    proc {ForEachType Types Acc ?Total}
+      case Types of nil then Total = Acc
+      [] Type|NextTypes then
+        Categories = {Record.arity Journal.Type $}
+        HowMany = {ForEachCategory Type Categories Acc $}
+      in
+        {ForEachType NextTypes HowMany Total}
+      end
+    end
   in
-    if HowMany > 0 then
-      {PrintLn ""}
-      {PrintLn HowMany#" elements listed"}
+    {DisplayLabels Labels}
+    {DisplayLine Labels}
+
+    local
+      Types = {Record.arity Journal $}
+      HowMany = {ForEachType Types 0 $}
+    in
+      if HowMany > 0 then
+        {PrintLn ""}
+        {PrintLn HowMany#" elements listed"}
+      end
     end
   end
 end
