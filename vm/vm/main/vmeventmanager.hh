@@ -48,26 +48,18 @@ bool VirtualMachineEventManager::contains(const IdsVector& idsVector, Id id) {
 UnstableNode VirtualMachineEventManager::buildRunnableEvent(VM vm,
   const RunnableEvent& event, RunnableAnnounce announce) {
 
-  if (announce == Collected) {
-    return buildRecord(vm,
-      buildArity(vm,
-        "event",
-        "id"
-      ),
-      build(vm, event.id)
-    );
-  } else {
-    return buildRecord(vm,
-      buildArity(vm,
-        "event",
-        "authorId",
-        "victimId"
-      ),
-      event.author == nullptr ?
-        build(vm, "none") : build(vm, event.author->getId()),
-      build(vm, event.runnable->getId())
-    );
-  }
+  bool isCollected = announce == Collected;
+
+  return buildRecord(vm,
+    buildArity(vm,
+      "event",
+      "authorId",
+      "victimId"
+    ),
+    event.author == nullptr || isCollected ?
+      build(vm, "none") : build(vm, event.author->getId()),
+    isCollected ? build(vm, event.id) : build(vm, event.runnable->getId())
+  );
 }
 
 UnstableNode VirtualMachineEventManager::buildRunnableEventsVector(VM vm,
