@@ -78,12 +78,12 @@ define
         thread {Wait InjectAVariable} {Boot_System.printVS "test" false true} end
       in
         % Everything concerning the introspection of the VM
-        case Command of "vm" then
-          \insert ./commands/introspection/VMCommand
+        case Command of "this" then
+          {PrintInfo "Debugger thread id: "#ThisId}
         [] "count" then
           \insert ./commands/introspection/CountCommand
-        [] "this" then
-          {PrintInfo "Debugger thread id: "#ThisId}
+        [] "vm" then
+          \insert ./commands/introspection/VMCommand
         [] "thread" then
           \insert ./commands/introspection/ThreadCommand
         [] "threads" then
@@ -108,10 +108,11 @@ define
         [] "journal" then
           \insert ./commands/JournalCommand
         [] "track" then
-          \insert ./commands/TrackCommand
+          \insert ./commands/tracking/TrackCommand
+        [] "untrack" then
+          \insert ./commands/tracking/UnTrackCommand
         [] "tracks" then
-          \insert ./commands/TracksCommand
-          skip
+          \insert ./commands/tracking/TracksCommand
 
         % Everything concerning the control of the VM
         [] "gc" then
@@ -222,6 +223,9 @@ define
 in  
   {Loop}
 end
+
+
+
 
 
 

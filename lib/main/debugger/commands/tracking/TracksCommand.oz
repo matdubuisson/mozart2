@@ -13,18 +13,20 @@ local
     in
       {DisplayJournalCSV
         [
-          "Type            " "Category        "
+          "Type            " "Category        " "Index   "
           "Author Id" flexible("Victim Ids                      ")
         ]
         Tracks
         proc {$ Type Category Track ?Result}
           case Track of track(
+            index: Index
             authorId: AuthorId
             victimIds: VictimIds
           ) then
             Result = track(
               type: Type
               category: Category
+              index: Index
               authorId: AuthorId
               victimIds: VictimIds
             )
@@ -37,12 +39,14 @@ local
           case Track of track(
             type: Type
             category: Category
+            index: Index
             authorId: AuthorId
             victimIds: VictimIds
           ) then
             Result = [
               {Atom.toString Type $}
               {Atom.toString Category $}
+              {Int.toString Index $}
               case AuthorId of none then "none"
               else {Int.toString AuthorId $} end
               {ListToString VictimIds $}
