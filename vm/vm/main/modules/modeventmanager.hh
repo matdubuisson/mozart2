@@ -56,7 +56,14 @@ public:
   public:
     Track(): Builtin("track") {}
 
-    static void call(VM vm, In event, In announce, In announcerId, In idsList);
+    static void call(VM vm, In type, In category, In authorId, In victimIds);
+  };
+
+  class Untrack: public Builtin<Untrack> {
+  public:
+    Untrack(): Builtin("untrack") {}
+
+    static void call(VM vm, In type, In category, In ruleIndex);
   };
 
   class GetTracks: public Builtin<GetTracks> {
