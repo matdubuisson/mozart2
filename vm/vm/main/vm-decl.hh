@@ -158,7 +158,7 @@ private:
   bool _useDynamicPreemption;
 };
 
-class VirtualMachine {
+class VirtualMachine: public VirtualMachineEventManager {
 public:
   struct Statistics {
     size_t schedulesCount = 0;
@@ -516,7 +516,7 @@ public:
   }
 
   VirtualMachineEventManager& getEventManager() {
-    return eventManager;
+    return *static_cast<VirtualMachineEventManager*>(this);
   }
 public:
   /**
