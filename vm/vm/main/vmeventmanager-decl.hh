@@ -209,7 +209,7 @@ public:
   };
 
   static inline
-  UnstableNode buildRunnableTrack(VM vm, const RunnableTracking& track);
+  UnstableNode buildRunnableTrack(VM vm, const RunnableTracking& track, Id index);
 
   using RunnableTrackingVector = std::vector<RunnableTracking>;
 
@@ -243,6 +243,14 @@ private:
 public:
   void track(RunnableTracking tracking) {
     runnableTrackingVector.push_back(tracking);
+  }
+
+  void untrack(RunnableAnnounce announce, Id index) {
+    if (index < runnableTrackingVector.size()) {
+      runnableTrackingVector.erase(
+        runnableTrackingVector.begin() + index
+      );
+    }
   }
 
 private:
@@ -401,7 +409,7 @@ public:
   };
 
   static inline
-  UnstableNode buildVariableTrack(VM vm, const VariableTracking& track);
+  UnstableNode buildVariableTrack(VM vm, const VariableTracking& track, Id index);
 
   using VariableTrackingVector = std::vector<VariableTracking>;
 
@@ -476,6 +484,14 @@ private:
 public:
   void track(VariableTracking tracking) {
     variableTrackingVector.push_back(tracking);
+  }
+
+  void untrack(VariableAnnounce announce, Id index) {
+    if (index < variableTrackingVector.size()) {
+      variableTrackingVector.erase(
+        variableTrackingVector.begin() + index
+      );
+    }
   }
 
 private:
