@@ -54,7 +54,7 @@ void GraphReplicator::copyThread(Runnable*& to, Runnable* from) {
   to = from;
   todos.threads.push_front(sourceMM, &to);
 
-  vm->getEventManager().announceRunnable(vm, to,
+  vm->announceRunnable(to,
     VirtualMachineEventManager::RunnableAnnounce::Collected);
 }
 

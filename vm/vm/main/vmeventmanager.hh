@@ -43,7 +43,7 @@ UnstableNode VirtualMachineEventManager::buildIdsVector(VM vm, const IdsVector& 
   return builder.get(vm);
 }
 
-Runnable* VirtualMachineEventManager::getCurrentThread(VM vm) {
+Runnable* VirtualMachineEventManager::getCurrentThread() {
   return vm->getCurrentThread();
 }
 
@@ -170,7 +170,7 @@ UnstableNode VirtualMachineEventManager::buildRunnableTracks(VM vm,
   );
 }
 
-bool VirtualMachineEventManager::matchTracking(VM vm,
+bool VirtualMachineEventManager::matchTracking(
   const RunnableTracking& tracking, const RunnableEvent& event) {
 
   if (tracking.authorId != SIZE_MAX
@@ -298,7 +298,7 @@ UnstableNode VirtualMachineEventManager::buildVariableTracks(VM vm,
 }
 
 template<class V>
-bool VirtualMachineEventManager::matchTracking(VM vm,
+bool VirtualMachineEventManager::matchTracking(
   const VariableTracking& tracking, const VariableEvent<V>& event) {
 
   const IdsVector& ids = tracking.victimIds;

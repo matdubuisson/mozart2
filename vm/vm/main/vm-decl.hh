@@ -649,7 +649,7 @@ public:
     assert(_currentThread != nullptr);
     return _currentThread->isPreemptible()
       && _currentThread->getPriority() != tpSystem
-      && eventManager.isTrackingTriggered();
+      && isTrackingTriggered();
   }
 
 private:
@@ -765,7 +765,6 @@ private:
   Statistics _statistics;
 
   VirtualMachineEnvironment& environment;
-  VirtualMachineEventManager eventManager;
 
   MemoryManager memoryManager;
 

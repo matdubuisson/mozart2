@@ -55,22 +55,22 @@ void ModEventManager::Track::call(VM vm, In type, In category, In authorId, In v
   if (matches(vm, type, "runnable")) {
     if (matches(vm, category, "created")) {
       eventManager.track(
-        RunnableTracking(vm, id, ids, RunnableAnnounce::Created));
+        RunnableTracking(id, ids, RunnableAnnounce::Created));
     } else if (matches(vm, category, "updated")) {
       eventManager.track(
-        RunnableTracking(vm, id, ids, RunnableAnnounce::Updated));
+        RunnableTracking(id, ids, RunnableAnnounce::Updated));
     } else if (matches(vm, category, "collected")) {
       eventManager.track(
-        RunnableTracking(vm, id, ids, RunnableAnnounce::Collected));
+        RunnableTracking(id, ids, RunnableAnnounce::Collected));
     } else if (matches(vm, category, "scheduled")) {
       eventManager.track(
-        RunnableTracking(vm, id, ids, RunnableAnnounce::Scheduled));
+        RunnableTracking(id, ids, RunnableAnnounce::Scheduled));
     } else if (matches(vm, category, "unscheduled")) {
       eventManager.track(
-        RunnableTracking(vm, id, ids, RunnableAnnounce::Unscheduled));
+        RunnableTracking(id, ids, RunnableAnnounce::Unscheduled));
     } else if (matches(vm, category, "rescheduled")) {
       eventManager.track(
-        RunnableTracking(vm, id, ids, RunnableAnnounce::Rescheduled));
+        RunnableTracking(id, ids, RunnableAnnounce::Rescheduled));
     } else {
       raiseTypeError(vm,
         "created, updated, collected, scheduled, unscheduled or rescheduled", category);
@@ -78,19 +78,19 @@ void ModEventManager::Track::call(VM vm, In type, In category, In authorId, In v
   } else if (matches(vm, type, "variable")) {
     if (matches(vm, category, "created")) {
       eventManager.track(
-        VariableTracking(vm, id, ids, VariableAnnounce::VCreated));
+        VariableTracking(id, ids, VariableAnnounce::VCreated));
     } else if (matches(vm, category, "collected")) {
       eventManager.track(
-        VariableTracking(vm, id, ids, VariableAnnounce::VCollected));
+        VariableTracking(id, ids, VariableAnnounce::VCollected));
     } else if (matches(vm, category, "needed")) {
       eventManager.track(
-        VariableTracking(vm, id, ids, VariableAnnounce::Needed));
+        VariableTracking(id, ids, VariableAnnounce::Needed));
     } else if (matches(vm, category, "waited")) {
       eventManager.track(
-        VariableTracking(vm, id, ids, VariableAnnounce::Waited));
+        VariableTracking(id, ids, VariableAnnounce::Waited));
     } else if (matches(vm, category, "bound")) {
       eventManager.track(
-        VariableTracking(vm, id, ids, VariableAnnounce::Bound));
+        VariableTracking(id, ids, VariableAnnounce::Bound));
     } else {
       raiseTypeError(vm,
         "created, collected, needed, waited or bound", category);
