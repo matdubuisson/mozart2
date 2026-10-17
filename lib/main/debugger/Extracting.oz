@@ -1,3 +1,11 @@
+proc {ExtractIndex Argument ?Index}
+  if {String.isInt Argument $} then
+    Index = {String.toInt Argument $}
+  else
+    {PrintError "Invalid index '"#Argument#"' provided"}
+  end
+end
+
 proc {ExtractIdentity Argument ?Identity}
   if Argument == "this" then
     Identity = ThisId
