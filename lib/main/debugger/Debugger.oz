@@ -1,6 +1,6 @@
 %%%
 %%% Authors:
-%%%   Mattéo Dubuisson
+%%%   Mattéo Dubuisson 2026
 %%%
 %%% Contributors:
 %%%   
