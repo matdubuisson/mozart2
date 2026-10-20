@@ -160,22 +160,6 @@ private:
 
 class VirtualMachine: public VirtualMachineEventManager {
 public:
-  struct Statistics {
-    size_t schedulesCount = 0;
-    size_t operationsCount = 0;
-    size_t systemSchedulesCount = 0;
-    size_t systemOperationsCount = 0;
-    size_t gcSchedulesCount = 0;
-  };
-public:
-  enum ExecutionMode {
-    Normal = 0,
-    LimitedSchedules,
-    LimitedOperations,
-    OperationByOperation, // Without system threads by definition: they are responsible to advance the VM
-    FollowingJournal
-  };
-
   /**
    * Exit codes allows the virtual machine to process runnable entities differently when they exit :
    * - recNeverInvokeAgain: ....
@@ -507,8 +491,6 @@ public:
   unique_name_t getUniqueName(size_t length, const char* data) {
     return atomTable.getUniqueName(this, length, data);
   }
-public:
-  Statistics getStatistics() { return _statistics; }
 
 public:
   Introspection& getIntrospection() {
@@ -527,9 +509,10 @@ public:
   template <typename T>
   inline
   ProtectedNode protect(T&& node);
+
+  /** ================ Virtual Machine Scheduler ================ */
 public:
   // Influence from the external world
-
 
   /** Requests preemption of the current thread TO-COMPLETE : check if 100% correct */
   void requestPreempt() {
@@ -550,6 +533,144 @@ public:
     _preemptRequestedNot.clear(std::memory_order_release);
   }
 
+private:
+  /** Checks if preemption is requested and clears the flag */
+  bool testAndClearPreemptRequested() {
+    return !_preemptRequestedNot.test_and_set(std::memory_order_acquire);
+  }
+
+  /** Checks if termination is requested and clears the flag */
+  bool testAndClearExitRunRequested() {
+    return !_exitRunRequestedNot.test_and_set(std::memory_order_acquire);
+  }
+
+  /** Checks if garbage collector is requested and clears the flag */
+  bool testAndClearGCRequested() {
+    return !_gcRequestedNot.test_and_set(std::memory_order_acquire);
+  }
+
+  /**
+   * Sets the reference time
+   * @param value The new time in milliseconds TO-COMPLETE : check unit
+   */
+  void setReferenceTime(std::int64_t value) {
+    _referenceTime.store(value, std::memory_order_release);
+  }
+
+public:
+  enum ExecutionMode {
+    Normal = 0,
+    LimitedSchedules,
+    LimitedOperations,
+    UntilTrackingTriggered
+  };
+
+  struct Statistics {
+    size_t schedulesCount = 0;
+    size_t operationsCount = 0;
+    size_t systemSchedulesCount = 0;
+    size_t systemOperationsCount = 0;
+    size_t gcSchedulesCount = 0;
+  };
+
+public:
+  void setExecutionMode(ExecutionMode mode, uint64_t counter = SIZE_MAX) {
+    _executionMode = mode;
+    _executionCounter = counter;
+  }
+
+  void resetExecutionMode() {
+    _executionMode = Normal;
+    _executionCounter = SIZE_MAX;
+  }
+
+  void updateExecutionMode(size_t nOperations) {
+    _statistics.schedulesCount++;
+    _statistics.operationsCount += nOperations;
+
+    /**
+     * System threads are self aware and they are not considered
+     * to be part of the 'normal' execution so they cannot affect
+     * execution mode and counters.
+     */
+    if (_currentThread->getPriority() == tpSystem) {
+      _statistics.systemSchedulesCount++;
+      _statistics.systemOperationsCount += nOperations;
+      return;
+    }
+
+    switch (_executionMode) {
+      case Normal: break;
+      case LimitedSchedules: {
+        if (_executionCounter > 0) _executionCounter--;
+        break;
+      } case LimitedOperations: {
+        if (_executionCounter > nOperations) _executionCounter -= nOperations;
+        else _executionCounter = 0;
+        break;
+      } case UntilTrackingTriggered: {
+        if (isTrackingTriggered())
+          _executionCounter = 0;
+        break;
+      }
+
+      default: assert(false);
+    }
+
+    if (_executionCounter == 0)
+      resetExecutionMode();
+  }
+
+  ExecutionMode getExecutionMode() {
+    return _executionMode;
+  }
+
+  size_t getExecutionCounter() {
+    return _executionCounter;
+  }
+
+  size_t getMaxOperationsExecutionMode() {
+    assert(_currentThread != nullptr);
+
+    // Same as said before system threads are self aware
+    if (_currentThread->getPriority() == tpSystem)
+      return SIZE_MAX;
+
+    switch (_executionMode) {
+      case Normal: return SIZE_MAX;
+      case LimitedOperations: return _executionCounter;
+      case LimitedSchedules: return SIZE_MAX;
+      default: assert(false);
+    }
+  }
+
+  Statistics getStatistics() {
+    return _statistics;
+  }
+
+  bool testEarlyPreemptionRequested() {
+    assert(_currentThread != nullptr);
+
+    /**
+     * Note system threads might be preempted if
+     * they are willing to be by not setting themselves
+     * as non-preemptible.
+     */
+
+    if (!_currentThread->isPreemptible())
+      return false;
+    else if (_executionMode == UntilTrackingTriggered && isTrackingTriggered())
+      return true;
+    else return false;
+
+    // return _currentThread->isPreemptible()
+    //   && _currentThread->getPriority() != tpSystem
+    //   && isTrackingTriggered();
+  }
+
+public:
+  // About the garbage collector
+
   void enableGC() {
     _gcEnabled = true;
   }
@@ -566,107 +687,6 @@ public:
     return _gcDone;
   }
 
-  /**
-   * Sets the reference time
-   * @param value The new time in milliseconds TO-COMPLETE : check unit
-   */
-  void setReferenceTime(std::int64_t value) {
-    _referenceTime.store(value, std::memory_order_release);
-  }
-public:
-  void setExecutionMode(ExecutionMode mode, uint64_t counter = SIZE_MAX) {
-    _executionMode = mode;
-    _executionCounter = counter;
-  }
-
-  void resetExecutionMode() {
-    _executionMode = Normal;
-    _executionCounter = SIZE_MAX;
-  }
-
-  void updateExecutionMode(size_t nOperations) {
-    _statistics.schedulesCount++;
-    _statistics.operationsCount += nOperations;
-
-    if (_currentThread->getPriority() == tpSystem) {
-      _statistics.systemSchedulesCount++;
-      _statistics.systemOperationsCount += nOperations;
-      return;
-    }
-
-    switch (_executionMode) {
-      case LimitedSchedules: {
-        if (_executionCounter > 0) _executionCounter--;
-        break;
-      }
-      case LimitedOperations: {
-        if (_executionCounter > nOperations) _executionCounter -= nOperations;
-        else _executionCounter = 0;
-        break;
-      }
-      case OperationByOperation:
-      case FollowingJournal:
-      case Normal:
-      default: break;
-    }
-
-    if (_executionCounter == 0)
-      resetExecutionMode();
-  }
-
-  size_t getMaxOperationsExecutionMode() {
-    assert(_currentThread != nullptr);
-    if (_currentThread->getPriority() == tpSystem)
-      return SIZE_MAX;
-
-    switch (_executionMode) {
-      case LimitedOperations: return _executionCounter;
-      case OperationByOperation: return 1;
-      case LimitedSchedules:
-      case FollowingJournal:
-      case Normal:
-      default: return SIZE_MAX;
-    }
-  }
-
-  ExecutionMode getExecutionMode() {
-    return _executionMode;
-  }
-
-  size_t getExecutionCounter() {
-    return _executionCounter;
-  }
-
-  bool testLimitedOperationsExecutionMode() {
-    return _executionMode == LimitedOperations;
-  }
-
-  bool testOperationByOperationExecutionMode() {
-    return _executionMode == OperationByOperation;
-  }
-
-  bool testEarlyPreemptionRequested() {
-    assert(_currentThread != nullptr);
-    return _currentThread->isPreemptible()
-      && _currentThread->getPriority() != tpSystem
-      && eventManager.isTrackingTriggered();
-  }
-
-private:
-  /** Checks if preemption is requested and clears the flag */
-  bool testAndClearPreemptRequested() {
-    return !_preemptRequestedNot.test_and_set(std::memory_order_acquire);
-  }
-
-  /** Checks if termination is requested and clears the flag */
-  bool testAndClearExitRunRequested() {
-    return !_exitRunRequestedNot.test_and_set(std::memory_order_acquire);
-  }
-
-  /** Checks if garbage collector is requested and clears the flag */
-  bool testAndClearGCRequested() {
-    return !_gcRequestedNot.test_and_set(std::memory_order_acquire);
-  }
 private:
   friend class GarbageCollector;
   friend class SpaceCloner;
@@ -762,10 +782,7 @@ private:
   AtomTable atomTable;
   GlobalNode* rootGlobalNode;
 
-  Statistics _statistics;
-
   VirtualMachineEnvironment& environment;
-  VirtualMachineEventManager eventManager;
 
   MemoryManager memoryManager;
 
@@ -775,7 +792,6 @@ private:
   Space* _currentSpace;
   Runnable* _currentThread;
   bool _isOnTopLevel;
-  bool _gcEnabled, _gcReady, _gcDone;
 
   NodeDictionary* _builtinModules;
   PropertyRegistry _propertyRegistry;
@@ -814,6 +830,10 @@ private:
   size_t _operationsCounter;
   size_t _systemSchedulesCounter;
   size_t _systemOperationsCounter;
+  Statistics _statistics;
+
+  // About the garbage collector
+  bool _gcEnabled, _gcReady, _gcDone;
 
   // During GC, we need a SpaceRef version of the top-level space
   SpaceRef _topLevelSpaceRef;

@@ -39,15 +39,6 @@ class ModScheduler: public Module {
 public:
   ModScheduler(): Module("Scheduler") {}
 
-  class SetVerbose: public Builtin<SetVerbose> {
-  public:
-    SetVerbose(): Builtin("setVerbose") {}
-
-    static void call(VM vm, In verbose) {
-      
-    }
-  };
-
   class RunNSchedules: public Builtin<RunNSchedules> {
   public:
     RunNSchedules(): Builtin("runNSchedules") {}
@@ -75,13 +66,31 @@ public:
       );
     }
   };
-  
-  class RunOperationByOperation: public Builtin<RunOperationByOperation> {
+
+  class RunUntilTrackingTriggered: public Builtin<RunUntilTrackingTriggered> {
   public:
-    RunOperationByOperation(): Builtin("runOperationByOperation") {}
+    RunUntilTrackingTriggered(): Builtin("runUntilTrackingTriggered") {}
 
     static void call(VM vm) {
-      vm->setExecutionMode(ExecutionMode::OperationByOperation);
+      vm->setExecutionMode(ExecutionMode::UntilTrackingTriggered);
+    }
+  };
+  
+  // class RunOperationByOperation: public Builtin<RunOperationByOperation> {
+  // public:
+  //   RunOperationByOperation(): Builtin("runOperationByOperation") {}
+
+  //   static void call(VM vm) {
+  //     vm->setExecutionMode(ExecutionMode::OperationByOperation);
+  //   }
+  // };
+
+  class Reset: public Builtin<Reset> {
+  public:
+    Reset(): Builtin("reset") {}
+
+    static void call(VM vm) {
+      vm->resetExecutionMode();
     }
   };
 
@@ -92,10 +101,12 @@ public:
     static void call(VM vm, Out result) {
       std::string executionMode;
       switch (vm->getExecutionMode()) {
+        case ExecutionMode::Normal: executionMode = "normal"; break;
         case ExecutionMode::LimitedSchedules: executionMode = "limitedSchedules"; break;
         case ExecutionMode::LimitedOperations: executionMode = "limitedOperations"; break;
-        case ExecutionMode::OperationByOperation: executionMode = "operationByOperation"; break;
-        default: executionMode = "normal";
+        case ExecutionMode::UntilTrackingTriggered: executionMode = "untilTrackingTriggered"; break;
+        // case ExecutionMode::OperationByOperation: executionMode = "operationByOperation"; break;
+        default: assert(false);
       }
       result = build(vm, executionMode.c_str());
     }
@@ -107,15 +118,6 @@ public:
 
     static void call(VM vm, Out result) {
       result = build(vm, vm->getExecutionCounter());
-    }
-  };
-
-  class Reset: public Builtin<Reset> {
-  public:
-    Reset(): Builtin("reset") {}
-
-    static void call(VM vm) {
-      vm->resetExecutionMode();
     }
   };
 
