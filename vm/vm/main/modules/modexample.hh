@@ -126,6 +126,29 @@ public:
       result = Introspection::buildMap(vm, map);
     }
   };
+
+  class GetPrintName: public Builtin<GetPrintName> {
+  public:
+    GetPrintName(): Builtin("getPrintName") {}
+
+    static void call(VM vm, In object, Out result) {
+      Type type = object.type();
+      if (type == Abstraction::type()) {
+        atom_t printName;
+        UnstableNode debugData;
+        object.as<Abstraction>().getDebugInfo(vm, printName, debugData);
+        result = buildRecord(vm,
+          buildArity(vm,
+            "test",
+            "debug",
+            "name"
+          ),
+          debugData,
+          build(vm, printName)
+        );
+      } else result = build(vm, "none");
+    }
+  };
 };
 
 }
