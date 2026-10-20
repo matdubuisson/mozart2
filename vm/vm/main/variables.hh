@@ -57,7 +57,7 @@ void VariableBase<This>::addToSuspendList(VM vm, RichNode variable) {
   pendings.push_back(vm, variable.getStableRef(vm));
 
   if constexpr (std::is_same_v<This, Variable> || std::is_same_v<This, ReadOnlyVariable>) {
-    vm->getEventManager().announceVariable(vm, static_cast<This*>(this),
+    vm->announceVariable<This>(static_cast<This*>(this),
       VirtualMachineEventManager::VariableAnnounce::Waited);
   }
 }
@@ -78,7 +78,7 @@ void VariableBase<This>::markNeeded(VM vm) {
     wakeUpPendings(vm);
 
     if constexpr (std::is_same_v<This, Variable> || std::is_same_v<This, ReadOnlyVariable>) {
-      vm->getEventManager().announceVariable(vm, static_cast<This*>(this),
+      vm->announceVariable<This>(static_cast<This*>(this),
         VariableAnnounce::Needed);
     }
   }
@@ -173,7 +173,7 @@ void Variable::bind(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
   if (AdvancedIdentifiable(self).is(vm))
     AdvancedIdentifiable(self).followIdentity(vm, *this, true);
-  vm->getEventManager().announceVariable(vm, this,
+  vm->announceVariable(this,
     VirtualMachineEventManager::VariableAnnounce::Bound);
 }
 
@@ -191,7 +191,7 @@ void ReadOnlyVariable::bind(RichNode self, VM vm, RichNode src) {
   waitFor(vm, self);
   if (AdvancedIdentifiable(self).is(vm))
     AdvancedIdentifiable(self).followIdentity(vm, *this, true);
-  vm->getEventManager().announceVariable(vm, this,
+  vm->announceVariable(this,
     VirtualMachineEventManager::VariableAnnounce::Bound);
 }
 
@@ -199,7 +199,7 @@ void ReadOnlyVariable::bindReadOnly(RichNode self, VM vm, RichNode src) {
   doBind(self, vm, src);
   if (AdvancedIdentifiable(self).is(vm))
     AdvancedIdentifiable(self).followIdentity(vm, *this, true);
-  vm->getEventManager().announceVariable(vm, this,
+  vm->announceVariable(this,
     VirtualMachineEventManager::VariableAnnounce::Bound);
 }
 

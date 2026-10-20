@@ -650,6 +650,20 @@ public:
 
   bool testEarlyPreemptionRequested() {
     assert(_currentThread != nullptr);
+    return _currentThread->isPreemptible()
+      && _currentThread->getPriority() != tpSystem
+      && isTrackingTriggered();
+  }
+
+private:
+  /** Checks if preemption is requested and clears the flag */
+  bool testAndClearPreemptRequested() {
+    return !_preemptRequestedNot.test_and_set(std::memory_order_acquire);
+  }
+
+  /** Checks if termination is requested and clears the flag */
+  bool testAndClearExitRunRequested() {
+    return !_exitRunRequestedNot.test_and_set(std::memory_order_acquire);
 
     /**
      * Note system threads might be preempted if

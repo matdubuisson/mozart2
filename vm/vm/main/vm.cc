@@ -68,7 +68,7 @@ void VirtualMachine::scheduleThread(bool isSystem) {
     // In OBO mode non naturally preempted thread must be rescheduled first
     threadPool.schedule(currentThread, isPreempted);
 
-    eventManager.announceRunnable(this, currentThread,
+    announceRunnable(currentThread,
       VirtualMachineEventManager::RunnableAnnounce::Scheduled);
 
     if (!isPreempted) {
@@ -85,7 +85,7 @@ void VirtualMachine::scheduleSystemThreads() {
   while (n-- > 0)
     scheduleThread(true);
 
-  eventManager.clear();
+  clearEvents();
 }
 
 VirtualMachine::run_return_type VirtualMachine::run() {
