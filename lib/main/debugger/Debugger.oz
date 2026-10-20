@@ -51,8 +51,6 @@ define
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
 
-  ModeCell = {Cell.new true $}
-
   proc {ProcessCommand ExecutionMode WatchedListIds ?NewWatchedListIds}
     proc {DefaultReturn}
       NewWatchedListIds = WatchedListIds
