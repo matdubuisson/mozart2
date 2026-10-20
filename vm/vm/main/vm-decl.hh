@@ -655,33 +655,6 @@ public:
       && isTrackingTriggered();
   }
 
-private:
-  /** Checks if preemption is requested and clears the flag */
-  bool testAndClearPreemptRequested() {
-    return !_preemptRequestedNot.test_and_set(std::memory_order_acquire);
-  }
-
-  /** Checks if termination is requested and clears the flag */
-  bool testAndClearExitRunRequested() {
-    return !_exitRunRequestedNot.test_and_set(std::memory_order_acquire);
-
-    /**
-     * Note system threads might be preempted if
-     * they are willing to be by not setting themselves
-     * as non-preemptible.
-     */
-
-    if (!_currentThread->isPreemptible())
-      return false;
-    else if (_executionMode == UntilTrackingTriggered && isTrackingTriggered())
-      return true;
-    else return false;
-
-    // return _currentThread->isPreemptible()
-    //   && _currentThread->getPriority() != tpSystem
-    //   && isTrackingTriggered();
-  }
-
 public:
   // About the garbage collector
 
