@@ -506,6 +506,7 @@ public:
   }
 
   void clearEvents() {
+    trackingTriggered = false;
     runnableEventsVectors.clear();
     variableEventsVectors.clear();
     readOnlyVariableEventsVectors.clear();
