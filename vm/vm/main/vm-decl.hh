@@ -404,14 +404,6 @@ public:
   UUID genUUID();
 
   /**
-   * Gets atomically the reference time
-   * @returns The reference time
-   */
-  std::int64_t getReferenceTime() {
-    return _referenceTime.load(std::memory_order_acquire);
-  }
-
-  /**
    * Inserts a new alarm in the list sorted by expiration according to the reference time
    * @param delay The delay in milliseconds TO-COMPLETE : Checks it true
    * @param wakeable A reference on the alarm as a stable node
@@ -549,12 +541,21 @@ private:
     return !_gcRequestedNot.test_and_set(std::memory_order_acquire);
   }
 
+public:
   /**
    * Sets the reference time
    * @param value The new time in milliseconds TO-COMPLETE : check unit
    */
   void setReferenceTime(std::int64_t value) {
     _referenceTime.store(value, std::memory_order_release);
+  }
+
+  /**
+   * Gets atomically the reference time
+   * @returns The reference time
+   */
+  std::int64_t getReferenceTime() {
+    return _referenceTime.load(std::memory_order_acquire);
   }
 
 public:
@@ -640,7 +641,7 @@ public:
       case Normal: return SIZE_MAX;
       case LimitedOperations: return _executionCounter;
       case LimitedSchedules: return SIZE_MAX;
-      default: assert(false);
+      default: assert(false); return 0;
     }
   }
 
