@@ -53,7 +53,7 @@ define
 
   ModeCell = {Cell.new true $}
 
-  proc {ProcessCommand WatchedListIds ?NewWatchedListIds}
+  proc {ProcessCommand ExecutionMode WatchedListIds ?NewWatchedListIds}
     proc {DefaultReturn}
       NewWatchedListIds = WatchedListIds
     end
@@ -75,7 +75,11 @@ define
       Input = {Boot_System.inputVSLine $}
     in
       if Input == "" then % Considered as a continue
-        {ContinueReturn nil}
+        case ExecutionMode of untilTrackingTriggered then
+          {ContinueReturn nil}
+        else
+          {DefaultReturn}
+        end
       else
         Inputs = {String.tokens Input 32 $}
         Command|Arguments = Inputs
@@ -145,7 +149,7 @@ define
     proc {CommandReturn}
       NewWatchedListIds
     in
-      {ProcessCommand WatchedListIds NewWatchedListIds}
+      {ProcessCommand ExecutionMode WatchedListIds NewWatchedListIds}
       {Loop NewWatchedListIds}
     end
 
@@ -154,9 +158,9 @@ define
       {Loop WatchedListIds}
     end
   in
-    {PrintInfo "Execution mode: "#ExecutionMode}
-    {PrintInfo "Is tracking triggered: "#{Bool.toString IsTrackingTriggered $}}
-    {PrintInfo "Watched list ids: "#{ListToString WatchedListIds $}}
+    % {PrintInfo "Execution mode: "#ExecutionMode}
+    % {PrintInfo "Is tracking triggered: "#{Bool.toString IsTrackingTriggered $}}
+    % {PrintInfo "Watched list ids: "#{ListToString WatchedListIds $}}
 
     case ExecutionMode of normal then {CommandReturn}
     [] limitedSchedules then {DefaultReturn}

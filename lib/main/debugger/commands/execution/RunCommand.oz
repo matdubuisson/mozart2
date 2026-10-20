@@ -1,14 +1,52 @@
+% WARNING this command is responsible to manage the return action itself !!
+
 local
   proc {DisplayOptions}
-    {PrintInfo "schedules <x> <includeSystemThreads=false>\tschedules x threads"}
-    {PrintInfo "operations <x> <includeSystemThreads=false>\texecutes x threads"}
-    {PrintInfo "operationByOperation (alias obo)\tEnters the operation by operation execution mode"}
+    {DisplayFrame "Run command options" [
+      "schedules <count>" "Run x schedules of non-system threads (debugger thread excluded)"
+      "operations <count>" "Run x operations of any non-system thread leading to an arbitrary number of schedules (debugger thread excluded)"
+      "until" "Run until the next interruption either being a breakpoint or a triggered tracking rule"
+      "steps <identities>" "Run step by step on streams"
+    ]}
+    
+    {DefaultReturn}
   end
 
-  \insert RunNCommand
-  \insert RunOBOCommand
-  \insert RunSBSCommand
+  proc {HandleRunN Thing RunN Arguments}
+    case Arguments of nil then
+      {PrintError "Missing "#Thing#" count"}
+    [] CountString|NextArguments then
+      Count = {ExtractInput int CountString none $}
+    in
+      if Count == none then
+        {PrintError "Provided first parameter "#Thing#" count '"#CountString#"' is not an integer"}
+      else
+        {RunN Count}
+        {Boot_Thread.preempt This}
+      end
+    end
 
+    {DefaultReturn}
+  end
+
+  proc {HandleUntil}
+    {Boot_Scheduler.runUntilTrackingTriggered}
+    {DefaultReturn}
+  end
+
+  proc {HandleStepByStep Arguments}
+    Ids = {ExtractIdentities Arguments $}
+  in
+    if {List.is Ids $} then
+      {Boot_EventManager.track variable bound none Ids}
+      {Boot_Scheduler.runUntilTrackingTriggered}
+
+      % Custom return here
+      NewWatchedListIds = Ids
+    else
+      {DefaultReturn}
+    end
+  end
 in
   case Arguments of nil then
     {DisplayOptions}
@@ -16,20 +54,24 @@ in
     case Argument of "help" then
       {DisplayOptions}
     [] "schedules" then
-      {HandleRunN "schedules" Boot_Scheduler.runNSchedules NextArguments}      
+      {HandleRunN "schedules" Boot_Scheduler.runNSchedules NextArguments}
     [] "operations" then
       {HandleRunN "operations" Boot_Scheduler.runNOperations NextArguments}
-    [] "operationByOperation" then
-      {HandleOperationByOperation NextArguments}
-    [] "obo" then
-      {HandleOperationByOperation NextArguments}
-    [] "stepByStep" then
+    [] "until" then
+      {HandleUntil}
+    [] "steps" then
       {HandleStepByStep NextArguments}
-    [] "sbs" then
-      {HandleStepByStep NextArguments}
-    [] "untilAlarm" then
-      {Cell.assign ModeCell false}
-      {Boot_Thread.preempt This}
+    % [] "operationByOperation" then
+    %   {HandleOperationByOperation NextArguments}
+    % [] "obo" then
+    %   {HandleOperationByOperation NextArguments}
+    % [] "stepByStep" then
+    %   {HandleStepByStep NextArguments}
+    % [] "sbs" then
+    %   {HandleStepByStep NextArguments}
+    % [] "untilAlarm" then
+    %   {Cell.assign ModeCell false}
+    %   {Boot_Thread.preempt This}
     else
       {PrintError "Unexpected run option '"#Argument#"'"#TRYHELP}
     end
