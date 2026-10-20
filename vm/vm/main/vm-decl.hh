@@ -609,11 +609,7 @@ public:
         if (_executionCounter > nOperations) _executionCounter -= nOperations;
         else _executionCounter = 0;
         break;
-      } case UntilTrackingTriggered: {
-        if (isTrackingTriggered())
-          _executionCounter = 0;
-        break;
-      }
+      } case UntilTrackingTriggered: break;
 
       default: assert(false);
     }
@@ -641,6 +637,7 @@ public:
       case Normal: return SIZE_MAX;
       case LimitedOperations: return _executionCounter;
       case LimitedSchedules: return SIZE_MAX;
+      case UntilTrackingTriggered: return SIZE_MAX;
       default: assert(false); return 0;
     }
   }
@@ -653,7 +650,7 @@ public:
     assert(_currentThread != nullptr);
     return _currentThread->isPreemptible()
       && _currentThread->getPriority() != tpSystem
-      && isTrackingTriggered();
+      && (_executionMode == UntilTrackingTriggered && isTrackingTriggered());
   }
 
 public:
