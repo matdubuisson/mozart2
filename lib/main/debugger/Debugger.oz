@@ -44,185 +44,175 @@ define
 
   \insert Printing
 
-  \insert Formatting
-
   \insert Extracting
   
   \insert Displaying
-
-  \insert Filtering
 
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
 
   ModeCell = {Cell.new true $}
 
-  proc {ProcessCommand}
+  proc {ProcessCommand WatchedListIds ?NewWatchedListIds}
+    proc {DefaultReturn}
+      NewWatchedListIds = WatchedListIds
+    end
+
+    proc {ContinueReturn Arguments}
+      \insert ./commands/execution/ContinueCommand
+      {DefaultReturn}
+    end
+  in
     /*
       It ensures the debugger will not be preempted during its analysis
       and so risking to produce an inconsistent result. However it is
       responsible to release the VM often to let other threads
       enough running time
-    */    
+    */
     {PrintPrefix}
     
     local
-      Input = {Boot_System.inputVSLine $}    
+      Input = {Boot_System.inputVSLine $}
     in
-      if Input \= "" then
+      if Input == "" then % Considered as a continue
+        {ContinueReturn nil}
+      else
         Inputs = {String.tokens Input 32 $}
         Command|Arguments = Inputs
-
-        InjectAVariable
-
-        thread {Wait InjectAVariable} {Boot_System.printVS "test" false true} end
       in
         % Everything concerning the introspection of the VM
         case Command of "this" then
           {PrintInfo "Debugger thread id: "#ThisId}
+          {DefaultReturn}
         [] "count" then
           \insert ./commands/introspection/CountCommand
+          {DefaultReturn}
         [] "vm" then
           \insert ./commands/introspection/VMCommand
+          {DefaultReturn}
         [] "thread" then
           \insert ./commands/introspection/ThreadCommand
+          {DefaultReturn}
         [] "threads" then
           \insert ./commands/introspection/ThreadsCommand
+          {DefaultReturn}
         [] "variable" then
           \insert ./commands/introspection/VariableCommand
+          {DefaultReturn}
         [] "variables" then
           \insert ./commands/introspection/VariablesCommand
-        % [] "run" then
-        %   \insert ./commands/execution/RunCommand
-        % [] "continue" then
-        %   {Cell.assign ModeCell false}
-        %   {Boot_Thread.preempt This}
-        % [] "reset" then
-        %   {Boot_Scheduler.reset}
-        % [] "alarm" then
-        %   \insert AlarmCommand
-        % [] "lists" then
-        %   \insert ./commands/introspection/ListsCommand
+          {DefaultReturn}
 
         % Journal and event management
         [] "journal" then
           \insert ./commands/JournalCommand
+          {DefaultReturn}
         [] "track" then
           \insert ./commands/tracking/TrackCommand
+          {DefaultReturn}
         [] "untrack" then
           \insert ./commands/tracking/UnTrackCommand
+          {DefaultReturn}
         [] "tracks" then
           \insert ./commands/tracking/TracksCommand
+          {DefaultReturn}
 
+        % Program execution control
+        [] "run" then
+          \insert ./commands/execution/RunCommand
+        [] "reset" then
+          \insert ./commands/execution/ResetCommand
+          {DefaultReturn}
+        [] "continue" then
+          {ContinueReturn Arguments}
+        
         % Everything concerning the control of the VM
         [] "gc" then
           \insert ./commands/GCCommand
-        
+          {DefaultReturn}
         else
           {PrintError "Unknown command '"#Command#"'"#TRYHELP}
+          {DefaultReturn}
         end
-        InjectAVariable = unit
       end
     end
   end
 
-  proc {Loop}
-    NormalExecutionMode = ({Boot_Scheduler.getExecutionMode $} == normal)
-    AlarmRaised = {Boot_EventManager.isTrackingTriggered $}
-  in
-    if {Boot_Scheduler.isGCReady $} then
-      CollectedThreadIds = {Boot_Introspection.getGarbageCollectedThreads $}
+  proc {Loop WatchedListIds}
+    ExecutionMode = {Boot_Scheduler.getExecutionMode $}
+    IsTrackingTriggered = {Boot_EventManager.isTrackingTriggered $}
+
+    proc {CommandReturn}
+      NewWatchedListIds
     in
-      {PrintWarning "GC ready"}
-      {Boot_System.printRepr CollectedThreadIds false true}
+      {ProcessCommand WatchedListIds NewWatchedListIds}
+      {Loop NewWatchedListIds}
     end
 
-    % if {Boot_Scheduler.isGCDone $} then
-    %   {PrintWarning "GC done"}
-    % end
-
-    % if {Boot_Thread.isPreemptible This $} then
-    %   {Boot_Thread.setPreemptible This false}
-    % end
-
-    if NormalExecutionMode orelse AlarmRaised then
-      {ProcessCommand}
-    else
+    proc {DefaultReturn}
       {Boot_Thread.preempt This}
+      {Loop WatchedListIds}
     end
+  in
+    {PrintInfo "Execution mode: "#ExecutionMode}
+    {PrintInfo "Is tracking triggered: "#{Bool.toString IsTrackingTriggered $}}
+    {PrintInfo "Watched list ids: "#{ListToString WatchedListIds $}}
 
-    % if 
-    %   {Boot_Scheduler.isGCReady $} == false
-    %   andthen {Boot_Scheduler.isGCDone $} == false
-    %   andthen {Boot_EventManager.isTrackingTriggered $} then
+    case ExecutionMode of normal then {CommandReturn}
+    [] limitedSchedules then {DefaultReturn}
+    [] limitedOperations then {DefaultReturn}
+    [] untilTrackingTriggered then
+      if IsTrackingTriggered then
+        {PrintWarning "Tracking triggered"}
 
-    %   local
-    %     Todos = {Boot_Introspection.getGarbageCollectorTodos $}
-    %   in
-    %     {Boot_System.printRepr Todos false true}
-    %   end
+        if WatchedListIds \= nil then
+          Lists = {Boot_Introspection.getLists WatchedListIds $}
+        in
+          if Lists \= nil then
+            {DisplayCSV
+              [
+                "Id        " "KindId    " "GenerationId"
+                "Hash    " "Owners                " flexible("List")
+              ]
+              Lists
+              proc {$ Entry ?Record} Record = Entry end
+              proc {$ Entry ?Result} Result = true end
+              proc {$ Lst ?Result}
+                case Lst of list(
+                  id: Id
+                  kindId: KindId
+                  generationId: GenerationId
+                  hash: Hash
+                  owners: Owners
+                  list: List
+                ) then
+                  Result = [
+                    {Int.toString Id $}
+                    {Int.toString KindId $}
+                    {Int.toString GenerationId $}
+                    {Int.toString Hash $}
+                    {ListToString Owners $}
+                    {Atom.toString {Boot_System.getRepr List ~1 ~1 $} $}
+                  ]
+                end
+              end}
+          else {PrintWarning "No lists matching watch list found"} end
+        end
 
-    %   % local
-    %   %   Variables = {Boot_Introspection.getAllVariables $}
-
-    %   %   proc {FormatStateCase Variable ?Result}
-    %   %     case Variable of variable(
-    %   %       id: Id
-    %   %       kindId: KindId
-    %   %       generationId: GenerationId
-    %   %       type: Type
-    %   %       isBound: IsBound
-    %   %       isNeeded: IsNeeded
-    %   %       pendings: Pendings
-    %   %       candidates: Candidates
-    %   %       value: _
-    %   %     ) then
-    %   %       Result = [
-    %   %         {Int.toString Id $}
-    %   %         {Int.toString KindId $}
-    %   %         {Int.toString GenerationId $}
-    %   %         {Atom.toString Type $}
-    %   %         {Bool.toString IsBound $}
-    %   %         {Bool.toString IsNeeded $}
-    %   %         {Int.toString
-    %   %           {List.length Pendings $} $}
-    %   %         {Int.toString
-    %   %           {List.length Candidates $} $}
-    %   %       ]
-    %   %     end
-    %   %   end
-
-    %   % in
-    %   %   {DisplayCSV
-    %   %     ["Id" "KindId" "GenerationId" "Type" "IsBound" "IsNeeded" "NPendings" "NCandidates"]
-    %   %     Variables
-    %   %     10
-    %   %     FormatStateCase
-    %   %   }
-    %   % end
-
-    %   local
-    %     % PingPong :
-    %     % Lists = {Boot_Introspection.getLists [100000] $}
-    %     Lists = {Boot_Introspection.getLists [11111111 22222222 33333333 44444444 55555555] $}
-    %   in
-    %     if Lists \= nil then
-    %       {MaskedDisplayCSV
-    %         ["Id" "KindId" "GenerationId" "Hash" "Owners" "List"]
-    %         Lists 10 FormatList
-    %         [true true true true false false]}
-    %       {PrintWarning "Make a stop...."}
-    %       {Boot_System.inputEnter}
-    %     else {PrintWarning "No lists matching conditions found"} end
-    %   end
-    % end
-
-    {Boot_Thread.preempt This}
-    {Loop}
+        {CommandReturn}
+      else
+        {DefaultReturn}
+      end
+    end
   end
-in  
-  {Loop}
+in
+  if {Boot_Thread.isPreemptible This $} then
+    {Boot_Thread.setPreemptible This false}
+  end
+
+  {Loop nil}
 end
+
 
 
 
