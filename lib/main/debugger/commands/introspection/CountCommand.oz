@@ -16,8 +16,10 @@ local
     {DisplayFrame "Count threads aggregates" [
       "schedules (<nextAggregates>)" "display the total schedules counter"
       "operations (<nextAggregates>)" "display the total executed operations counter"
-      "systemSchedules (<nextAggregates>)" "display the total schedules counter"
-      "systemOperations (<nextAggregates>)" "display the total executed operations counter"
+      "nonSystemSchedules (<nextAggregates>)" "display the non-system schedules counter"
+      "nonSystemOperations (<nextAggregates>)" "display the non-system executed operations counter"
+      "systemSchedules (<nextAggregates>)" "display the system schedules counter"
+      "systemOperations (<nextAggregates>)" "display the system executed operations counter"
       "gcSchedules (<nextAggregates>)" "display the total number of garbage collections done"
       "all" "display all VM counters"
     ]}
@@ -30,6 +32,18 @@ local
 
     proc {GetOperationsCount Frame NewFrame}
       Frame = "Operations count"|{Boot_Introspection.getOperationsCount $}|NewFrame
+    end
+
+    proc {GetNonSystemSchedulesCount Frame NewFrame}
+      R = {Boot_Introspection.getSchedulesCount $} - {Boot_Introspection.getSystemSchedulesCount $}
+    in
+      Frame = "Non-system schedules count"|R|NewFrame
+    end
+
+    proc {GetNonSystemOperationsCount Frame NewFrame}
+      R = {Boot_Introspection.getOperationsCount $} - {Boot_Introspection.getSystemOperationsCount $}
+    in
+      Frame = "Non-system operations count"|R|NewFrame
     end
 
     proc {GetSystemSchedulesCount Frame NewFrame}
@@ -53,21 +67,29 @@ local
       [] "operations" then NewFrame in
         {GetOperationsCount Frame NewFrame}
         {GetVMCountsFrame NextArguments NewFrame}
+      [] "nonSystemSchedules" then NewFrame in
+        {GetNonSystemSchedulesCount Frame NewFrame}
+        {GetVMCountsFrame NextArguments NewFrame}
+      [] "nonSystemOperations" then NewFrame in
+        {GetNonSystemOperationsCount Frame NewFrame}
+        {GetVMCountsFrame NextArguments NewFrame}
       [] "systemSchedules" then NewFrame in
-        {GetSchedulesCount Frame NewFrame}
+        {GetSystemSchedulesCount Frame NewFrame}
         {GetVMCountsFrame NextArguments NewFrame}
       [] "systemOperations" then NewFrame in
-        {GetOperationsCount Frame NewFrame}
+        {GetSystemOperationsCount Frame NewFrame}
         {GetVMCountsFrame NextArguments NewFrame}
       [] "gcSchedules" then NewFrame in
         {GetGCExecutionsCount Frame NewFrame}
         {GetVMCountsFrame NextArguments NewFrame}
-      [] "all" then A B C D E in
+      [] "all" then A B C D E F in
         {GetSchedulesCount Frame A}
         {GetOperationsCount A B}
-        {GetSystemSchedulesCount B C}
-        {GetSystemOperationsCount C D}
-        {GetGCExecutionsCount D nil}
+        {GetNonSystemSchedulesCount B C}
+        {GetNonSystemOperationsCount C D}
+        {GetSystemSchedulesCount D E}
+        {GetSystemOperationsCount E F}
+        {GetGCExecutionsCount F nil}
       else
         Frame = nil
         {PrintError "Unexpected vm counter '"#Argument#"'"#TRYHELP}
