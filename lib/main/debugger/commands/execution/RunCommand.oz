@@ -15,18 +15,18 @@ local
   proc {HandleRunN Thing RunN Arguments}
     case Arguments of nil then
       {PrintError "Missing "#Thing#" count"}
+      {DefaultReturn}
     [] CountString|NextArguments then
       Count = {ExtractInput int CountString none $}
     in
       if Count == none then
         {PrintError "Provided first parameter "#Thing#" count '"#CountString#"' is not an integer"}
+        {DefaultReturn}
       else
         {RunN Count}
-        {Boot_Thread.preempt This}
+        {PreemptionReturn}
       end
     end
-
-    {DefaultReturn}
   end
 
   proc {HandleUntil}
@@ -42,6 +42,7 @@ local
       {Boot_Scheduler.runUntilTrackingTriggered}
 
       % Custom return here
+      PreemptionDone = false
       NewWatchedListIds = Ids
     else
       {DefaultReturn}
@@ -61,19 +62,9 @@ in
       {HandleUntil}
     [] "steps" then
       {HandleStepByStep NextArguments}
-    % [] "operationByOperation" then
-    %   {HandleOperationByOperation NextArguments}
-    % [] "obo" then
-    %   {HandleOperationByOperation NextArguments}
-    % [] "stepByStep" then
-    %   {HandleStepByStep NextArguments}
-    % [] "sbs" then
-    %   {HandleStepByStep NextArguments}
-    % [] "untilAlarm" then
-    %   {Cell.assign ModeCell false}
-    %   {Boot_Thread.preempt This}
     else
       {PrintError "Unexpected run option '"#Argument#"'"#TRYHELP}
+      {DefaultReturn}
     end
   end
 end

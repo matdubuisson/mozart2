@@ -51,14 +51,20 @@ define
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
 
-  proc {ProcessCommand ExecutionMode WatchedListIds ?NewWatchedListIds}
+  proc {ProcessCommand ExecutionMode WatchedListIds ?PreemptionDone ?NewWatchedListIds}
     proc {DefaultReturn}
+      PreemptionDone = false
       NewWatchedListIds = WatchedListIds
     end
 
     proc {ContinueReturn Arguments}
       \insert ./commands/execution/ContinueCommand
-      {DefaultReturn}
+    end
+
+    proc {PreemptionReturn}
+      {Boot_Thread.preempt This}
+      PreemptionDone = true
+      NewWatchedListIds = WatchedListIds
     end
   in
     /*
@@ -140,20 +146,21 @@ define
     end
   end
 
-  proc {Loop WatchedListIds}
+  proc {Loop PreemptionDone WatchedListIds}
     ExecutionMode = {Boot_Scheduler.getExecutionMode $}
     IsTrackingTriggered = {Boot_EventManager.isTrackingTriggered $}
 
     proc {CommandReturn}
       NewWatchedListIds
+      PreemptionDone
     in
-      {ProcessCommand ExecutionMode WatchedListIds NewWatchedListIds}
-      {Loop NewWatchedListIds}
+      {ProcessCommand ExecutionMode WatchedListIds PreemptionDone NewWatchedListIds}
+      {Loop PreemptionDone NewWatchedListIds}
     end
 
     proc {DefaultReturn}
       {Boot_Thread.preempt This}
-      {Loop WatchedListIds}
+      {Loop true WatchedListIds}
     end
   in
     % {PrintInfo "Execution mode: "#ExecutionMode}
@@ -167,7 +174,7 @@ define
       if IsTrackingTriggered then
         {PrintWarning "Tracking triggered"}
 
-        if WatchedListIds \= nil then
+        if PreemptionDone andthen WatchedListIds \= nil then
           Lists = {Boot_Introspection.getLists WatchedListIds $}
         in
           if Lists \= nil then
@@ -212,7 +219,7 @@ in
     {Boot_Thread.setPreemptible This false}
   end
 
-  {Loop nil}
+  {Loop true nil}
 end
 
 
