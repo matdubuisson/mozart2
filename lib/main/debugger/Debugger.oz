@@ -92,6 +92,8 @@ define
         case Command of "this" then
           {PrintInfo "Debugger thread id: "#ThisId}
           {DefaultReturn}
+        [] "help" then
+          \insert ./commands/HelpCommand
         [] "count" then
           \insert ./commands/introspection/CountCommand
           {DefaultReturn}
@@ -221,6 +223,9 @@ in
 
   {Loop true nil}
 end
+
+
+
 
 
 
