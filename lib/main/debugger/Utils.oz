@@ -148,8 +148,13 @@ in
 end
 
 proc {GetPercent Count Scale ?Percent ?DotPercent}
-  Percent = (Count * 100) div Scale
-  DotPercent = (Count * 10000) mod Scale
+  if Scale > 0 then
+    Percent = (Count * 100) div Scale
+    DotPercent = (Count * 10000) mod Scale
+  else
+    Percent = 0
+    DotPercent = 0
+  end
 end
 
 proc {GetPercentString Count Scale ?String}
