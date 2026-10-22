@@ -29,41 +29,6 @@ namespace mozart {
 
 namespace builtins {
 
-UnstableNode ModIntrospection::buildReachabilityMapRecord(VM vm, Introspection::IdToIdsMap& map) {
-  // for (Introspection::IdToIdsMap::iterator iter = map.begin();
-  //   iter != map.end(); ++iter) {
-  //   size_t fromId = iter->first;
-  //   Introspection::IdsVector vector = iter->second;
-  //   char numbers[vector.size()][21];
-
-  //   size_t i = 0;
-  //   for (Introspection::IdsVector::iterator iter2 = vector.begin();
-  //     iter2 != vector.end(); ++iter2) {
-  //     numbers[i++] = std::to_string(*iter2).c_str();
-      
-  //   }
-  // }
-  return build(vm, "none");
-}
-
-UnstableNode ModIntrospection::buildReachabilityGraphRecord(VM vm, Introspection::ReachabilityGraph& graph) {
-  return buildRecord(vm,
-    buildArity(vm,
-      "graph",
-      "threadToVariables",
-      "variableToThreads"
-    ),
-    buildReachabilityMapRecord(vm, graph.threadToVariables),
-    buildReachabilityMapRecord(vm, graph.variableToThreads)
-  );
-}
-
-void ModIntrospection::GetReachabilityGraph::call(VM vm, Out result) {
-  Introspection::ReachabilityGraph graph = vm->getIntrospection()
-    .computeReachabilityGraph(vm);
-  result = buildReachabilityGraphRecord(vm, graph);
-}
-
 }
 
 }

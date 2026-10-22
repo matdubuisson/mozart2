@@ -680,17 +680,15 @@ public:
 
   /* ========== Reachability graph ========== */
 
-  static
-  UnstableNode buildReachabilityMapRecord(VM vm, Introspection::IdToIdsMap& map);
-
-  static
-  UnstableNode buildReachabilityGraphRecord(VM vm, Introspection::ReachabilityGraph& graph);
-
   class GetReachabilityGraph: public Builtin<GetReachabilityGraph> {
   public:
     GetReachabilityGraph(): Builtin("getReachabilityGraph") {}
 
-    static void call(VM vm, Out result);
+    static void call(VM vm, Out result) {
+      Introspection::ReachabilityGraph graph = vm->getIntrospection()
+        .computeReachabilityGraph(vm);
+      result = Introspection::buildReachabilityGraph(vm, graph);
+    }
   };
 
   /* ========== Structures list ========== */

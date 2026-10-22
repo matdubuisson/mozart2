@@ -1386,6 +1386,9 @@ public:
     IdToIdsMap threadToVariables;
     IdToIdsMap variableToThreads;
   };
+
+  static inline
+  UnstableNode buildReachabilityGraph(VM vm, const ReachabilityGraph& graph);
   
 private:
   inline

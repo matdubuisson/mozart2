@@ -934,24 +934,65 @@ Introspection::IdToVariableStateMap Introspection::getVariables(VM vm) {
 
 /* ========== Reachability graph ========== */
 
+UnstableNode Introspection::buildReachabilityGraph(VM vm, const ReachabilityGraph& graph) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "graph",
+      "threadToVariables",
+      "variableToThreads"
+    ),
+    buildMap<Id, IdsVector>(vm, graph.threadToVariables),
+    buildMap<Id, IdsVector>(vm, graph.variableToThreads)
+  );
+}
+
 void Introspection::computeReachabilityGraph(VM vm, ReachabilityGraph& graph, size_t variableId,
   Introspection::Pendings& pendings) {
-  for (Pendings::iterator iter = pendings.begin(); iter != pendings.end(); ++iter) {
-    RichNode node = RichNode(*static_cast<StableNode*>(*iter));
-    if (node.is<ReifiedThread>()) {
-      Runnable* runnable = getArgument<Runnable*>(vm, node);
-      size_t threadId = runnable->getId();
-
-      if (graph.variableToThreads.contains(variableId))
-        graph.variableToThreads.insert({variableId, {threadId}});
-      else
-        graph.variableToThreads.at(variableId).push_back(threadId);
+  for (StableNode* stableNode : pendings) {
+    RichNode node = RichNode(*stableNode);
+    if (stableNode->type() == ReifiedThread::type()) {
+      Runnable* runnable = getArgument<Runnable*>(vm, RichNode(stableNode));
+      graph.variableToThreads.at(variableId).push_back(runnable->getId());
     }
   }
 }
 
 Introspection::ReachabilityGraph Introspection::computeReachabilityGraph(VM vm) {
   ReachabilityGraph graph;
+
+  doForEachThread(vm, allRunnables,
+    [this, &graph](VM vm, Runnable* runnable) {
+      Id threadId = runnable->getId();
+
+      if (!graph.threadToVariables.contains(threadId))
+        graph.threadToVariables.insert({threadId, {}});
+      
+      this->doForEachVariable(vm, runnable,
+        [this, &graph, threadId](VM vm, Runnable* runnable, RichNode node) {
+          Id variableId = SIZE_MAX;
+          Pendings* pendings = nullptr;
+
+          if (node.isNullNode()) return;
+          else if (node.is<Variable>()) {
+            Variable variable = node.getAs<Variable>();
+            variableId = variable.getId();
+            pendings = &variable.getPendings(vm);
+          } else if (node.is<ReadOnlyVariable>()) {
+            ReadOnlyVariable readOnlyVariable = node.getAs<ReadOnlyVariable>();
+            variableId = readOnlyVariable.getId();
+            pendings = &readOnlyVariable.getPendings(vm);
+          } else return;
+
+          if (!graph.variableToThreads.contains(variableId))
+            graph.variableToThreads.insert({variableId, {}});
+
+          this->computeReachabilityGraph(vm, graph, variableId, *pendings);
+          
+          graph.threadToVariables.at(threadId).push_back(variableId);
+        }
+      );
+    }
+  );
 
   doForEachNode(vm,
     [](VM vm, Runnable* runnable) {
@@ -976,9 +1017,9 @@ Introspection::ReachabilityGraph Introspection::computeReachabilityGraph(VM vm) 
       } else return;
       
       if (graph.threadToVariables.contains(threadId))
-        graph.threadToVariables.insert({threadId, {variableId}});
-      else
         graph.threadToVariables.at(threadId).push_back(variableId);
+      else
+        graph.threadToVariables.insert({threadId, {variableId}});
     }
   );
 
