@@ -113,6 +113,10 @@ define
           \insert ./commands/introspection/VariablesCommand
           {DefaultReturn}
 
+        % Reachability analysis
+        [] "graph" then
+          \insert ./commands/reachability/GraphCommand
+
         % Journal and event management
         [] "journal" then
           \insert ./commands/JournalCommand
@@ -223,6 +227,11 @@ in
 
   {Loop true nil}
 end
+
+
+
+
+
 
 
 
