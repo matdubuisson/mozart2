@@ -45,6 +45,7 @@ local
     Statistics = {Boot_Introspection.getThreadStatistics Thread $}
   in
     case Statistics of statistics(
+      id: _
       runsCount: RunsCount
       resumesCount: ResumesCount
       suspendsCount: SuspendsCount
@@ -72,6 +73,7 @@ local
     Nodes = {Boot_Introspection.getThreadNodesCounts Thread $}
   in
     case Nodes of nodes(
+      id: _
       variableNodesCount: VariableNodesCount
       valueNodesCount: ValueNodesCount
       structuralNodesCount: StructuralNodesCount
