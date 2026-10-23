@@ -15,6 +15,7 @@ in
     proc {ForI I}
       if I < Length then
         {Boot_System.printVS " " false false}
+        {ForI I + 1}
       else skip end
     end
   in
@@ -34,7 +35,7 @@ in
   end
 
   proc {PrintLn String}
-    {Print String#"\n"}
+    {Boot_System.printVS String false true}
   end
 
   proc {PrintTab Character Size}
