@@ -86,7 +86,8 @@ std::string DebugInfo::toString(VM vm) {
 // StackEntry //
 ////////////////
 
-StackEntry::StackEntry(GR gr, StackEntry& from):
+StackEntry::StackEntry(GR gr, StackEntry& from) :
+  groupIdentity(GroupIdentity(SIZE_MAX, SIZE_MAX)),
   debugEntry(gr, from.debugEntry)
 {
   if (from.abstraction == nullptr)
@@ -1302,7 +1303,7 @@ void Thread::pushFrame(VM vm, StableNode* abstraction,
                        StaticArray<StableNode> kregs,
                        DebugEntry&& debugEntry) {
   stack.push_front_new(vm, abstraction, PC, yregCount, yregs, gregs, kregs,
-                       std::move(debugEntry));
+                       getGroupIdentity(), std::move(debugEntry));
 }
 
 void Thread::popFrame(VM vm, StableNode*& abstraction,
@@ -1321,6 +1322,7 @@ void Thread::popFrame(VM vm, StableNode*& abstraction,
   yregs = entry.yregs;
   gregs = entry.gregs;
   kregs = entry.kregs;
+  setGroupIdentity(entry.groupIdentity);
   debugEntry = std::move(entry.debugEntry);
 
   stack.remove_front(vm);
@@ -1400,11 +1402,14 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
   yregs = nullptr;
   gregs = Gs;
   kregs = Ks;
+  followIdentity(Callable(*abstraction).getIdentity(vm));
 
   // Test for preemption
   // (there is no infinite execution path that does not traverse a call)
   if (isPreemptible() && vm->testPreemption())
     preempt();
+  else vm->announceRunnable(this,
+    VirtualMachineEventManager::RunnableAnnounce::Updated);
 }
 
 void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,

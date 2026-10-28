@@ -76,14 +76,17 @@ struct StackEntry {
   /** Create a regular stack entry */
   StackEntry(StableNode* abstraction, ProgramCounter PC, size_t yregCount,
     StaticArray<UnstableNode> yregs, StaticArray<StableNode> gregs,
-    StaticArray<StableNode> kregs, DebugEntry&& debugEntry):
+    StaticArray<StableNode> kregs, GroupIdentity groupIdentity, DebugEntry&& debugEntry):
     abstraction(abstraction), PC(PC), yregCount(yregCount),
-    yregs(yregs), gregs(gregs), kregs(kregs), debugEntry(std::move(debugEntry)) {}
+    yregs(yregs), gregs(gregs), kregs(kregs),
+    groupIdentity(groupIdentity), debugEntry(std::move(debugEntry)) {}
 
   /** Create a catch stack entry */
   StackEntry(ProgramCounter PC, DebugEntry&& debugEntry):
     abstraction(nullptr), PC(PC), yregCount(0),
-    yregs(nullptr), gregs(nullptr), kregs(nullptr), debugEntry(std::move(debugEntry)) {}
+    yregs(nullptr), gregs(nullptr), kregs(nullptr),
+    groupIdentity(GroupIdentity(SIZE_MAX, SIZE_MAX)),
+    debugEntry(std::move(debugEntry)) {}
 
   inline
   StackEntry(GR gr, StackEntry& from);
@@ -112,6 +115,8 @@ struct StackEntry {
 
   StaticArray<StableNode> gregs; // Irrelevant during GR
   StaticArray<StableNode> kregs; // Irrelevant during GR
+
+  GroupIdentity groupIdentity;
 
   // Debugging information
   DebugEntry debugEntry;
