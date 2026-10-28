@@ -87,12 +87,32 @@ void AdvancedIdentity::copyIdentity(RichNode self, VM vm, const AdvancedIdentity
   copyIdentity(other);
 }
 
+void AdvancedIdentity::followIdentity(RichNode self, VM vm, const Identity& other) {
+  followIdentity(other);
+}
+
+void AdvancedIdentity::followIdentity(RichNode self, VM vm, const Identity* other) {
+  followIdentity(other);
+}
+
 void AdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity& other, bool newGeneration) {
   followIdentity(other, newGeneration);
 }
 
 void AdvancedIdentity::followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration) {
   followIdentity(other, newGeneration);
+}
+
+GroupIdentity AdvancedIdentity::getGroupIdentity(RichNode self, VM vm) {
+  return getGroupIdentity(self, vm);
+}
+
+void AdvancedIdentity::resetGroupIdentity(RichNode self, VM vm, size_t kindId) {
+  resetGroupIdentity(kindId);
+}
+
+void AdvancedIdentity::setGroupIdentity(RichNode self, VM vm, const GroupIdentity group) {
+  setGroupIdentity(group);
 }
 
 ////////////////////////

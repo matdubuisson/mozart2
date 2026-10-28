@@ -263,6 +263,37 @@ public:
    * @tparam OtherIdentified The class defining the identity template
    * @param other Another instance of a different identity template
    */
+  void followIdentity(const Identity& other) {
+    assert(_kindId == SIZE_MAX);
+    if (_kindId != other.getId()) { // For lazy/recursive function, we re-enter the same function every time
+      _kindId = other.getId();
+      _generationId = 0;
+    } else _generationId++;
+  }
+
+  inline
+  void followIdentity(RichNode self, VM vm, const Identity& other);
+
+  /**
+   * @brief Follow the identify of an other advanced identity template
+   * 
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other A pointer on another instance of a different identity template
+   */
+  void followIdentity(const Identity* other) {
+    assert(other != nullptr);
+    followIdentity(*other);
+  }
+  
+  inline
+  void followIdentity(RichNode self, VM vm, const Identity* other);
+
+  /**
+   * @brief Follow the identify of an other advanced identity template
+   * 
+   * @tparam OtherIdentified The class defining the identity template
+   * @param other Another instance of a different identity template
+   */
   void followIdentity(const AdvancedIdentity& other, bool newGeneration) {
     assert(_kindId == SIZE_MAX);
     _kindId = other.getKindId();
@@ -290,9 +321,44 @@ public:
   inline
   void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
 
+  struct GroupIdentity {
+    explicit GroupIdentity(size_t kindId, size_t generationId) :
+      kindId(kindId), generationId(generationId) {}
+    
+    size_t kindId, generationId;
+  };
+
+  inline
+  GroupIdentity getGroupIdentity() {
+    return GroupIdentity(_kindId, _generationId);
+  }
+
+  inline
+  GroupIdentity getGroupIdentity(RichNode self, VM vm);
+
+  inline
+  void resetGroupIdentity(size_t kindId) {
+    _kindId = kindId;
+    _generationId = 0;
+  }
+
+  inline
+  void resetGroupIdentity(RichNode self, VM vm, size_t kindId);
+
+  inline
+  void setGroupIdentity(const GroupIdentity group) {
+    _kindId = group.kindId;
+    _generationId = group.generationId;
+  }
+
+  inline
+  void setGroupIdentity(RichNode self, VM vm, const GroupIdentity group);
+
 private:
   size_t _kindId, _generationId;
 };
+
+using GroupIdentity = AdvancedIdentity::GroupIdentity;
 
 ////////////////////////
 // ReferencedIdentity //
