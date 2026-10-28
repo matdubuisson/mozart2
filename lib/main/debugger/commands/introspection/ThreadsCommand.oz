@@ -15,6 +15,7 @@ local
         "Id      " "KindId  " "GenerationId" % Ids
         "Priority" % Importance
         "Runnable" "Terminated" "Dead " "Preempted" "Preemptible" % State
+        flexible("Abstraction")
       ]
       Threads
       proc {$ Thread ?Record} Record = {Boot_Introspection.getThreadState Thread $} end
@@ -25,6 +26,7 @@ local
           kindId: KindId
           generationId: GenerationId
 
+          abstraction: Abstraction
           priority: Priority
 
           runnable: Runnable
@@ -37,6 +39,7 @@ local
             {Int.toString Id $}
             {Int.toString KindId $}
             {Int.toString GenerationId $}
+
             {Atom.toString Priority $}
 
             {Bool.toString Runnable $}
@@ -44,6 +47,8 @@ local
             {Bool.toString Dead $}
             {Bool.toString Preempted $}
             {Bool.toString Preemptible $}
+
+            {Atom.toString Abstraction $}
           ]
         end
       end}

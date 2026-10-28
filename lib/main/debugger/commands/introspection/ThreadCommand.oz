@@ -8,6 +8,7 @@ local
       "<identity> depth" "display the thread stack depth"
       "<identity> register <type> (<depth>=0)" "display the state of a specific register owned by the specified thread"
       "<identity> registers" "display registers' nodes proportions towards the thread and the virtual machine"
+      "<identity> abstractions" "display the abstractions currently entered by the thread"
     ]}
   end
 
@@ -18,6 +19,8 @@ local
       id: _
       kindId: KindId
       generationId: GenerationId
+
+      abstraction: Abstraction
       priority: Priority
 
       runnable: Runnable
@@ -30,6 +33,8 @@ local
         "Id" Id
         "Kind Id" KindId
         "Generation Id" GenerationId
+
+        "Abstraction" Abstraction
         "Priority" Priority
 
         "Is runnable" {Bool.toString Runnable $}
@@ -293,6 +298,36 @@ local
     {DisplayFrame "Thread registers (thread%) (vm%)" {GetFrame $}}
   end
 
+  proc {DisplayAbstractions Id Thread}
+    Abstractions = {Boot_Introspection.getThreadAbstractions Thread $}
+  in
+    {DisplayCSV
+      [
+        "KindId" "GenerationId"
+        "AbstractionId"
+        flexible("Name")
+      ]
+      Abstractions
+      proc {$ Abstraction ?Record} Record = Abstraction end
+      proc {$ Abstraction ?Result} Result = true end
+      proc {$ Abstraction ?Result}
+        case Abstraction of abstraction(
+          id: AbstractionId
+          name: Name
+
+          kindId: KindId
+          generationId: GenerationId
+        ) then
+          Result = [
+            {Int.toString KindId $}
+            {Int.toString GenerationId $}
+            {Int.toString AbstractionId $}
+            {Atom.toString Name $}
+          ]
+        end
+      end}
+  end
+
   proc {HandleOption Id Thread Arguments}
     case Arguments of nil then
       {DisplayOptions}
@@ -311,6 +346,8 @@ local
         {DisplayRegister Id Thread NextArguments}
       [] "registers" then
         {DisplayRegisters Id Thread}
+      [] "abstractions" then
+        {DisplayAbstractions Id Thread}
       else
         {PrintInvalidOptionError Argument}
       end
