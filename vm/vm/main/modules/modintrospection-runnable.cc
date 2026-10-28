@@ -111,6 +111,11 @@ void ModIntrospection::GetThreadNodesCounts::call(VM vm, In threadNode, Out resu
     introspection.getNodesCounts(vm, runnable));
 }
 
+void ModIntrospection::GetThreadAbstractions::call(VM vm, In threadNode, Out result) {
+  Runnable* runnable = getArgument<Runnable*>(vm, threadNode);
+  result = Introspection::buildThreadAbstractions(vm, runnable);
+}
+
 }
 
 }

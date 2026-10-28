@@ -209,7 +209,7 @@ Runnable* Introspection::getNextScheduledThread(VM vm, bool includeSystemThreads
 
 /* ========== Threads stats ========== */
 
-UnstableNode Introspection::buildThreadState(VM vm, const Runnable* runnable) {
+UnstableNode Introspection::buildThreadState(VM vm, Runnable* runnable) {
   UnstableNode id = build(vm, runnable->getId());
   UnstableNode kindId = build(vm, runnable->getKindId());
   UnstableNode generationId = build(vm, runnable->getGenerationId());
@@ -228,9 +228,23 @@ UnstableNode Introspection::buildThreadState(VM vm, const Runnable* runnable) {
     default: assert(false);
   }
 
+  UnstableNode abstraction;
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    if (!thread->stack.empty()) {
+      StableNode* node = thread->
+      stack.front().abstraction;
+      assert(node != nullptr);
+      atom_t printName;
+      UnstableNode debugData;
+      Callable(*node).getDebugInfo(vm, printName, debugData);
+      abstraction = build(vm, printName);
+    } else abstraction = build(vm, "none");
+  } else abstraction = build(vm, "none");
+
   return buildRecord(vm,
     buildArity(vm,
       "state",
+      "abstraction",
       "dead",
       "generationId",
       "id",
@@ -241,6 +255,7 @@ UnstableNode Introspection::buildThreadState(VM vm, const Runnable* runnable) {
       "runnable",
       "terminated"
     ),
+    abstraction,
     isDead,
     generationId,
     id,
@@ -296,6 +311,40 @@ UnstableNode Introspection::buildThreadsCounts(VM vm, const ThreadsCounts& count
     build(vm, counts.passiveThreadsCount),
     build(vm, counts.threadsCount)
   );
+}
+
+UnstableNode Introspection::buildThreadAbstractions(VM vm, Runnable* runnable) {
+  OzListBuilder builder(vm);
+
+  if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
+    for (StackEntry& entry : thread->stack) {
+      StableNode* node = entry.abstraction;
+      if (node != nullptr) {
+        atom_t printName;
+        UnstableNode debugInfo;
+        Callable callable = Callable(*node);
+        callable.getDebugInfo(vm, printName, debugInfo);
+
+        builder.push_back(vm,
+          buildRecord(vm,
+            buildArity(vm,
+              "abstraction",
+              "generationId",
+              "id",
+              "kindId",
+              "name"
+            ),
+            build(vm, entry.groupIdentity.generationId),
+            build(vm, callable.getId(vm)),
+            build(vm, entry.groupIdentity.kindId),
+            build(vm, printName)
+          )
+        );
+      }
+    }
+  }
+
+  return builder.get(vm);
 }
 
 /* ========== Threads getters ========== */

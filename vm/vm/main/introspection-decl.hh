@@ -246,7 +246,7 @@ public:
   /* ========== Threads stats ========== */
 
   static inline
-  UnstableNode buildThreadState(VM vm, const Runnable* runnable);
+  UnstableNode buildThreadState(VM vm, Runnable* runnable);
 
   static inline
   UnstableNode buildThreadStatistics(VM vm, const Runnable* runnable);
@@ -260,6 +260,9 @@ public:
 
   static inline
   UnstableNode buildThreadsCounts(VM vm, const ThreadsCounts& counts);
+
+  static inline
+  UnstableNode buildThreadAbstractions(VM vm, Runnable* runnable);
 
 public:
   /* ========== Threads getters ========== */

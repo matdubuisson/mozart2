@@ -217,6 +217,15 @@ public:
     static void call(VM vm, In threadNode, Out result);
   };
 
+  // Thread abstractions list
+
+  class GetThreadAbstractions: public Builtin<GetThreadAbstractions> {
+  public:
+    GetThreadAbstractions(): Builtin("getThreadAbstractions") {}
+
+    static void call(VM vm, In threadNode, Out result);
+  };
+
   /* ========== Nodes ========== */
 
   // Nodes counters
