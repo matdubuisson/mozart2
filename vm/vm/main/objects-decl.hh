@@ -43,7 +43,8 @@ namespace mozart {
 /**
  * Object
  */
-class Object: public DataType<Object>, public WithHome,
+class Object: public Identity,
+  public DataType<Object>, public WithHome,
   StoredWithArrayOf<UnstableNode> {
 private:
   // defined in coredatatypes.cc

@@ -314,8 +314,18 @@ struct Interface<BuiltinCallable>:
 class Callable;
 template<>
 struct Interface<Callable>:
+  // They must all have at least a simple identity
   ImplementedBy<Abstraction, Object, BuiltinProcedure>,
   NoAutoReflectiveCalls {
+
+  inline
+  size_t getId(RichNode self, VM vm) {
+    return SIZE_MAX;
+  }
+
+  Identity& getIdentity(RichNode self, VM vm) {
+    raiseTypeError(vm, "Identity.getIdentity", self);
+  }
 
   inline
   bool isCallable(RichNode self, VM vm);
