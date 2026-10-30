@@ -14,6 +14,7 @@ local
       "scheduled <authorId|none> <victimIds>" "detect a scheduled thread from the last schedule"
       "unscheduled <authorId|none> <victimIds>" "detect a unscheduled thread from the last schedule"
       "rescheduled <authorId|none> <victimIds>" "detect a rescheduled thread from the last schedule"
+      "calling <authorId|none> <victimIds>" "detect a thread calling a certain abstraction, procedure or object"
     ]}
   end
 
@@ -87,6 +88,8 @@ local
         {HandleCase runnable unscheduled NextArguments}
       [] "rescheduled" then
         {HandleCase runnable rescheduled NextArguments}
+      [] "calling" then
+        {HandleCase runnable calling NextArguments}
       else
         {PrintUnexpectedOptionError Argument}
       end
