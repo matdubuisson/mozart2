@@ -71,9 +71,12 @@ void ModEventManager::Track::call(VM vm, In type, In category, In authorId, In v
     } else if (matches(vm, category, "rescheduled")) {
       eventManager.track(
         RunnableTracking(id, ids, RunnableAnnounce::Rescheduled));
+    } else if (matches(vm, category, "calling")) {
+      eventManager.track(
+        RunnableTracking(id, ids, RunnableAnnounce::Calling));
     } else {
       raiseTypeError(vm,
-        "created, updated, collected, scheduled, unscheduled or rescheduled", category);
+        "created, updated, collected, scheduled, unscheduled, rescheduled or calling", category);
     }
   } else if (matches(vm, type, "variable")) {
     if (matches(vm, category, "created")) {
@@ -127,9 +130,11 @@ void ModEventManager::Untrack::call(VM vm, In type, In category, In ruleIndex) {
       eventManager.untrack(RunnableAnnounce::Unscheduled, index);
     } else if (matches(vm, category, "rescheduled")) {
       eventManager.untrack(RunnableAnnounce::Rescheduled, index);
+    } else if (matches(vm, category, "calling")) {
+      eventManager.untrack(RunnableAnnounce::Calling, index);
     } else {
       raiseTypeError(vm,
-        "created, updated, collected, scheduled, unscheduled or rescheduled", category);
+        "created, updated, collected, scheduled, unscheduled, rescheduled or calling", category);
     }
   } else if (matches(vm, type, "variable")) {
     if (matches(vm, category, "created")) {
