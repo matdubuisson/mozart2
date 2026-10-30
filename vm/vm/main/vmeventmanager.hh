@@ -84,6 +84,7 @@ UnstableNode VirtualMachineEventManager::buildRunnableEventsVectors(VM vm,
   return buildRecord(vm,
     buildArity(vm,
       "events",
+      "calling",
       "collected",
       "created",
       "rescheduled",
@@ -91,6 +92,7 @@ UnstableNode VirtualMachineEventManager::buildRunnableEventsVectors(VM vm,
       "unscheduled",
       "updated"
     ),
+    buildRunnableEventsVector(vm, vectors.calling, Calling),
     buildRunnableEventsVector(vm, vectors.collected, Collected),
     buildRunnableEventsVector(vm, vectors.created, Created),
     buildRunnableEventsVector(vm, vectors.rescheduled, Rescheduled),
@@ -125,6 +127,7 @@ UnstableNode VirtualMachineEventManager::buildRunnableTracks(VM vm,
   OzListBuilder scheduled(vm);
   OzListBuilder unscheduled(vm);
   OzListBuilder rescheduled(vm);
+  OzListBuilder calling(vm);
 
   Id index = 0;
   for (const RunnableTracking& track : vector) {
@@ -147,6 +150,9 @@ UnstableNode VirtualMachineEventManager::buildRunnableTracks(VM vm,
       case Rescheduled:
         rescheduled.push_back(vm, buildRunnableTrack(vm, track, index));
         break;
+      case Calling:
+        calling.push_back(vm, buildRunnableTrack(vm, track, index));
+        break;
     }
     index++;
   }
@@ -154,6 +160,7 @@ UnstableNode VirtualMachineEventManager::buildRunnableTracks(VM vm,
   return buildRecord(vm,
     buildArity(vm,
       "events",
+      "calling",
       "collected",
       "created",
       "rescheduled",
@@ -161,6 +168,7 @@ UnstableNode VirtualMachineEventManager::buildRunnableTracks(VM vm,
       "unscheduled",
       "updated"
     ),
+    calling.get(vm),
     collected.get(vm),
     created.get(vm),
     rescheduled.get(vm),
@@ -180,7 +188,8 @@ bool VirtualMachineEventManager::matchTracking(
   else if (tracking.victimIds.empty())
     return true;
   else
-    return contains(tracking.victimIds, event.runnable->getId());
+    return contains(tracking.victimIds, event.runnable->getId())
+      || contains(tracking.victimIds, event.runnable->getKindId());
 }
 
 /** ================ Variable events ================ */

@@ -88,7 +88,8 @@ public:
     Collected,
     Scheduled,
     Unscheduled,
-    Rescheduled
+    Rescheduled,
+    Calling
   };
 
   struct RunnableEvent {
@@ -126,6 +127,7 @@ public:
     RunnableEventsVector scheduled;
     RunnableEventsVector unscheduled;
     RunnableEventsVector rescheduled;
+    RunnableEventsVector calling;
 
     void clear() {
       created.clear();
@@ -134,6 +136,7 @@ public:
       scheduled.clear();
       unscheduled.clear();
       rescheduled.clear();
+      calling.clear();
     }
   };
 
@@ -166,6 +169,9 @@ public:
       case Rescheduled:
         runnableEventsVectors.rescheduled.push_back(RunnableEvent(getCurrentThread(), runnable));
         break;
+      case Calling:
+        runnableEventsVectors.calling.push_back(RunnableEvent(getCurrentThread(), runnable));
+        break;
       default: assert(false);
     }
   }
@@ -184,6 +190,8 @@ public:
         return runnableEventsVectors.unscheduled;
       case Rescheduled:
         return runnableEventsVectors.rescheduled;
+      case Calling:
+        return runnableEventsVectors.calling;
       default: assert(false); return getRunnables(Created);
     }
   }
