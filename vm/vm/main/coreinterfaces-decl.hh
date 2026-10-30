@@ -39,6 +39,7 @@ struct Interface<Identifiable>:
   ImplementedBy<ReifiedThread,
     Variable, ReadOnlyVariable, OptVar,
     Cons, Tuple, Record,
+    Abstraction, Object, BuiltinProcedure,
     // TODO : Add Abstraction to it but Abstraction inherits Identity but not AdvancedIdentity however AdvancedIdentifiable(abstraction).is(vm) == true thus the system was bugged.
     Reference>,
   NoAutoWait, NoAutoReflectiveCalls {
