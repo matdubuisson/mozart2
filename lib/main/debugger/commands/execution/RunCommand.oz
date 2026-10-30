@@ -38,6 +38,7 @@ local
     Ids = {ExtractIdentities Arguments $}
   in
     if {List.is Ids $} then
+      {Boot_EventManager.track runnable calling none Ids}
       {Boot_EventManager.track variable bound none Ids}
       {Boot_Scheduler.runUntilTrackingTriggered}
 
