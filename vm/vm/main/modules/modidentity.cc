@@ -41,16 +41,9 @@ void ModIdentity::GetId::call(VM vm, In object, Out result) {
 void ModIdentity::SetId::call(VM vm, In object, In idNode) {
   size_t id = getArgument<size_t>(vm, idNode);
 
-  if (object.is<OptVar>()) {
-    UnstableNode variable = Variable::build(vm);
-    Identifiable(variable).setId(vm, id);
-    DataflowVariable(object).bind(vm, RichNode(variable));
-  } else {
-    Identifiable identifiable = Identifiable(object);
-    if (identifiable.is(vm)) {
-      identifiable.setId(vm, id);
-    }
-  }
+  Identifiable identifiable = Identifiable(object);
+  if (identifiable.is(vm))
+    identifiable.setId(vm, id);
 }
 
 void ModIdentity::GetIdFromName::call(VM vm, In nape, Out result) {
