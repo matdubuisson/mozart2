@@ -1409,7 +1409,7 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
   if (isPreemptible() && vm->testPreemption())
     preempt();
   else vm->announceRunnable(this,
-    VirtualMachineEventManager::RunnableAnnounce::Updated);
+    VirtualMachineEventManager::RunnableAnnounce::Calling);
 }
 
 void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,
