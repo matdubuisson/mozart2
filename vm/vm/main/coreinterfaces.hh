@@ -100,6 +100,18 @@ bool Interface<Callable>::isProcedure(RichNode self, VM vm) {
   return false;
 }
 
+bool Interface<Callable>::isAbstraction(RichNode self, VM vm) {
+  if (self.is<ReflectiveEntity>()) {
+    bool result;
+    if (self.as<ReflectiveEntity>().reflectiveCall(
+          vm, "$intf$::Callable::isAbstraction",
+          "isAbstraction", ozcalls::out(result)))
+      return result;
+  }
+
+  return false;
+}
+
 size_t Interface<Callable>::procedureArity(RichNode self, VM vm) {
   if (self.is<ReflectiveEntity>()) {
     size_t result;

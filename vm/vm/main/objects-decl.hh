@@ -129,6 +129,10 @@ public:
     return false;
   }
 
+  bool isAbstraction(VM vm) {
+    return false;
+  }
+
   inline
   size_t procedureArity(RichNode self, VM vm);
 

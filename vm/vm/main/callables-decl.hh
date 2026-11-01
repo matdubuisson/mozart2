@@ -120,6 +120,10 @@ public:
     return true;
   }
 
+  bool isAbstraction(VM vm) {
+    return false;
+  }
+
   inline
   size_t procedureArity(VM vm);
 
@@ -194,6 +198,10 @@ public:
   }
 
   bool isProcedure(VM vm) {
+    return true;
+  }
+
+  bool isAbstraction(VM vm) {
     return true;
   }
 

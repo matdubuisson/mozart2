@@ -335,6 +335,9 @@ struct Interface<Callable>:
   bool isProcedure(RichNode self, VM vm);
 
   inline
+  bool isAbstraction(RichNode self, VM vm);
+
+  inline
   size_t procedureArity(RichNode self, VM vm);
 
   inline
