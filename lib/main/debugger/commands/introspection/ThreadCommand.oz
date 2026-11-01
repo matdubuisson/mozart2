@@ -12,11 +12,11 @@ local
     ]}
   end
 
-  proc {DisplayState Id Thread}
+  proc {DisplayState Thread}
     State = {Boot_Introspection.getThreadState Thread $}
   in
     case State of state(
-      id: _
+      id: Id
       kindId: KindId
       generationId: GenerationId
 
@@ -46,11 +46,11 @@ local
     end
   end
 
-  proc {DisplayStatistics Id Thread}
+  proc {DisplayStatistics Thread}
     Statistics = {Boot_Introspection.getThreadStatistics Thread $}
   in
     case Statistics of statistics(
-      id: _
+      id: Id
       runsCount: RunsCount
       resumesCount: ResumesCount
       suspendsCount: SuspendsCount
@@ -74,11 +74,11 @@ local
     end
   end
 
-  proc {DisplayNodes Id Thread}
+  proc {DisplayNodes Thread}
     Nodes = {Boot_Introspection.getThreadNodesCounts Thread $}
   in
     case Nodes of nodes(
-      id: _
+      id: Id
       variableNodesCount: VariableNodesCount
       valueNodesCount: ValueNodesCount
       structuralNodesCount: StructuralNodesCount
@@ -114,13 +114,13 @@ local
     end
   end
 
-  proc {DisplayDepth Id Thread}
+  proc {DisplayDepth Thread}
     Depth = {Boot_Introspection.getThreadStackDepth Thread $}
   in
-    {PrintInfo "Thread "#Id#" stack depth : "#Depth}
+    {PrintInfo "Thread "#{Boot_Thread.getId Thread $}#" stack depth : "#Depth}
   end
 
-  proc {DisplayRegister Id Thread Arguments}
+  proc {DisplayRegister Thread Arguments}
     StackDepth = {Boot_Introspection.getThreadStackDepth Thread $}
 
     proc {DisplayOptions}
@@ -245,7 +245,7 @@ local
     end
   end
 
-  proc {DisplayRegisters Id Thread}
+  proc {DisplayRegisters Thread}
     VMNodesCount = {Boot_Introspection.getNodesCount $}
     NodesCount = {Boot_Introspection.getThreadNodesCount Thread $}
     StackDepth = {Boot_Introspection.getThreadStackDepth Thread $}
@@ -298,7 +298,7 @@ local
     {DisplayFrame "Thread registers (thread%) (vm%)" {GetFrame $}}
   end
 
-  proc {DisplayAbstractions Id Thread}
+  proc {DisplayAbstractions Thread}
     Abstractions = {Boot_Introspection.getThreadAbstractions Thread $}
   in
     {DisplayCSV
@@ -335,19 +335,19 @@ local
       case Argument of "help" then
         {DisplayOptions}
       [] "state" then
-        {DisplayState Id Thread}
+        {DisplayState Thread}
       [] "statistics" then
-        {DisplayStatistics Id Thread}
+        {DisplayStatistics Thread}
       [] "nodes" then
-        {DisplayNodes Id Thread}
+        {DisplayNodes Thread}
       [] "depth" then
-        {DisplayDepth Id Thread}
+        {DisplayDepth Thread}
       [] "register" then
-        {DisplayRegister Id Thread NextArguments}
+        {DisplayRegister Thread NextArguments}
       [] "registers" then
-        {DisplayRegisters Id Thread}
+        {DisplayRegisters Thread}
       [] "abstractions" then
-        {DisplayAbstractions Id Thread}
+        {DisplayAbstractions Thread}
       else
         {PrintInvalidOptionError Argument}
       end

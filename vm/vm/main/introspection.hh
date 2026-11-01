@@ -355,7 +355,7 @@ Runnable* Introspection::getThread(VM vm, size_t id) {
   RunnableList& list = getThreads(vm);
   for (iterator iter = list.begin(); iter != list.end(); ++iter) {
     Runnable* runnable = *iter;
-    if (runnable->getId() == id)
+    if (runnable->getId() == id || runnable->getKindId() == id)
       return runnable;
   }
   return nullptr;
