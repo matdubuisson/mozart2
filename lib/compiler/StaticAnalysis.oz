@@ -48,6 +48,8 @@ export
 
    statement:              SAStatement
    typeOf:                 SATypeOf
+   debugInfo:              SAStatement
+   optimizedDebugInfo:     SAStatement
    stepPoint:              SAStepPoint
    declaration:            SADeclaration
    skipNode:               SASkipNode

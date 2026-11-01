@@ -41,6 +41,7 @@ prepare
    Continuations = c(vDebugEntry: 4
                      vDebugExit: 4
                      vDebugInfo: 6
+                     vOptimizedDebugInfo: 3
                      vMakePermanent: 3
                      vClear: 3
                      vUnify: 4
@@ -771,6 +772,8 @@ define
             Emitter, DebugExit(Coord Kind)
          [] vDebugInfo(_ Name Path Type Coord _) then
             Emitter, DebugInfo(Name Path Type Coord)
+         [] vOptimizedDebugInfo(_ Type _) then
+            Emitter, OptimizedDebugInfo(Type)
          [] vMakePermanent(_ RegIndices _) then TempX1 TempX2 S D in
             Emitter, AllocateShortLivedTemp(?TempX2)
             Emitter, AllocateShortLivedTemp(?TempX1)
@@ -1412,6 +1415,10 @@ define
          FileName = Coord.1 Line = Coord.2 Column = Coord.3
       in
          Emitter, Emit(debugInfo(Name Path Type FileName Line Column))
+      end
+
+      meth OptimizedDebugInfo(Type)
+         Emitter, Emit(optimizedDebugInfo(Type))
       end
 
       meth Unify(R1 R2)

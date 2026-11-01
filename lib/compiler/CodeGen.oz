@@ -50,6 +50,8 @@ import
 export
    %% mixin classes for the abstract syntax:
    typeOf: CodeGenTypeOf
+   debugInfo: CodeGenDebugInfo
+   optimizedDebugInfo: CodeGenOptimizedDebugInfo
    stepPoint: CodeGenStepPoint
    declaration: CodeGenDeclaration
    skipNode: CodeGenSkipNode
@@ -758,6 +760,18 @@ define
    class CodeGenTypeOf from CodeGenStatement
       meth codeGen(CS VHd VTl)
          VHd = vEquateConstant(_ @value {@res reg($)} VTl)
+      end
+   end
+
+   class CodeGenDebugInfo from CodeGenStatement
+      meth codeGen(CS VHd VTl)
+         VHd = vDebugInfo(_ @name @path @type @coord VTl)
+      end
+   end
+
+   class CodeGenOptimizedDebugInfo from CodeGenStatement
+      meth codeGen(CS VHd VTl)
+         VHd = vOptimizedDebugInfo(_ @type VTl)
       end
    end
 

@@ -59,6 +59,8 @@ export
    %% classes for abstract syntax:
    Statement
    TypeOf
+   DebugInfo
+   OptimizedDebugInfo
    StepPoint
    Declaration
    SkipNode
@@ -265,6 +267,33 @@ define
          {@res output2(R $ ?FS)}#' = '#
          {Value.toVirtualString @value 50 1000}#
          '   % typeof '#{@arg output(R $)}#FS
+      end
+   end
+
+   class DebugInfo
+      from Statement Annotate.debugInfo StaticAnalysis.debugInfo CodeGen.debugInfo
+      prop final
+      attr name: unit path: unit type: unit coord: unit
+      meth init(Name Path Type Coord)
+         name <- Name
+         path <- Path
+         type <- Type
+         coord <- Coord
+      end
+      meth output(R $)
+         '% debugInfo '#@name#' '#@path#' '#@type#' '#@coord
+      end
+   end
+
+   class OptimizedDebugInfo
+      from Statement Annotate.optimizedDebugInfo StaticAnalysis.optimizedDebugInfo CodeGen.optimizedDebugInfo
+      prop final
+      attr type: unit
+      meth init(Type)
+         type <- Type
+      end
+      meth output(R $)
+         '% optimizedDebugInfo '#@type
       end
    end
 

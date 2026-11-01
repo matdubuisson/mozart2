@@ -43,6 +43,8 @@
 functor
 export
    typeOf: AnnotateTypeOf
+   debugInfo: AnnotateDefaults
+   optimizedDebugInfo: AnnotateDefaults
    stepPoint: AnnotateStepPoint
    declaration: AnnotateDeclaration
    skipNode: AnnotateDefaults

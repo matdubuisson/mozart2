@@ -499,6 +499,23 @@ define
             Unnester, UnnestToVar(FE Origin ?GEqs ?GT)
          end
       end
+
+      meth UnnestDebugInfo(FE Type $)
+         case FE of fVar(PrintName C) then
+            {New Core.debugInfo init(PrintName '' Type C)}
+         [] fOcc(V) then
+            C = {V getCoord($)}
+         in
+            {New Core.debugInfo init(unit '' Type C)}
+         else
+            {New Core.debugInfo init(unit '' Type unit)}
+         end
+      end
+
+      meth UnnestOptimizedDebugInfo(Type $)
+         {New Core.optimizedDebugInfo init(Type)}
+      end
+
       meth UnnestToVar(FE Origin ?GEqs ?GVO)
          SubtreeGVO % Moved here because of a limitation of the bootcompiler
       in
@@ -783,7 +800,7 @@ define
                             fOpApply('Value.byNeed'
                                      [fFun(fDollar(CND) nil NewFE nil CND)]
                                      CND) RestFlags C)
-               Unnester, UnnestStatement(NewFS $)
+               Unnester, UnnestOptimizedDebugInfo('lazy' $)|Unnester, UnnestStatement(NewFS $)
             end
          [] fFunctor(FE FDescriptors C) then
             FRequire FPrepare FImport FExport FDefine1 FDefine2

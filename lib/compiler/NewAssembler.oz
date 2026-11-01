@@ -158,6 +158,7 @@ define
       globalVarname: 0xa3
       clearY: 0xa4
       debugInfo: 0xa5
+      optimizedDebugInfo: 0xa6
    )
 
    fun {GetInstrSize Instr}
@@ -291,6 +292,7 @@ define
       [] debugEntry(Filename Line Column Kind) then debugEntry(k(Filename) Line Column k(Kind))
       [] debugExit(Filename Line Column Kind) then debugExit(k(Filename) Line Column k(Kind))
       [] debugInfo(Name Path Type FileName Line Column) then debugInfo(k(Name) k(Path) k(Type) k(FileName) Line Column)
+      [] optimizedDebugInfo(Type) then optimizedDebugInfo(k(Type))
       [] localVarname(Name) then localVarname(k(Name))
       [] globalVarname(Name) then globalVarname(k(Name))
       [] clear(R=y(_)) then clearY(R)
