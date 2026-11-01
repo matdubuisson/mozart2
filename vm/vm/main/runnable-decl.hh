@@ -146,7 +146,7 @@ private:
 // Runnable //
 //////////////
 
-class Runnable : public AdvancedIdentity {
+class Runnable : public MoreAdvancedIdentity {
 public:
   struct Statistics {
     size_t runsCount = 0;

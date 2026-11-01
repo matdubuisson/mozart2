@@ -1402,13 +1402,15 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
   yregs = nullptr;
   gregs = Gs;
   kregs = Ks;
-  followIdentity(Callable(*abstraction).getIdentity(vm));
+  
+  followGroupIdentity(Callable(*abstraction).getIdentity(vm));
 
   // Test for preemption
   // (there is no infinite execution path that does not traverse a call)
   if (isPreemptible() && vm->testPreemption())
     preempt();
-  else vm->announceRunnable(this,
+
+  vm->announceRunnable(this,
     VirtualMachineEventManager::RunnableAnnounce::Calling);
 }
 
