@@ -423,6 +423,13 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
           advancePC(6);
           break;
         }
+        
+        case OpOptimizedDebugInfo: {
+          
+          // std::cout << debugInfo.toString(vm) << std::endl;
+          advancePC(1);
+          break;
+        }
 
         // MOVES
 
@@ -1402,7 +1409,7 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
   yregs = nullptr;
   gregs = Gs;
   kregs = Ks;
-  
+
   followGroupIdentity(Callable(*abstraction).getIdentity(vm));
 
   // Test for preemption
