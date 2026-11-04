@@ -1384,10 +1384,14 @@ public:
   /* ========== Reachability graph ========== */
 
   using IdToIdsMap = Map<Id, IdsVector>;
+  using IdToRunnable = Map<Id, Runnable*>;
+  using IdToVariable = Map<Id, DataflowVariable>;
 
   struct ReachabilityGraph {
     IdToIdsMap threadToVariables;
     IdToIdsMap variableToThreads;
+    IdToRunnable threadsStatus;
+    IdToVariable variablesStatus;
   };
 
   static inline
@@ -1395,7 +1399,8 @@ public:
   
 private:
   inline
-  void computeReachabilityGraph(VM vm, ReachabilityGraph& graph, size_t variableId, Pendings& pendings);
+  void computeReachabilityGraph(VM vm, ReachabilityGraph& graph,
+    size_t variableId, Pendings& pendings);
 
 public:
   inline

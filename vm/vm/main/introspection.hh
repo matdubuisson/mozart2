@@ -65,15 +65,20 @@ UnstableNode Introspection::buildMap(VM vm, const Map<Key, Value>& map) {
 
   for (auto pair : map) {
     Key key = pair.first;
-    Value value = pair.second;
-    fields[i].feature = build<Key>(vm, key);
 
-    if constexpr (is_Vector_v<Value>)
-      fields[i].value = buildVector(vm, value);
-    else if constexpr (is_Map_v<Value>)
-      fields[i].value = buildMap(vm, value);
-    else
-      fields[i].value = build<Value>(vm, value);
+    if constexpr (std::is_same_v<Value, UnstableNode>)
+      fields[i].value.copy(vm, pair.second);
+    else {
+      Value value = pair.second;
+      fields[i].feature = build<Key>(vm, key);
+
+      if constexpr (is_Vector_v<Value>)
+        fields[i].value = buildVector(vm, value);
+      else if constexpr (is_Map_v<Value>)
+        fields[i].value = buildMap(vm, value);
+      else
+        fields[i].value = build<Value>(vm, value);
+    }
     
     i++;
   }
@@ -231,8 +236,7 @@ UnstableNode Introspection::buildThreadState(VM vm, Runnable* runnable) {
   UnstableNode abstraction;
   if (Thread* thread = dynamic_cast<Thread*>(runnable)) {
     if (!thread->stack.empty()) {
-      StableNode* node = thread->
-      stack.front().abstraction;
+      StableNode* node = thread->stack.front().abstraction;
       assert(node != nullptr);
       atom_t printName;
       UnstableNode debugData;
@@ -266,6 +270,12 @@ UnstableNode Introspection::buildThreadState(VM vm, Runnable* runnable) {
     isRunnable,
     isTerminated
   );
+}
+
+template<>
+inline
+UnstableNode Introspection::build(VM vm, Runnable* runnable) {
+  return buildThreadState(vm, runnable);
 }
 
 UnstableNode Introspection::buildThreadStatistics(VM vm, const Runnable* runnable) {
@@ -897,6 +907,49 @@ UnstableNode Introspection::build(VM vm, VariableState state) {
   return buildVariable(vm, state);
 }
 
+static inline
+UnstableNode buildVariableStateBoundAndNeeded(VM vm, const bool isBound, const bool isNeeded) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "state",
+      "isBound",
+      "isNeeded"
+    ),
+    build(vm, isBound),
+    build(vm, isNeeded)
+  );
+}
+
+template<>
+inline
+UnstableNode Introspection::build(VM vm, Variable* variable) {
+  assert(variable != nullptr);
+  return buildVariableStateBoundAndNeeded(vm,
+    variable->isBound(vm), variable->isNeeded(vm));
+}
+
+template<>
+inline
+UnstableNode Introspection::build(VM vm, ReadOnlyVariable* variable) {
+  assert(variable != nullptr);
+  return buildVariableStateBoundAndNeeded(vm,
+    variable->isBound(vm), variable->isNeeded(vm));
+}
+
+template<>
+inline
+UnstableNode Introspection::build(VM vm, DataflowVariable variable) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "state",
+      "isBound",
+      "isNeeded"
+    ),
+    build(vm, variable.isBound(vm)),
+    build(vm, variable.isNeeded(vm))
+  );
+}
+
 /* ========== Variables candidates extractors ========== */
 
 void Introspection::pendingsToIdsVector(VM vm, VariableState& state, Pendings& pendings) {
@@ -988,15 +1041,19 @@ UnstableNode Introspection::buildReachabilityGraph(VM vm, const ReachabilityGrap
     buildArity(vm,
       "graph",
       "threadToVariables",
-      "variableToThreads"
+      "threadsStatus",
+      "variableToThreads",
+      "variablesStatus"
     ),
     buildMap<Id, IdsVector>(vm, graph.threadToVariables),
-    buildMap<Id, IdsVector>(vm, graph.variableToThreads)
+    buildMap<Id, Runnable*>(vm, graph.threadsStatus),
+    buildMap<Id, IdsVector>(vm, graph.variableToThreads),
+    buildMap<Id, DataflowVariable>(vm, graph.variablesStatus)
   );
 }
 
-void Introspection::computeReachabilityGraph(VM vm, ReachabilityGraph& graph, size_t variableId,
-  Introspection::Pendings& pendings) {
+void Introspection::computeReachabilityGraph(VM vm, ReachabilityGraph& graph,
+  size_t variableId, Introspection::Pendings& pendings) {
   if (!graph.variableToThreads.contains(variableId))
     graph.variableToThreads.insert({variableId, {}});
 
@@ -1018,23 +1075,23 @@ Introspection::ReachabilityGraph Introspection::computeReachabilityGraph(VM vm) 
     [this, &graph](VM vm, Runnable* runnable) {
       Id threadId = runnable->getId();
 
-      if (!graph.threadToVariables.contains(threadId))
+      if (!graph.threadToVariables.contains(threadId)) {
         graph.threadToVariables.insert({threadId, {}});
+        graph.threadsStatus.insert({threadId, runnable});
+      }
       
       this->doForEachVariable(vm, runnable,
         [this, &graph, threadId](VM vm, Runnable* runnable, RichNode node) {
-          Id variableId = SIZE_MAX;
+          if (node.isNullNode() || !(node.is<Variable>() || node.is<ReadOnlyVariable>()))
+            return;
 
-          if (node.isNullNode()) return;
-          else if (node.is<Variable>()) {
-            Variable variable = node.getAs<Variable>();
-            variableId = variable.getId();
-            this->computeReachabilityGraph(vm, graph, variableId, variable.getPendings(vm));            
-          } else if (node.is<ReadOnlyVariable>()) {
-            ReadOnlyVariable readOnlyVariable = node.getAs<ReadOnlyVariable>();
-            variableId = readOnlyVariable.getId();
-            this->computeReachabilityGraph(vm, graph, variableId, readOnlyVariable.getPendings(vm));
-          } else return;
+          Id variableId = Identifiable(node).getId(vm);
+          DataflowVariable variable = DataflowVariable(node);
+
+          if (!graph.variablesStatus.contains(variableId))
+            graph.variablesStatus.insert({variableId, variable});
+
+          this->computeReachabilityGraph(vm, graph, variableId, variable.getPendings(vm));            
           
           graph.threadToVariables.at(threadId).push_back(variableId);
         }
