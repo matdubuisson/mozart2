@@ -38,12 +38,37 @@ local
   in
     case Graph of graph(
       threadToVariables: T2VGraph
+      threadsStatus: T2Status
       variableToThreads: V2TGraph
+      variablesStatus: V2Status
     ) then
       if IsT2V then
         {DisplayGraphAux T2VGraph V2TGraph
           proc {$ Key}
-            {PrintLn "Thread "#Key}  
+            {Print "Thread "#Key}
+
+            case T2Status.Key of state(
+              id: _
+              kindId: _
+              generationId: _
+
+              abstraction: _
+              priority: _
+
+              runnable: Runnable
+              terminated: Terminated
+              dead: Dead
+              preempted: Preempted
+              preemptible: Preemptible
+            ) then
+              if Runnable then {Print " (runnable)"} end
+              if Terminated then {Print " (terminated)"} end
+              if Dead then {Print " (dead)"} end
+              if Preempted then {Print " (preempted)"} end
+              if Preemptible then {Print " (preemptible)"} end
+            end
+            
+            {PrintLn ""}
           end
           proc {$ Key Value KeysSubset}
             {PrintLn TAB#"- Variable "#Value#": ["#
@@ -52,7 +77,17 @@ local
       else
         {DisplayGraphAux V2TGraph T2VGraph
           proc {$ Key}
-            {PrintLn "Variable "#Key}  
+            {Print "Variable "#Key}
+
+            case V2Status.Key of state(
+              isNeeded: IsNeeded
+              isBound: IsBound
+            ) then
+              if IsNeeded then {Print " (needed)"} end
+              if IsBound then {Print " (bound)"} end
+            end
+            
+            {PrintLn ""}
           end
           proc {$ Key Value KeysSubset}
             {PrintLn TAB#"- Thread "#Value#": ["#
