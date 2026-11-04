@@ -140,6 +140,8 @@ class OptVar;
 class Variable;
 class ReadOnlyVariable;
 
+class DataflowVariable;
+
 class Abstraction;
 class Cons;
 class Tuple;
