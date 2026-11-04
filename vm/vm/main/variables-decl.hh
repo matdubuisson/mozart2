@@ -90,10 +90,6 @@ public:
     return _needed;
   }
 
-  bool isWaited(VM vm) {
-    return !pendings.empty();
-  }
-
   /**
    * Marks the variable as needed
    * @param vm The virtual machine
