@@ -102,6 +102,10 @@ public:
   inline
   void bind(VM vm, RichNode src);
   */
+
+  bool isWaited(VM vm) {
+    return !pendings.empty();
+  }
   
   inline
   VMAllocatedList<StableNode*>& getPendings(VM vm) {
@@ -393,11 +397,20 @@ public:
   inline
   void markNeeded(RichNode self, VM vm);
 
+  bool isBound(VM vm) {
+    return false;
+  }
+
   inline
   void bind(RichNode self, VM vm, UnstableNode&& src);
 
   inline
   void bind(RichNode self, VM vm, RichNode src);
+
+  VMAllocatedList<StableNode*>& getPendings(RichNode self, VM vm) {
+    assert(false);
+    std::abort();
+  }
 
 private:
   inline
@@ -538,6 +551,9 @@ public:
   inline
   void markNeeded(VM vm);
 
+  inline
+  bool isBound(VM vm);
+
   /**
    * Tries to bind the read-only value with the provided source variable or value
    * @param vm The virtual machine
@@ -546,6 +562,11 @@ public:
    */
   inline
   void bind(VM vm, RichNode src);
+
+  VMAllocatedList<StableNode*>& getPendings(RichNode self, VM vm) {
+    assert(false);
+    std::abort();
+  }
 
 public:
   // Miscellaneous
@@ -646,7 +667,11 @@ public:
   inline
   void markNeeded(VM vm);
 
+  inline
+  bool isBound(VM vm);
+
   /**
+   * 
    * Tries to bind the failed-value value with the provided source variable or value
    * @param vm The virtual machine
    * @param src The source variable or value to bind with
@@ -654,6 +679,11 @@ public:
    */
   inline
   void bind(VM vm, RichNode src);
+
+  VMAllocatedList<StableNode*>& getPendings(RichNode self, VM vm) {
+    assert(false);
+    std::abort();
+  }
 
 public:
   // Miscellaneous

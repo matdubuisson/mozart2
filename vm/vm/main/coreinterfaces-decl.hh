@@ -153,6 +153,11 @@ struct Interface<DataflowVariable>:
     // Nothing to do
   }
 
+  bool isBound(RichNode self, VM vm) {
+    // Determined variables are always bound
+    return true;
+  }
+
   /**
    * Precondition:
    *   self.type()->getStructuralBehavior() == sbVariable
@@ -161,6 +166,11 @@ struct Interface<DataflowVariable>:
     assert(self.type()->getStructuralBehavior() == sbVariable);
     assert(false);
     return raiseTypeError(vm, "Variable", self);
+  }
+
+  VMAllocatedList<StableNode*>& getPendings(RichNode self, VM vm) {
+    raiseTypeError(vm, "DataflowVariable.getPendings", self);
+    std::abort();
   }
 };
 

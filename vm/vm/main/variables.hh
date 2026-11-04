@@ -315,6 +315,10 @@ void ReadOnly::markNeeded(VM vm) {
   DataflowVariable(*_underlying).markNeeded(vm);
 }
 
+bool ReadOnly::isBound(VM vm) {
+  return DataflowVariable(*_underlying).isBound(vm);
+}
+
 void ReadOnly::bind(VM vm, RichNode src) {
   return waitFor(vm, *_underlying);
 }
@@ -343,6 +347,10 @@ bool FailedValue::isNeeded(VM vm) {
 
 void FailedValue::markNeeded(VM vm) {
   // Nothing to do
+}
+
+bool FailedValue::isBound(VM vm) {
+  return true;
 }
 
 void FailedValue::bind(VM vm, RichNode src) {
