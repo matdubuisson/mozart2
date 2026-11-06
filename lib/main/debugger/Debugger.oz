@@ -48,6 +48,8 @@ define
   
   \insert Displaying
 
+  \insert Reachability
+
   This = {Boot_Thread.this $}
   ThisId = {Boot_Thread.getId This $}
 
