@@ -203,8 +203,13 @@ const OpCode OpDebugExit = 0xa1;
 const OpCode OpLocalVarname = 0xa2;
 const OpCode OpGlobalVarname = 0xa3;
 const OpCode OpClearY = 0xa4;
-const OpCode OpDebugInfo = 0xa5;
-const OpCode OpOptimizedDebugInfo = 0xa6;
+
+const OpCode OpDebugInfo = 0xd0;
+const OpCode OpProcDebugInfo = 0xd1;
+const OpCode OpFunDebugInfo = 0xd2;
+const OpCode OpLazyFunDebugInfo = 0xd3;
+const OpCode OpArgDebugInfo = 0xd4;
+const OpCode OpOptimizedDebugInfo = 0xd5;
 
 }
 

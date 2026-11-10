@@ -157,8 +157,13 @@ define
       localVarname: 0xa2
       globalVarname: 0xa3
       clearY: 0xa4
-      debugInfo: 0xa5
-      optimizedDebugInfo: 0xa6
+
+      debugInfo: 0xd0
+      procDebugInfo: 0xd1
+      funDebugInfo: 0xd2
+      lazyFunDebugInfo: 0xd3
+      argDebugInfo: 0xd4
+      optimizedDebugInfo: 0xd5
    )
 
    fun {GetInstrSize Instr}
@@ -291,11 +296,18 @@ define
       [] custom(...) then Instr
       [] debugEntry(Filename Line Column Kind) then debugEntry(k(Filename) Line Column k(Kind))
       [] debugExit(Filename Line Column Kind) then debugExit(k(Filename) Line Column k(Kind))
-      [] debugInfo(Name Path Type FileName Line Column) then debugInfo(k(Name) k(Path) k(Type) k(FileName) Line Column)
-      [] optimizedDebugInfo(Type) then optimizedDebugInfo(k(Type))
+      
       [] localVarname(Name) then localVarname(k(Name))
       [] globalVarname(Name) then globalVarname(k(Name))
       [] clear(R=y(_)) then clearY(R)
+
+      [] debugInfo(Name FileName Line Column Type) then debugInfo(k(Name) k(FileName) Line Column k(Type))
+      [] procDebugInfo(Name FileName Line Column) then procDebugInfo(k(Name) k(FileName) Line Column)
+      [] funDebugInfo(Name FileName Line Column) then funDebugInfo(k(Name) k(FileName) Line Column)
+      [] lazyFunDebugInfo(Name FileName Line Column) then lazyFunDebugInfo(k(Name) k(FileName) Line Column)
+      [] argDebugInfo(Name FileName Line Column PName PFileName PLine PColumn) then
+         argDebugInfo(k(Name) k(FileName) Line Column k(PName) k(PFileName) PLine PColumn)
+      [] optimizedDebugInfo(Type) then optimizedDebugInfo(k(Type))
 
       else
          if {Not {HasFeature OpCodeTable {Label Instr}}} then

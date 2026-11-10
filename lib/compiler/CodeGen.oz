@@ -51,6 +51,10 @@ export
    %% mixin classes for the abstract syntax:
    typeOf: CodeGenTypeOf
    debugInfo: CodeGenDebugInfo
+   procDebugInfo: CodeGenProcDebugInfo
+   funDebugInfo: CodeGenFunDebugInfo
+   lazyFunDebugInfo: CodeGenLazyFunDebugInfo
+   argDebugInfo: CodeGenArgDebugInfo
    optimizedDebugInfo: CodeGenOptimizedDebugInfo
    stepPoint: CodeGenStepPoint
    declaration: CodeGenDeclaration
@@ -765,7 +769,31 @@ define
 
    class CodeGenDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         VHd = vDebugInfo(_ @name @path @type @coord VTl)
+         VHd = vDebugInfo(_ @name @coord @type @data VTl)
+      end
+   end
+
+   class CodeGenProcDebugInfo from CodeGenStatement
+      meth codeGen(CS VHd VTl)
+         VHd = vProcDebugInfo(_ @name @coord VTl)
+      end
+   end
+
+   class CodeGenFunDebugInfo from CodeGenStatement
+      meth codeGen(CS VHd VTl)
+         VHd = vFunDebugInfo(_ @name @coord VTl)
+      end
+   end
+
+   class CodeGenLazyFunDebugInfo from CodeGenStatement
+      meth codeGen(CS VHd VTl)
+         VHd = vLazyFunDebugInfo(_ @name @coord VTl)
+      end
+   end
+
+   class CodeGenArgDebugInfo from CodeGenStatement
+      meth codeGen(CS VHd VTl)
+         VHd = vArgDebugInfo(_ @name @coord @pname @pcoord VTl)
       end
    end
 

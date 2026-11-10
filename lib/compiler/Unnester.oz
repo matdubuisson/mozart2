@@ -500,20 +500,50 @@ define
          end
       end
 
-      meth UnnestDebugInfo(FE Type $)
-         case FE of fVar(PrintName C) then
-            {New Core.debugInfo init(PrintName '' Type C)}
+      meth UnnestPrintNameAndCoord(FE ?PrintName ?Coord)
+         case FE of fVar(P C) then
+            PrintName = P
+            Coord = C
          [] fOcc(V) then
-            C = {V getCoord($)}
-         in
-            {New Core.debugInfo init(unit '' Type C)}
+            PrintName = {V getPrintName($)}
+            Coord = {V getCoord($)}
          else
-            {New Core.debugInfo init(unit '' Type unit)}
+            PrintName = 'none'
+            Coord = unit
          end
       end
 
-      meth UnnestOptimizedDebugInfo(Type $)
-         {New Core.optimizedDebugInfo init(Type)}
+      meth UnnestArgDebugInfos(PPrintName PCoord FEs End $)
+         fun {Aux FEs}
+            case FEs of nil then End
+            [] FE|NextFEs then
+               PrintName Coord
+            in
+               Unnester, UnnestPrintNameAndCoord(FE PrintName Coord)
+               {New Core.argDebugInfo init(PrintName Coord PPrintName PCoord)}|
+                  {Aux NextFEs}
+            end
+         end
+      in
+         {Aux FEs}
+      end
+
+      meth UnnestProcDebugInfo(FE1 FEs End $) PrintName Coord in
+         Unnester, UnnestPrintNameAndCoord(FE1 PrintName Coord)
+         {New Core.procDebugInfo init(PrintName Coord)}|
+            Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+      end
+
+      meth UnnestFunDebugInfo(FE1 FEs End $) PrintName Coord in
+         Unnester, UnnestPrintNameAndCoord(FE1 PrintName Coord)
+         {New Core.funDebugInfo init(PrintName Coord)}|
+            Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+      end
+
+      meth UnnestLazyFunDebugInfo(FE1 FEs End $) PrintName Coord in
+         Unnester, UnnestPrintNameAndCoord(FE1 PrintName Coord)
+         {New Core.lazyFunDebugInfo init(PrintName Coord)}|
+            Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
       end
 
       meth UnnestToVar(FE Origin ?GEqs ?GVO)
@@ -589,6 +619,70 @@ define
             {@BA refer(PrintName C ?GVO)}
          [] fOcc(GV) then
             {GV occ({GV getCoord($)} ?GVO)}
+         end
+      end
+
+      meth UnnestFunction(FE1 FEs FE2 ProcFlags C IsLazy $) LazyFlags RestFlags in
+         {List.partition ProcFlags fun {$ fAtom(A _)} A == 'lazy' end
+            ?LazyFlags ?RestFlags}
+         {List.forAll RestFlags proc{$ fAtom(A _)}
+                                    case A
+                                    of instantiate then skip
+                                    [] dynamic then skip
+                                    [] sited then skip
+                                    else
+                                       {@reporter
+                                       error(coord: C kind: 'flag check warning'
+                                             msg: 'unrecognized flag '#A#' was ignored')}
+                                    end
+                                 end}
+         if {DollarsInScope FEs 0} > 0 then
+            {@reporter error(coord: {DollarCoord FEs} kind: SyntaxError
+                              msg: 'no $ in function head allowed')}
+            nil
+         elseif LazyFlags == nil then
+            GFrontEq GVO OldStateUsed NewFEs GS GFormals IsStateUsing GD
+         in
+            Unnester, UnnestToVar(FE1 'Fun' ?GFrontEq ?GVO)
+            OldStateUsed = (StateUsed <- false)
+            {@BA openScope()}
+            NewFEs = {Append FEs [fDollar(C)]}
+            Unnester, UnnestProc(NewFEs FE2 C ?GS)
+            {@BA closeScope(?GFormals)}
+            IsStateUsing = (@StateUsed orelse
+                              @Stateful andthen
+                              {@state getSwitch(staticvarnames $)})
+            StateUsed <- IsStateUsing orelse OldStateUsed
+            GD = {New Core.definition
+                  init(GVO GFormals GS IsStateUsing
+                        {Map RestFlags fun {$ fAtom(A _)} A end} C)}
+            if {@state getSwitch(staticvarnames $)} then
+               {GD setAllVariables({@BA getAllVariables($)})}
+            end
+
+            if IsLazy then
+               GFrontEq|GD % Definition node must always be second element!
+            else
+               Unnester, UnnestFunDebugInfo(FE1 FEs GFrontEq|GD $) % Definition node must always be second element!
+            end
+         else CND Formals NewFE NewFS in
+            CND = {CoordNoDebug C}
+            Formals#NewFE = {FoldR FEs
+                              fun {$ FE1 Formals#FE2} GV in
+                                 (fAnonVar('Result' C GV)|Formals)#
+                                 fCase(fOcc(GV) [fCaseClause(FE1 FE2)]
+                                       fNoElse(CND)   %--** better exception
+                                       CND)
+                              end nil#FE2}
+            
+            local
+               End = Unnester, UnnestFunction(FE1 Formals
+                  fOpApply('Value.byNeed'
+                     [fFun(fDollar(CND) nil NewFE nil CND)]
+                     CND) RestFlags C true $)
+            in
+               Unnester, UnnestLazyFunDebugInfo(FE1 FEs End $)
+            end
          end
       end
 
@@ -748,60 +842,9 @@ define
             if {@state getSwitch(staticvarnames $)} then
                {GD setAllVariables({@BA getAllVariables($)})}
             end
-            GFrontEq|GD   % Definition node must always be second element!
-         [] fFun(FE1 FEs FE2 ProcFlags C) then LazyFlags RestFlags in
-            {List.partition ProcFlags fun {$ fAtom(A _)} A == 'lazy' end
-             ?LazyFlags ?RestFlags}
-            {List.forAll RestFlags proc{$ fAtom(A _)}
-                                      case A
-                                      of instantiate then skip
-                                      [] dynamic then skip
-                                      [] sited then skip
-                                      else
-                                         {@reporter
-                                          error(coord: C kind: 'flag check warning'
-                                               msg: 'unrecognized flag '#A#' was ignored')}
-                                      end
-                                   end}
-            if {DollarsInScope FEs 0} > 0 then
-               {@reporter error(coord: {DollarCoord FEs} kind: SyntaxError
-                                msg: 'no $ in function head allowed')}
-               nil
-            elseif LazyFlags == nil then
-               GFrontEq GVO OldStateUsed NewFEs GS GFormals IsStateUsing GD
-            in
-               Unnester, UnnestToVar(FE1 'Fun' ?GFrontEq ?GVO)
-               OldStateUsed = (StateUsed <- false)
-               {@BA openScope()}
-               NewFEs = {Append FEs [fDollar(C)]}
-               Unnester, UnnestProc(NewFEs FE2 C ?GS)
-               {@BA closeScope(?GFormals)}
-               IsStateUsing = (@StateUsed orelse
-                               @Stateful andthen
-                               {@state getSwitch(staticvarnames $)})
-               StateUsed <- IsStateUsing orelse OldStateUsed
-               GD = {New Core.definition
-                     init(GVO GFormals GS IsStateUsing
-                          {Map RestFlags fun {$ fAtom(A _)} A end} C)}
-               if {@state getSwitch(staticvarnames $)} then
-                  {GD setAllVariables({@BA getAllVariables($)})}
-               end
-               GFrontEq|GD   % Definition node must always be second element!
-            else CND Formals NewFE NewFS in
-               CND = {CoordNoDebug C}
-               Formals#NewFE = {FoldR FEs
-                                fun {$ FE1 Formals#FE2} GV in
-                                   (fAnonVar('Result' C GV)|Formals)#
-                                   fCase(fOcc(GV) [fCaseClause(FE1 FE2)]
-                                         fNoElse(CND)   %--** better exception
-                                         CND)
-                                end nil#FE2}
-               NewFS = fFun(FE1 Formals
-                            fOpApply('Value.byNeed'
-                                     [fFun(fDollar(CND) nil NewFE nil CND)]
-                                     CND) RestFlags C)
-               Unnester, UnnestOptimizedDebugInfo('lazy' $)|Unnester, UnnestStatement(NewFS $)
-            end
+            Unnester, UnnestProcDebugInfo(FE1 FEs GFrontEq|GD $) % Definition node must always be second element!
+         [] fFun(FE1 FEs FE2 ProcFlags C) then
+            Unnester, UnnestFunction(FE1 FEs FE2 ProcFlags C false $)
          [] fFunctor(FE FDescriptors C) then
             FRequire FPrepare FImport FExport FDefine1 FDefine2
          in

@@ -415,18 +415,31 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
           advancePC(1); break;
 
         case OpDebugInfo: {
-          DebugInfo debugInfo = DebugInfo(
-            &KPC(1), &KPC(2), &KPC(3),
-            &KPC(4), IntPC(5), IntPC(6)
-          );
-          // std::cout << debugInfo.toString(vm) << std::endl;
-          advancePC(6);
+          advancePC(5);
+          break;
+        }
+
+        case OpProcDebugInfo: {
+          advancePC(4);
+          break;
+        }
+
+        case OpFunDebugInfo: {
+          advancePC(4);
+          break;
+        }
+
+        case OpLazyFunDebugInfo: {
+          advancePC(4);
+          break;
+        }
+
+        case OpArgDebugInfo: {
+          advancePC(8);
           break;
         }
         
         case OpOptimizedDebugInfo: {
-          
-          // std::cout << debugInfo.toString(vm) << std::endl;
           advancePC(1);
           break;
         }

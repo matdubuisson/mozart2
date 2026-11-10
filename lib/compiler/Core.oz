@@ -60,6 +60,10 @@ export
    Statement
    TypeOf
    DebugInfo
+   ProcDebugInfo
+   FunDebugInfo
+   LazyFunDebugInfo
+   ArgDebugInfo
    OptimizedDebugInfo
    StepPoint
    Declaration
@@ -273,15 +277,69 @@ define
    class DebugInfo
       from Statement Annotate.debugInfo StaticAnalysis.debugInfo CodeGen.debugInfo
       prop final
-      attr name: unit path: unit type: unit coord: unit
-      meth init(Name Path Type Coord)
+      attr name: unit coord: unit type: unit data: unit
+      meth init(Name Coord Type Data)
          name <- Name
-         path <- Path
+         coord <- Coord
          type <- Type
+         data <- Data
+      end
+      meth output(R $)
+         '% debugInfo '#@name#' '#@coord#' '#@type#' '#@data
+      end
+   end
+
+   class ProcDebugInfo
+      from Statement Annotate.debugInfo StaticAnalysis.debugInfo CodeGen.procDebugInfo
+      prop final
+      attr name: unit coord: unit
+      meth init(Name Coord)
+         name <- Name
          coord <- Coord
       end
       meth output(R $)
-         '% debugInfo '#@name#' '#@path#' '#@type#' '#@coord
+         '% procDebugInfo '#@name#' '#@coord
+      end
+   end
+
+   class FunDebugInfo
+      from Statement Annotate.debugInfo StaticAnalysis.debugInfo CodeGen.funDebugInfo
+      prop final
+      attr name: unit coord: unit
+      meth init(Name Coord)
+         name <- Name
+         coord <- Coord
+      end
+      meth output(R $)
+         '% funDebugInfo '#@name#' '#@coord
+      end
+   end
+
+   class LazyFunDebugInfo
+      from Statement Annotate.debugInfo StaticAnalysis.debugInfo CodeGen.lazyFunDebugInfo
+      prop final
+      attr name: unit coord: unit
+      meth init(Name Coord)
+         name <- Name
+         coord <- Coord
+      end
+      meth output(R $)
+         '% lazyFunDebugInfo '#@name#' '#@coord
+      end
+   end
+
+   class ArgDebugInfo
+      from Statement Annotate.debugInfo StaticAnalysis.debugInfo CodeGen.argDebugInfo
+      prop final
+      attr name: unit coord: unit pname: unit pcoord: unit
+      meth init(Name Coord PName PCoord)
+         name <- Name
+         coord <- Coord
+         pname <- Name
+         pcoord <- PCoord
+      end
+      meth output(R $)
+         '% argDebugInfo '#@name#' '#@coord#' '#@pname#' '#@pcoord
       end
    end
 

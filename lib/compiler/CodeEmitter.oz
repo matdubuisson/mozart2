@@ -41,6 +41,10 @@ prepare
    Continuations = c(vDebugEntry: 4
                      vDebugExit: 4
                      vDebugInfo: 6
+                     vProcDebugInfo: 4
+                     vFunDebugInfo: 4
+                     vLazyFunDebugInfo: 4
+                     vArgDebugInfo: 6
                      vOptimizedDebugInfo: 3
                      vMakePermanent: 3
                      vClear: 3
@@ -772,6 +776,14 @@ define
             Emitter, DebugExit(Coord Kind)
          [] vDebugInfo(_ Name Path Type Coord _) then
             Emitter, DebugInfo(Name Path Type Coord)
+         [] vProcDebugInfo(_ Name Coord _) then
+            Emitter, ProcDebugInfo(Name Coord)
+         [] vFunDebugInfo(_ Name Coord _) then
+            Emitter, FunDebugInfo(Name Coord)
+         [] vLazyFunDebugInfo(_ Name Coord _) then
+            Emitter, LazyFunDebugInfo(Name Coord)
+         [] vArgDebugInfo(_ Name Coord PName PCoord _) then
+            Emitter, ArgDebugInfo(Name Coord PName PCoord)
          [] vOptimizedDebugInfo(_ Type _) then
             Emitter, OptimizedDebugInfo(Type)
          [] vMakePermanent(_ RegIndices _) then TempX1 TempX2 S D in
@@ -1412,9 +1424,55 @@ define
       end
 
       meth DebugInfo(Name Path Type Coord)
-         FileName = Coord.1 Line = Coord.2 Column = Coord.3
-      in
-         Emitter, Emit(debugInfo(Name Path Type FileName Line Column))
+         if Coord == unit then
+            Emitter, Emit(debugInfo(Name Path Type '' 0 0))
+         else
+            FileName = Coord.1 Line = Coord.2 Column = Coord.3
+         in
+            Emitter, Emit(debugInfo(Name Path Type FileName Line Column))
+         end
+      end
+
+      meth ProcDebugInfo(Name Coord)
+         if Coord == unit then
+            Emitter, Emit(procDebugInfo(Name '' 0 0))
+         else
+            FileName = Coord.1 Line = Coord.2 Column = Coord.3
+         in
+            Emitter, Emit(procDebugInfo(Name FileName Line Column))
+         end
+      end
+
+      meth FunDebugInfo(Name Coord)
+         if Coord == unit then
+            Emitter, Emit(funDebugInfo(Name '' 0 0))
+         else
+            FileName = Coord.1 Line = Coord.2 Column = Coord.3
+         in
+            Emitter, Emit(funDebugInfo(Name FileName Line Column))
+         end
+      end
+
+      meth LazyFunDebugInfo(Name Coord)
+         if Coord == unit then
+            Emitter, Emit(lazyFunDebugInfo(Name '' 0 0))
+         else
+            FileName = Coord.1 Line = Coord.2 Column = Coord.3
+         in
+            Emitter, Emit(lazyFunDebugInfo(Name FileName Line Column))
+         end
+      end
+
+      meth ArgDebugInfo(Name Coord PName PCoord)
+         if Coord == unit then
+            Emitter, Emit(argDebugInfo(Name '' 0 0 PName '' 0 0))
+         else
+            FileName = Coord.1 Line = Coord.2 Column = Coord.3
+            PFileName = PCoord.1 PLine = PCoord.2 PColumn = PCoord.3
+         in
+            Emitter, Emit(argDebugInfo(Name FileName Line Column
+               PName PFileName PLine PColumn))
+         end
       end
 
       meth OptimizedDebugInfo(Type)

@@ -198,6 +198,10 @@ define
             case VInstr of vDebugEntry(_ _ _ _) then skip
             [] vDebugExit(_ _ _ _) then skip
             [] vDebugInfo(_ _ _ _ _ _) then skip
+            [] vProcDebugInfo(_ _ _ _) then skip
+            [] vFunDebugInfo(_ _ _ _) then skip
+            [] vLazyFunDebugInfo(_ _ _ _) then skip
+            [] vArgDebugInfo(_ _ _ _ _ _) then skip
             [] vOptimizedDebugInfo(_ _ _) then skip
             [] vMakePermanent(_ RegIndices _) then
                {ForAll RegIndices
@@ -373,6 +377,10 @@ define
             case VInstr of vDebugEntry(_ _ _ _) then skip
             [] vDebugExit(_ _ _ _) then skip
             [] vDebugInfo(_ _ _ _ _ _) then skip
+            [] vProcDebugInfo(_ _ _ _) then skip
+            [] vFunDebugInfo(_ _ _ _) then skip
+            [] vLazyFunDebugInfo(_ _ _ _) then skip
+            [] vArgDebugInfo(_ _ _ _ _ _) then skip
             [] vOptimizedDebugInfo(_ _ _) then skip
             [] vMakePermanent(_ _ _) then skip
             [] vClear(_ _ _) then skip
