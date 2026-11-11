@@ -28,8 +28,6 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include "mozartcore.hh"
-
 #ifndef MOZART_GENERATOR
 
 namespace mozart {
