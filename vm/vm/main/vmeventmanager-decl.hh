@@ -44,8 +44,6 @@ public:
   VirtualMachineEventManager(VM vm) : vm(vm), trackingTriggered(false) {}
 
 public:
-  using Id = size_t;
-
   using IdsVector = std::vector<Id>;
 
   static inline

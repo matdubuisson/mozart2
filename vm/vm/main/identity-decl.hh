@@ -41,6 +41,8 @@ namespace mozart {
  * The target objects are mainly runnables, variables and structures as abstractions and cons for streams.
  */
 
+using Id = size_t;
+
 //////////////
 // Identity //
 //////////////
@@ -54,7 +56,7 @@ namespace mozart {
 class Identity {
 private:
   // C++20 automatically generating a static counter to the template without specifying it in advance
-  inline static size_t _idsCounter = 0;
+  inline static Id _idsCounter = 0;
 
 public:
   /** @brief Create a new identifiant with an unique id */
@@ -91,14 +93,14 @@ public:
   /**
    * @brief Get the id
    * 
-   * @return size_t 
+   * @return Id 
    */
-  size_t getId() const {
+  Id getId() const {
     return _id;
   }
   
   inline
-  size_t getId(RichNode self, VM vm);
+  Id getId(RichNode self, VM vm);
 
   /**
    * @brief Set the id
@@ -106,12 +108,12 @@ public:
    * @param id The new id to set to the identifiant
    * @remark Should be controlled only by the system or by the outside for debugging purposes
    */
-  void setId(size_t id) {
+  void setId(Id id) {
     _id = id;
   }
 
   inline
-  void setId(RichNode self, VM vm, size_t id);
+  void setId(RichNode self, VM vm, Id id);
 
 public:
   /**
@@ -142,7 +144,7 @@ public:
   void copyIdentity(RichNode self, VM vm, const Identity* other);
 
 protected:
-  size_t _id;
+  Id _id;
 };
 
 //////////////////////
@@ -189,25 +191,25 @@ public:
    * @return size_t
    * @remark Kind id == id if the current identity is a kind leader
    */
-  size_t getKindId() const {
+  Id getKindId() const {
     return _kindId == SIZE_MAX ?
       Identity::getId() : _kindId;
   }
 
   inline
-  size_t getKindId(RichNode self, VM vm);
+  Id getKindId(RichNode self, VM vm);
 
   /**
    * @brief Get the generation id
    * 
-   * @return size_t 
+   * @return Id 
    */
-  size_t getGenerationId() const {
+  Id getGenerationId() const {
     return _generationId;
   }
 
   inline
-  size_t getGenerationId(RichNode self, VM vm);
+  Id getGenerationId(RichNode self, VM vm);
 
 public:
   /**
@@ -291,7 +293,7 @@ public:
   void followIdentity(RichNode self, VM vm, const AdvancedIdentity* other, bool newGeneration);
 
 protected:
-  size_t _kindId, _generationId;
+  Id _kindId, _generationId;
 };
 
 class MoreAdvancedIdentity: public AdvancedIdentity {
@@ -302,10 +304,10 @@ public:
 
 public:
   struct GroupIdentity {
-    explicit GroupIdentity(size_t kindId, size_t generationId) :
+    explicit GroupIdentity(Id kindId, Id generationId) :
       kindId(kindId), generationId(generationId) {}
     
-    size_t kindId, generationId;
+    Id kindId, generationId;
   };
 
 public:
@@ -313,7 +315,7 @@ public:
     return GroupIdentity(_kindId, _generationId);
   }
 
-  void resetGroupIdentity(size_t kindId) {
+  void resetGroupIdentity(Id kindId) {
     _kindId = kindId;
     _generationId = 0;
   }
@@ -325,7 +327,7 @@ public:
 
   void followGroupIdentity(const Identity& other) {
     assert(_kindId == SIZE_MAX);
-    size_t id = other.getId();
+    Id id = other.getId();
     if (_kindId != id) { // For lazy/recursive function, we re-enter the same function every time
       _kindId = id;
       _generationId = 0;
@@ -356,10 +358,10 @@ public:
   bool is(RichNode self, VM vm);
   
   inline
-  size_t getId(RichNode self, VM vm);
+  Id getId(RichNode self, VM vm);
 
   inline
-  void setId(RichNode self, VM vm, size_t id);
+  void setId(RichNode self, VM vm, Id id);
 
 public:
   inline
@@ -387,10 +389,10 @@ public:
 
 public:
   inline
-  size_t getKindId(RichNode self, VM vm);
+  Id getKindId(RichNode self, VM vm);
 
   inline
-  size_t getGenerationId(RichNode self, VM vm);
+  Id getGenerationId(RichNode self, VM vm);
 
 public:
   inline
@@ -434,10 +436,10 @@ public:
   bool is(RichNode self, VM vm);
   
   inline
-  size_t getId(RichNode self, VM vm);
+  Id getId(RichNode self, VM vm);
 
   inline
-  void setId(RichNode self, VM vm, size_t id);
+  void setId(RichNode self, VM vm, Id id);
 
 public:
   inline
@@ -464,10 +466,10 @@ public:
   bool is(RichNode self, VM vm);
 
   inline
-  size_t getKindId(RichNode self, VM vm);
+  Id getKindId(RichNode self, VM vm);
 
   inline
-  size_t getGenerationId(RichNode self, VM vm);
+  Id getGenerationId(RichNode self, VM vm);
 
 public:
   inline
@@ -518,10 +520,10 @@ public:
   bool is(RichNode self, VM vm);
   
   inline
-  size_t getId(RichNode self, VM vm);
+  Id getId(RichNode self, VM vm);
 
   inline
-  void setId(RichNode self, VM vm, size_t id);
+  void setId(RichNode self, VM vm, Id id);
 
 public:
   inline
@@ -547,10 +549,10 @@ public:
 
 public:
   inline
-  size_t getKindId(RichNode self, VM vm);
+  Id getKindId(RichNode self, VM vm);
 
   inline
-  size_t getGenerationId(RichNode self, VM vm);
+  Id getGenerationId(RichNode self, VM vm);
 
 public:
   inline

@@ -32,7 +32,6 @@ namespace builtins {
 void ModEventManager::Track::call(VM vm, In type, In category, In authorId, In victimIds) {
   VirtualMachineEventManager& eventManager = vm->getEventManager();
 
-  using Id = VirtualMachineEventManager::Id;
   using IdsVector = VirtualMachineEventManager::IdsVector;
   using RunnableAnnounce = VirtualMachineEventManager::RunnableAnnounce;
   using RunnableTracking = VirtualMachineEventManager::RunnableTracking;
@@ -106,7 +105,6 @@ void ModEventManager::Track::call(VM vm, In type, In category, In authorId, In v
 void ModEventManager::Untrack::call(VM vm, In type, In category, In ruleIndex) {
   VirtualMachineEventManager& eventManager = vm->getEventManager();
 
-  using Id = VirtualMachineEventManager::Id;
   using IdsVector = VirtualMachineEventManager::IdsVector;
   using RunnableAnnounce = VirtualMachineEventManager::RunnableAnnounce;
   using RunnableTracking = VirtualMachineEventManager::RunnableTracking;

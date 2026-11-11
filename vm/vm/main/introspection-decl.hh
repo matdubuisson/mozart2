@@ -28,7 +28,6 @@
 #include "core-forward-decl.hh"
 #include "opcodes.hh"
 #include "runnable-decl.hh"
-
 #include "buildsupport-decl.hh"
 
 namespace mozart {
@@ -55,8 +54,6 @@ public:
 
 public:
   /* ========== Structures related to ids ========== */
-
-  using Id = size_t;
 
   using IdsVector = std::vector<Id>;
 
