@@ -49,6 +49,7 @@
 #include "functiontraits-decl.hh"
 #include "vm-decl.hh"
 #include "vmeventmanager-decl.hh"
+#include "vmdebuginfomanager-decl.hh"
 #include "introspection-decl.hh"
 
 #endif // MOZART_MOZARTCORE_DECL_H
