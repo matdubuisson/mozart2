@@ -622,7 +622,7 @@ define
          end
       end
 
-      meth UnnestFunction(FE1 FEs FE2 ProcFlags C IsLazy $) LazyFlags RestFlags in
+      meth UnnestFun(FE1 FEs FE2 ProcFlags C IsLazy $) LazyFlags RestFlags in
          {List.partition ProcFlags fun {$ fAtom(A _)} A == 'lazy' end
             ?LazyFlags ?RestFlags}
          {List.forAll RestFlags proc{$ fAtom(A _)}
@@ -676,7 +676,7 @@ define
                               end nil#FE2}
             
             local
-               End = Unnester, UnnestFunction(FE1 Formals
+               End = Unnester, UnnestFun(FE1 Formals
                   fOpApply('Value.byNeed'
                      [fFun(fDollar(CND) nil NewFE nil CND)]
                      CND) RestFlags C true $)
@@ -844,7 +844,7 @@ define
             end
             Unnester, UnnestProcDebugInfo(FE1 FEs GFrontEq|GD $) % Definition node must always be second element!
          [] fFun(FE1 FEs FE2 ProcFlags C) then
-            Unnester, UnnestFunction(FE1 FEs FE2 ProcFlags C false $)
+            Unnester, UnnestFun(FE1 FEs FE2 ProcFlags C false $)
          [] fFunctor(FE FDescriptors C) then
             FRequire FPrepare FImport FExport FDefine1 FDefine2
          in
