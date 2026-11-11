@@ -527,4 +527,4 @@ private:
 
 }
 
-#endif // MOZART_EVENTMANAGER_DECL_H
+#endif // MOZART_VMEVENTMANAGER_DECL_H
