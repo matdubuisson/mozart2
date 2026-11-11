@@ -29,6 +29,7 @@
 #include <algorithm>
 
 #include "mozartcore.hh"
+#include "buildsupport.hh"
 
 #ifndef MOZART_GENERATOR
 
@@ -46,44 +47,6 @@ UnstableNode Introspection::build(VM vm, Value value) {
   // If there are not build() defined for Value inside Introspection
   // then go look outside if there exists one.
   return mozart::build(vm, value);
-}
-
-template<class Value>
-UnstableNode Introspection::buildVector(VM vm, const Vector<Value>& vector) {
-  OzListBuilder builder(vm);
-  for (Value value : vector) {
-    builder.push_back(vm, build<Value>(vm, value));
-  }
-  return builder.get(vm);
-}
-
-template<class Key, class Value>
-UnstableNode Introspection::buildMap(VM vm, const Map<Key, Value>& map) {
-  UnstableNode label = Atom::build(vm, "map");
-  size_t i = 0, width = map.size();
-  UnstableField fields[width];
-
-  for (auto pair : map) {
-    Key key = pair.first;
-
-    if constexpr (std::is_same_v<Value, UnstableNode>)
-      fields[i].value.copy(vm, pair.second);
-    else {
-      Value value = pair.second;
-      fields[i].feature = build<Key>(vm, key);
-
-      if constexpr (is_Vector_v<Value>)
-        fields[i].value = buildVector(vm, value);
-      else if constexpr (is_Map_v<Value>)
-        fields[i].value = buildMap(vm, value);
-      else
-        fields[i].value = build<Value>(vm, value);
-    }
-    
-    i++;
-  }
-
-  return buildRecordDynamic(vm, label, width, fields);
 }
 
 /* ========== VM state ========== */
@@ -270,12 +233,6 @@ UnstableNode Introspection::buildThreadState(VM vm, Runnable* runnable) {
     isRunnable,
     isTerminated
   );
-}
-
-template<>
-inline
-UnstableNode Introspection::build(VM vm, Runnable* runnable) {
-  return buildThreadState(vm, runnable);
 }
 
 UnstableNode Introspection::buildThreadStatistics(VM vm, const Runnable* runnable) {
@@ -901,12 +858,6 @@ UnstableNode Introspection::buildVariable(VM vm, const VariableState& variable) 
   );
 }
 
-template<>
-inline
-UnstableNode Introspection::build(VM vm, VariableState state) {
-  return buildVariable(vm, state);
-}
-
 static inline
 UnstableNode buildVariableStateBoundAndNeeded(VM vm, const bool isBound, const bool isNeeded) {
   return buildRecord(vm,
@@ -920,24 +871,18 @@ UnstableNode buildVariableStateBoundAndNeeded(VM vm, const bool isBound, const b
   );
 }
 
-template<>
-inline
 UnstableNode Introspection::build(VM vm, Variable* variable) {
   assert(variable != nullptr);
   return buildVariableStateBoundAndNeeded(vm,
     variable->isBound(vm), variable->isNeeded(vm));
 }
 
-template<>
-inline
 UnstableNode Introspection::build(VM vm, ReadOnlyVariable* variable) {
   assert(variable != nullptr);
   return buildVariableStateBoundAndNeeded(vm,
     variable->isBound(vm), variable->isNeeded(vm));
 }
 
-template<>
-inline
 UnstableNode Introspection::build(VM vm, DataflowVariable variable) {
   return buildRecord(vm,
     buildArity(vm,

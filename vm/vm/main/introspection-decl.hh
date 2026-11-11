@@ -29,11 +29,18 @@
 #include "opcodes.hh"
 #include "runnable-decl.hh"
 
+#include "buildsupport-decl.hh"
+
 namespace mozart {
 
 // Assumption : there is only one VM
 
-class Introspection {
+class Introspection: public BuildSupport<Introspection> {
+public:
+  template<class Value>
+  static inline
+  UnstableNode build(VM vm, Value value);
+
 public:
   using RunnableLambda = std::function<void(VM, Runnable*)>;
   using NodeLambda = std::function<void(VM, RichNode)>;
@@ -49,45 +56,9 @@ public:
 public:
   /* ========== Structures related to ids ========== */
 
-  template<class Value>
-  static inline
-  UnstableNode build(VM vm, Value value);
-
   using Id = size_t;
 
-  template<class Value>
-  using Vector = std::vector<Value>;
-
-  template<class Type>
-  struct IsVector : std::false_type {};
-
-  template<class Value>
-  struct IsVector<Vector<Value>> : std::true_type {};
-
-  template<class Type>
-  static inline constexpr bool is_Vector_v = IsVector<Type>::value;
-
-  template<class Value>
-  static inline
-  UnstableNode buildVector(VM vm, const Vector<Value>& vector);
-
   using IdsVector = std::vector<Id>;
-
-  template<class Key, class Value>
-  using Map = std::unordered_map<Key, Value>;
-
-  template<class Type>
-  struct IsMap : std::false_type {};
-
-  template<class Key, class Value>
-  struct IsMap<Map<Key, Value>> : std::true_type {};
-
-  template<class Type>
-  static inline constexpr bool is_Map_v = IsMap<Type>::value;
-
-  template<class Key, class Value>
-  static inline
-  UnstableNode buildMap(VM vm, const Map<Key, Value>& map);
 
   template<class Value>
   using IdToValueMap = Map<Id, Value>;
@@ -247,6 +218,11 @@ public:
 
   static inline
   UnstableNode buildThreadState(VM vm, Runnable* runnable);
+
+  static inline
+  UnstableNode build(VM vm, Runnable* runnable) {
+    return buildThreadState(vm, runnable);
+  }
 
   static inline
   UnstableNode buildThreadStatistics(VM vm, const Runnable* runnable);
@@ -1357,6 +1333,20 @@ public:
 
   static inline
   UnstableNode buildVariable(VM vm, const VariableState& variable);
+
+  static inline
+  UnstableNode build(VM vm, VariableState state) {
+    return buildVariable(vm, state);
+  }
+
+  static inline
+  UnstableNode build(VM vm, Variable* variable);
+
+  static inline
+  UnstableNode build(VM vm, ReadOnlyVariable* variable);
+
+  static inline
+  UnstableNode build(VM vm, DataflowVariable variable);
 
   using VariableStatesVector = Vector<VariableState>;
 
