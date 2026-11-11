@@ -42,6 +42,7 @@
 #include "uuid-decl.hh"
 #include "vmallocatedlist-decl.hh"
 #include "vmeventmanager-decl.hh"
+#include "vmdebuginfomanager-decl.hh"
 
 #include "atomtable.hh"
 #include "bigintimplem-decl.hh"
@@ -158,7 +159,7 @@ private:
   bool _useDynamicPreemption;
 };
 
-class VirtualMachine: public VirtualMachineEventManager {
+class VirtualMachine: public VirtualMachineEventManager, public VirtualMachineDebugInfoManager {
 public:
   /**
    * Exit codes allows the virtual machine to process runnable entities differently when they exit :
