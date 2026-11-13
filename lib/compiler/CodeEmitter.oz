@@ -1468,10 +1468,16 @@ define
             Emitter, Emit(argDebugInfo(Name '' 0 0 PName '' 0 0))
          else
             FileName = Coord.1 Line = Coord.2 Column = Coord.3
-            PFileName = PCoord.1 PLine = PCoord.2 PColumn = PCoord.3
          in
-            Emitter, Emit(argDebugInfo(Name FileName Line Column
-               PName PFileName PLine PColumn))
+            if PCoord == unit then
+               Emitter, Emit(argDebugInfo(Name FileName Line Column
+                  PName '' 0 0))               
+            else
+               PFileName = PCoord.1 PLine = PCoord.2 PColumn = PCoord.3
+            in
+               Emitter, Emit(argDebugInfo(Name FileName Line Column
+                  PName PFileName PLine PColumn))
+            end
          end
       end
 
