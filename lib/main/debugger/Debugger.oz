@@ -27,6 +27,9 @@ functor
 
 import
   Boot        at 'x-oz://boot/Boot'
+  System
+export
+  Start
 define
   Boot_Thread = {Boot.getInternal 'Thread'}
   Boot_System = {Boot.getInternal 'System'}
@@ -50,10 +53,7 @@ define
 
   \insert Reachability
 
-  This = {Boot_Thread.this $}
-  ThisId = {Boot_Thread.getId This $}
-
-  proc {ProcessCommand ExecutionMode WatchedListIds ?PreemptionDone ?NewWatchedListIds}
+  proc {ProcessCommand This ThisId ExecutionMode WatchedListIds ?PreemptionDone ?NewWatchedListIds}
     proc {DefaultReturn}
       PreemptionDone = false
       NewWatchedListIds = WatchedListIds
@@ -155,6 +155,9 @@ define
   end
 
   proc {Loop PreemptionDone WatchedListIds}
+    This = {Boot_Thread.this $}
+    ThisId = {Boot_Thread.getId This $}
+
     ExecutionMode = {Boot_Scheduler.getExecutionMode $}
     IsTrackingTriggered = {Boot_EventManager.isTrackingTriggered $}
 
@@ -162,7 +165,7 @@ define
       NewWatchedListIds
       PreemptionDone
     in
-      {ProcessCommand ExecutionMode WatchedListIds PreemptionDone NewWatchedListIds}
+      {ProcessCommand This ThisId ExecutionMode WatchedListIds PreemptionDone NewWatchedListIds}
       {Loop PreemptionDone NewWatchedListIds}
     end
 
@@ -171,6 +174,14 @@ define
       {Loop true WatchedListIds}
     end
   in
+    if {Boot_Thread.isPreemptible This $} == false then
+      {Boot_Thread.setPreemptible This false}
+    end
+
+    if {Boot_Thread.getPriority This $} \= system then
+      {Boot_Thread.setPriority This system}
+    end
+
     % {PrintInfo "Execution mode: "#ExecutionMode}
     % {PrintInfo "Is tracking triggered: "#{Bool.toString IsTrackingTriggered $}}
     % {PrintInfo "Watched list ids: "#{ListToString WatchedListIds $}}
@@ -222,12 +233,14 @@ define
       end
     end
   end
-in
-  if {Boot_Thread.isPreemptible This $} then
-    {Boot_Thread.setPreemptible This false}
-  end
 
-  {Loop true nil}
+  proc {Start}
+    thread
+      {Loop true nil}
+    end
+  end
+in
+  skip
 end
 
 
