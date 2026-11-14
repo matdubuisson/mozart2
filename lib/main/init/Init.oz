@@ -186,6 +186,25 @@ prepare
    end
 \endif
 
+   functor DebuggerFunctor
+   import
+      System
+      Property
+      Debugger at 'x-oz://system/Debugger'
+   define
+      {System.showInfo "Hello from init debugger functor"}
+
+      case {Property.get 'oz.debugger'} of 'on' then
+         {Debugger.start}
+      else {System.showInfo "Debugger not activated"} end
+
+      case {Property.get 'oz.debugger.gui'} of 'on' then
+         {System.showInfo "Debugger GUI activated"}
+      else {System.showInfo "Debugger GUI not activated"} end
+
+      
+   end
+
 import
    Boot at 'x-oz://boot/Boot'
 
@@ -327,6 +346,8 @@ define
 
       %% Install error handler
       {RM apply(ErrorHandler)}
+
+      {RM apply(DebuggerFunctor)}
 
 \ifdef DENYS_EVENTS
       %% Start event handling
