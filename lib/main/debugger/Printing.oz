@@ -3,6 +3,10 @@ local
 
   proc {PrintVS String Error NewLine}
     {Boot_System.printVS String Error NewLine}
+
+    % if DebuggerGUIAgent \= none then
+    %   {DebuggerGUIAgent print(String Error NewLine)}
+    % end
   end
 
   proc {PrintAux Status String IsError}

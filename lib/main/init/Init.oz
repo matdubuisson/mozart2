@@ -198,7 +198,7 @@ prepare
       case {Property.get 'oz.debugger'} of 'on' then
          case {Property.get 'oz.debugger.gui'} of 'on' then
             {System.showInfo "Debugger GUI activated"}
-            {Debugger.start none}
+            {Debugger.start {DebuggerGUI.new $}}
          else
             {System.showInfo "Debugger GUI not activated"}
             {Debugger.start none}
