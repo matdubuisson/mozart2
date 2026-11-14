@@ -191,18 +191,19 @@ prepare
       System
       Property
       Debugger at 'x-oz://system/Debugger'
+      DebuggerGUI at 'x-oz://system/DebuggerGUI'
    define
       {System.showInfo "Hello from init debugger functor"}
 
       case {Property.get 'oz.debugger'} of 'on' then
-         {Debugger.start}
+         case {Property.get 'oz.debugger.gui'} of 'on' then
+            {System.showInfo "Debugger GUI activated"}
+            {Debugger.start none}
+         else
+            {System.showInfo "Debugger GUI not activated"}
+            {Debugger.start none}
+         end
       else {System.showInfo "Debugger not activated"} end
-
-      case {Property.get 'oz.debugger.gui'} of 'on' then
-         {System.showInfo "Debugger GUI activated"}
-      else {System.showInfo "Debugger GUI not activated"} end
-
-      
    end
 
 import

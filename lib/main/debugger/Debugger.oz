@@ -42,136 +42,136 @@ define
   TAB = "\t"
   TRYHELP = ", try help to get more details"
 
-  % All printers to display runtime data, infos and errors
-  \insert Utils
-
-  \insert Printing
-
-  \insert Extracting
-  
-  \insert Displaying
-
-  \insert Reachability
-
-  proc {ProcessCommand This ThisId ExecutionMode WatchedListIds ?PreemptionDone ?NewWatchedListIds}
-    proc {DefaultReturn}
-      PreemptionDone = false
-      NewWatchedListIds = WatchedListIds
-    end
-
-    proc {ContinueReturn Arguments}
-      \insert ./commands/execution/ContinueCommand
-    end
-
-    proc {PreemptionReturn}
-      {Boot_Thread.preempt This}
-      PreemptionDone = true
-      NewWatchedListIds = WatchedListIds
-    end
-  in
-    /*
-      It ensures the debugger will not be preempted during its analysis
-      and so risking to produce an inconsistent result. However it is
-      responsible to release the VM often to let other threads
-      enough running time
-    */
-    {PrintPrefix}
-    
-    local
-      Input = {Boot_System.inputVSLine $}
-    in
-      if Input == "" then % Considered as a continue
-        case ExecutionMode of untilTrackingTriggered then
-          {ContinueReturn nil}
-        else
-          {DefaultReturn}
-        end
-      else
-        Inputs = {String.tokens Input 32 $}
-        Command|Arguments = Inputs
-      in
-        % Everything concerning the introspection of the VM
-        case Command of "this" then
-          {PrintInfo "Debugger thread id: "#ThisId}
-          {DefaultReturn}
-        [] "help" then
-          \insert ./commands/HelpCommand
-        [] "count" then
-          \insert ./commands/introspection/CountCommand
-          {DefaultReturn}
-        [] "vm" then
-          \insert ./commands/introspection/VMCommand
-          {DefaultReturn}
-        [] "thread" then
-          \insert ./commands/introspection/ThreadCommand
-          {DefaultReturn}
-        [] "threads" then
-          \insert ./commands/introspection/ThreadsCommand
-          {DefaultReturn}
-        [] "variable" then
-          \insert ./commands/introspection/VariableCommand
-          {DefaultReturn}
-        [] "variables" then
-          \insert ./commands/introspection/VariablesCommand
-          {DefaultReturn}
-
-        % Reachability analysis
-        [] "graph" then
-          \insert ./commands/reachability/GraphCommand
-
-        % Journal and event management
-        [] "journal" then
-          \insert ./commands/JournalCommand
-          {DefaultReturn}
-        [] "track" then
-          \insert ./commands/tracking/TrackCommand
-          {DefaultReturn}
-        [] "untrack" then
-          \insert ./commands/tracking/UnTrackCommand
-          {DefaultReturn}
-        [] "tracks" then
-          \insert ./commands/tracking/TracksCommand
-          {DefaultReturn}
-
-        % Program execution control
-        [] "run" then
-          \insert ./commands/execution/RunCommand
-        [] "reset" then
-          \insert ./commands/execution/ResetCommand
-          {DefaultReturn}
-        [] "continue" then
-          {ContinueReturn Arguments}
-        
-        % Everything concerning the control of the VM
-        [] "gc" then
-          \insert ./commands/GCCommand
-          {DefaultReturn}
-        else
-          {PrintError "Unknown command '"#Command#"'"#TRYHELP}
-          {DefaultReturn}
-        end
-      end
-    end
-  end
-
-  proc {Loop PreemptionDone WatchedListIds}
+  proc {Loop PreemptionDone WatchedListIds DebuggerGUIAgent}
     This = {Boot_Thread.this $}
     ThisId = {Boot_Thread.getId This $}
 
     ExecutionMode = {Boot_Scheduler.getExecutionMode $}
     IsTrackingTriggered = {Boot_EventManager.isTrackingTriggered $}
 
+    % All printers to display runtime data, infos and errors
+    \insert Utils
+
+    \insert Printing
+
+    \insert Extracting
+    
+    \insert Displaying
+
+    \insert Reachability
+
+    proc {ProcessCommand ExecutionMode WatchedListIds ?PreemptionDone ?NewWatchedListIds}
+      proc {DefaultReturn}
+        PreemptionDone = false
+        NewWatchedListIds = WatchedListIds
+      end
+
+      proc {ContinueReturn Arguments}
+        \insert ./commands/execution/ContinueCommand
+      end
+
+      proc {PreemptionReturn}
+        {Boot_Thread.preempt This}
+        PreemptionDone = true
+        NewWatchedListIds = WatchedListIds
+      end
+    in
+      /*
+        It ensures the debugger will not be preempted during its analysis
+        and so risking to produce an inconsistent result. However it is
+        responsible to release the VM often to let other threads
+        enough running time
+      */
+      {PrintPrefix}
+      
+      local
+        Input = {Boot_System.inputVSLine $}
+      in
+        if Input == "" then % Considered as a continue
+          case ExecutionMode of untilTrackingTriggered then
+            {ContinueReturn nil}
+          else
+            {DefaultReturn}
+          end
+        else
+          Inputs = {String.tokens Input 32 $}
+          Command|Arguments = Inputs
+        in
+          % Everything concerning the introspection of the VM
+          case Command of "this" then
+            {PrintInfo "Debugger thread id: "#ThisId}
+            {DefaultReturn}
+          [] "help" then
+            \insert ./commands/HelpCommand
+          [] "count" then
+            \insert ./commands/introspection/CountCommand
+            {DefaultReturn}
+          [] "vm" then
+            \insert ./commands/introspection/VMCommand
+            {DefaultReturn}
+          [] "thread" then
+            \insert ./commands/introspection/ThreadCommand
+            {DefaultReturn}
+          [] "threads" then
+            \insert ./commands/introspection/ThreadsCommand
+            {DefaultReturn}
+          [] "variable" then
+            \insert ./commands/introspection/VariableCommand
+            {DefaultReturn}
+          [] "variables" then
+            \insert ./commands/introspection/VariablesCommand
+            {DefaultReturn}
+
+          % Reachability analysis
+          [] "graph" then
+            \insert ./commands/reachability/GraphCommand
+
+          % Journal and event management
+          [] "journal" then
+            \insert ./commands/JournalCommand
+            {DefaultReturn}
+          [] "track" then
+            \insert ./commands/tracking/TrackCommand
+            {DefaultReturn}
+          [] "untrack" then
+            \insert ./commands/tracking/UnTrackCommand
+            {DefaultReturn}
+          [] "tracks" then
+            \insert ./commands/tracking/TracksCommand
+            {DefaultReturn}
+
+          % Program execution control
+          [] "run" then
+            \insert ./commands/execution/RunCommand
+          [] "reset" then
+            \insert ./commands/execution/ResetCommand
+            {DefaultReturn}
+          [] "continue" then
+            {ContinueReturn Arguments}
+          
+          % Everything concerning the control of the VM
+          [] "gc" then
+            \insert ./commands/GCCommand
+            {DefaultReturn}
+          else
+            {PrintError "Unknown command '"#Command#"'"#TRYHELP}
+            {DefaultReturn}
+          end
+        end
+      end
+    end
+
     proc {CommandReturn}
       NewWatchedListIds
       PreemptionDone
     in
-      {ProcessCommand This ThisId ExecutionMode WatchedListIds PreemptionDone NewWatchedListIds}
-      {Loop PreemptionDone NewWatchedListIds}
+      {ProcessCommand ExecutionMode WatchedListIds PreemptionDone NewWatchedListIds}
+      {Loop PreemptionDone NewWatchedListIds DebuggerGUIAgent}
     end
 
     proc {DefaultReturn}
       {Boot_Thread.preempt This}
-      {Loop true WatchedListIds}
+      {Loop true WatchedListIds DebuggerGUIAgent}
     end
   in
     if {Boot_Thread.isPreemptible This $} == false then
@@ -234,9 +234,9 @@ define
     end
   end
 
-  proc {Start}
+  proc {Start DebuggerGUIAgent}
     thread
-      {Loop true nil}
+      {Loop true nil DebuggerGUIAgent}
     end
   end
 in
