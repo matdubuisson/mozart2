@@ -8,7 +8,7 @@ end
 
 proc {ExtractIdentity Argument ?Identity}
   if Argument == "this" then
-    Identity = ThisId
+    Identity = {Boot_Thread.getId {Boot_Thread.this $} $}
   elseif {String.isInt Argument $} then
     Identity = {String.toInt Argument $}
   else
