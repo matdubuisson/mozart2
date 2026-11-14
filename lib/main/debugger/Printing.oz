@@ -1,12 +1,16 @@
 local
   MARKER = "[DEBUGGER]"
 
+  proc {PrintVS String Error NewLine}
+    {Boot_System.printVS String Error NewLine}
+  end
+
   proc {PrintAux Status String IsError}
     case Status of none then
-      {Boot_System.printVS MARKER#": "#
+      {PrintVS MARKER#": "#
         String IsError true}
     else
-      {Boot_System.printVS MARKER#"["#Status#"]"#": "#
+      {PrintVS MARKER#"["#Status#"]"#": "#
         String IsError true}
     end
   end
@@ -14,7 +18,7 @@ in
   proc {PrintPadding Length}
     proc {ForI I}
       if I < Length then
-        {Boot_System.printVS " " false false}
+        {PrintVS " " false false}
         {ForI I + 1}
       else skip end
     end
@@ -23,19 +27,19 @@ in
   end
 
   proc {PrintPrefix}
-    {Boot_System.printVS MARKER#": " false false}
+    {PrintVS MARKER#": " false false}
   end
 
   proc {PrintOtherPrefix Status}
-    {Boot_System.printVS MARKER#"["#Status#"]: " false false}
+    {PrintVS MARKER#"["#Status#"]: " false false}
   end
 
   proc {Print String}
-    {Boot_System.printVS String false false}
+    {PrintVS String false false}
   end
 
   proc {PrintLn String}
-    {Boot_System.printVS String false true}
+    {PrintVS String false true}
   end
 
   proc {PrintTab Character Size}
