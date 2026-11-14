@@ -9,7 +9,7 @@ import
   DynamicGridAgent
   DynamicGraphAgent
 export
-  Start
+  new: NewDebuggerGUIAgent
 define
   Boot_Introspection = {Boot.getInternal 'Introspection'}
 
@@ -167,12 +167,38 @@ define
       td(
         glue: nswe
 
-        canvas(
-          handle: TotalThreadsCanvas
+        td(
+          glue: nswe
+
+          label(
+            glue: w
+            text: "Total threads"
+            foreground: red
+          )
+ 
+          canvas(
+            handle: TotalThreadsCanvas
+          )
         )
 
-        canvas(
-          handle: ActiveVsPassiveThreadsCanvas
+        td(
+          glue: nswe
+
+          label(
+            glue: w
+            text: "Active threads"
+            foreground: orange
+          )
+
+          label(
+            glue: w
+            text: "Passive threads"
+            foreground: blue
+          )
+
+          canvas(
+            handle: ActiveVsPassiveThreadsCanvas
+          )
         )
       )
     )
@@ -186,142 +212,130 @@ define
       handle: OutputText
     )
 
-    entry(
+    lr(
       glue: we
-      init: "Enter command"
-      handle: InputText
-      action: proc {$} {System.show input} end
+
+      label(
+        glue: w
+        text: "Enter command"
+        foreground: red
+      )
+
+      entry(
+        glue: we
+        init: "help"
+        handle: InputText
+      )
+
+      button(
+        glue: e
+        text: "Execute"
+        action: proc {$} {System.show input({InputText get($)})} end
+      )
     )
   )
 
-  Window
+  Window = {QTk.build td(Description)}
 
-  proc {Start}
-    Window = {QTk.build td(Description)}
-    {Window show}
+  BoardAgent = {DynamicGridAgent.new Board config() $}
+
+  TotalThreadsDynamicGraphAgent = {DynamicGraphAgent.new TotalThreadsCanvas config(
+    nDots: 10
+    nLabels: 5
+    color: red
+    traitsEnabled: false
+    digitsEnabled: true
+    statisticsEnabled: true
+  ) $}
+
+  ActiveThreadsDynamicGraphAgent = {DynamicGraphAgent.new ActiveVsPassiveThreadsCanvas config(
+    nDots: 20
+    nLabels: 5
+    color: orange
+    traitsEnabled: false
+    digitsEnabled: true
+    statisticsEnabled: false
+  ) $}
+
+  PassiveThreadsDynamicGraphAgent = {DynamicGraphAgent.new ActiveVsPassiveThreadsCanvas config(
+    nDots: 20
+    nLabels: 5
+    color: blue
+    traitsEnabled: false
+    digitsEnabled: true
+    statisticsEnabled: false
+  ) $}
+
+  thread
+    proc {Loop}
+      {TotalThreadsDynamicGraphAgent newDot({Boot_Introspection.getThreadsCount $})}
+      {ActiveThreadsDynamicGraphAgent newDot({Boot_Introspection.getActiveThreadsCount $})}
+      {PassiveThreadsDynamicGraphAgent newDot({Boot_Introspection.getPassiveThreadsCount $})}
+      {TotalThreadsDynamicGraphAgent draw()}
+      {ActiveThreadsDynamicGraphAgent draw()}
+      {PassiveThreadsDynamicGraphAgent draw()}
+
+      {Time.delay 1000}
+      {Loop}
+    end
+  in
+    {Loop}
   end
 
+  proc {NewDebuggerGUIAgent ?Agent}
+    Port Stream
+
+    proc {Loop Messages}
+      case Messages of nil then skip
+      [] Message|NextMessages then
+        case Message of print(S _ NewLine) then
+          String = if NewLine then {List.append S "\n" $} else S end
+        in
+          {OutputText insert('end' String)}
+        [] display(Data) then
+          {BoardAgent display(Data)}
+        [] displayCSV(Labels Rows) then
+          {BoardAgent displayCSV(Labels Rows)}
+        end
+
+        {Loop NextMessages}
+      end
+    end
+  in
+    {NewPort Stream Port}
+    {Window show}
+
+    thread {Loop Stream} end
+
+    Agent = proc {$ Message} {Send Port Message} end
+  end
 in
+  % local
+  %   Agent = {NewDebuggerGUIAgent $}
 
+  %   proc {Test I}
+  %     {Agent displayCSV(
+  %       ["Label0" "Label1" "Label2" "Label3" "Label4" "LastVeryVeryLongLabelThatIsVeryBoring"]
+  %       [
+  %         ["00000000000000000000" "1" "2" "3" "4" "5" "6"]
+  %         ["01" "1" "2" "3" "4" "5" "6"]
+  %         ["02" "1" "2" "3" "4" "5" "6"]
+  %         ["03" "1" "2" "3" "4" "5" "6"]
+  %       ]
+  %     )}
+
+  %     {Time.delay 500}
+  %     {Agent print("This is a wonderful string" false false)}
+  %     {Time.delay 1000}
+  %     {Agent print(".... New string" false false)}
+  %     {Agent print({Int.toString I $} false true)}
+
+  %     {Agent display({Thread.getState {Thread.this $} $})}
+  %     {Time.delay 1000}
+  %     {Test (I + 1)}
+  %   end
+  % in
+  %   {Test 0}
+  % end
   skip
-  % {System.showInfo "Hello"}
-  % {Window show}
-
-  % local
-  %   Agent = {DynamicGridAgent.new Board config() $}
-  % in
-  %   % {Agent display(
-  %   %   {Thread.getState {Thread.this $} $}
-  %   % )}
-
-  %   % {Agent display(
-  %   %   test(
-  %   %     'a very very very super very long long name that is annoying to read': aaaa
-  %   %     b: [0 1 2 3 4 5]
-  %   %     c: ["test" "eheheheheh"]
-  %   %     d: [0 1 2 3 4 5]
-  %   %     e: [0 1 2 3 4 5]
-  %   %     f: [0 1 2 3 4 5]
-  %   %   )
-  %   % )}
-
-  %   % {Time.delay 2000}
-
-  %   {Agent displayCSV(
-  %     ["Label0" "Label1" "Label2" "Label3" "Label4" "LastVeryVeryLongLabelThatIsVeryBoring"]
-  %     [
-  %       ["00000000000000000000" "1" "2" "3" "4" "5" "6"]
-  %       ["01" "1" "2" "3" "4" "5" "6"]
-  %       ["02" "1" "2" "3" "4" "5" "6"]
-  %       ["03" "1" "2" "3" "4" "5" "6"]
-  %     ]
-  %   )}
-  % end
-
-  % local
-  %   Agent = {DynamicGraphAgent.new TotalThreadsCanvas config(
-  %     nDots: 10
-  %     nLabels: 5
-  %     traitsEnabled: true
-  %     digitsEnabled: true
-  %     statisticsEnabled: true
-  %   ) $}
-
-  %   Agent2 = {DynamicGraphAgent.new ActiveVsPassiveThreadsCanvas config(
-  %     nDots: 10
-  %     nLabels: 5
-  %     traitsEnabled: true
-  %     digitsEnabled: true
-  %     statisticsEnabled: false
-  %   ) $}
-
-  %   Agent3 = {DynamicGraphAgent.new ActiveVsPassiveThreadsCanvas config(
-  %     nDots: 10
-  %     nLabels: 5
-  %     traitsEnabled: false
-  %     digitsEnabled: false
-  %     statisticsEnabled: false
-  %   ) $}
-  % in
-  %   % {Grid bind(event:"<Configure>" action:
-  %   %   proc {$}
-  %   %     {Agent draw()}
-  %   %   end
-  %   %   )}
-  %   thread
-  %     proc {Loop}
-  %       {Agent newDot({Boot_Introspection.getThreadsCount $})}
-  %       {Agent draw()}
-
-  %       {Agent2 newDot({Boot_Introspection.getActiveThreadsCount $})}
-  %       {Agent3 newDot({Boot_Introspection.getPassiveThreadsCount $})}
-  %       {Agent2 draw()}
-  %       {Agent3 draw()}
-
-  %       {Time.delay 1000}
-  %       {Loop}
-  %     end
-  %   in
-  %     {Loop}
-  %   end
-  % end
-
-  % thread
-  %   proc {Soldier Order}
-  %     thread
-  %       {Wait Order}
-  %       {System.show order(Order)}
-  %     end
-  %   end
-
-  %   proc {Commander I}
-  %     if I > 4096 then skip
-  %     else
-  %       thread X in
-  %         {Soldier X}
-  %         {Soldier X}
-  %         {Soldier X}
-  %         {Soldier X}
-
-  %         {Time.delay 1000}
-  %         X = I
-
-  %         {Commander 2 * I}
-  %         {Commander 2 * I + 1}
-  %       end
-  %     end
-  %   end
-  % in
-  %   {Commander 1}
-  % end
-
-
-  % {Window bind(event:"<Configure>" action:
-  %   proc {$}
-  %     Width Height
-  %   in
-  %     {Window get(width:Width height:Height)}
-  %   end
-  %   )}
-  % {Start}
 end

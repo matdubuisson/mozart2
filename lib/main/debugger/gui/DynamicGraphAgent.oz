@@ -127,7 +127,7 @@ define
               end
 
               % Draw the line between the previous dot and the new one
-              {Canvas create(line PreX PreY X Y fill:red)}
+              {Canvas create(line PreX PreY X Y fill:Config.color)}
 
               if Config.traitsEnabled then
                 TraitSize = {GetScaledDistance Width TraitPercent $}
