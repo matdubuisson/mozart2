@@ -131,7 +131,7 @@ local
         {GetPassiveThreadsCount Frame NewFrame}
         {GetThreadsCountsFrame NextArguments NewFrame}
       [] "total" then NewFrame in
-        {GetTotalThreadsCount Frame NewFrame}
+        {GetThreadsCount Frame NewFrame}
         {GetThreadsCountsFrame NextArguments NewFrame}
       [] "all" then A B in
         {GetActiveThreadsCount Frame A}
