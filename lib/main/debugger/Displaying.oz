@@ -22,7 +22,7 @@ proc {DisplayFrame Label Rows}
   MaxLength = {GetMaxLength Rows 0 $}
 in
   {PrintLn Label}
-  {PrintTab "─" {List.length Label $}}
+  {PrintTab "_" {List.length Label $}}
   {PrintLn ""}
   {Display Rows (MaxLength + 1)}
 end
@@ -55,7 +55,7 @@ local
 
     Length = {GetTotalLength Labels 1 $}
   in
-    {PrintTab "─" Length}
+    {PrintTab "_" Length}
     {PrintLn ""}
   end
 
