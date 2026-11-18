@@ -665,7 +665,7 @@ define
             else
                Unnester, UnnestFunDebugInfo(FE1 FEs GFrontEq|GD $) % Definition node must always be second element!
             end
-         else CND Formals NewFE NewFS in
+         else CND Formals NewFE in
             CND = {CoordNoDebug C}
             Formals#NewFE = {FoldR FEs
                               fun {$ FE1 Formals#FE2} GV in

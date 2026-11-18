@@ -195,18 +195,12 @@ prepare
       DebuggerGUI at 'x-oz://system/DebuggerGUI'
    define
       Boot_Thread = {Boot.getInternal 'Thread'}
-
-      {System.showInfo "Hello from init debugger functor"}
          
-      case {Property.get 'oz.debugger'} of 'on' then
-         case {Property.get 'oz.debugger.gui'} of 'on' then
-            {System.showInfo "Debugger GUI activated"}
+      if {Property.get 'oz.debugger'} == 'on' then
+         if {Property.get 'oz.debugger.gui'} == 'on' then
             {Debugger.start DebuggerGUI.agent}
-         else
-            {System.showInfo "Debugger GUI not activated"}
-            {Debugger.start none}
-         end
-      else {System.showInfo "Debugger not activated"} end
+         else {Debugger.start none} end
+      end
    end
 
 import
