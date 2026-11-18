@@ -1,5 +1,5 @@
 proc {ExtractString Argument ?String}
-  if {Not {IsDet Argument}} then
+  if {Not {IsDet Argument $} $} then
     String = "_"
   elseif {Bool.is Argument $} then
     String = {Bool.toString Argument $}
