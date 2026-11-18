@@ -54,6 +54,7 @@ void VirtualMachine::scheduleThread(bool isSystem) {
   assert(currentThread->isRunnable());
   _currentThread = currentThread;
 
+  // std::printf("Schedule %ld\n", _currentThread->getId());
   size_t nOperations = currentThread->run(getMaxOperationsExecutionMode());
 
   // Update the execution mode (normally manipulated by system threads for specific purposes)
@@ -121,7 +122,8 @@ VirtualMachine::run_return_type VirtualMachine::run() {
     }
 
     // Schedules thread
-    scheduleThread(false);
+    if (_executionMode != OnlySystem)
+      scheduleThread(false);
     
     if (threadPool.empty())
       break;

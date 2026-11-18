@@ -47,7 +47,13 @@ public:
     Create(): Builtin("create") {}
 
     static void call(VM vm, In target) {
-      ozcalls::asyncOzCall(vm, target);
+      // Children of a system thread are considered as part of the system functionalities
+      // thus they must be system priorities as well
+      Runnable* parent = vm->getCurrentThread();
+      Thread* child = ozcalls::asyncOzCall(vm, target);
+      if (vm->getExecutionMode() == ExecutionMode::OnlySystem ||
+        (parent != nullptr && parent->getPriority() == tpSystem))
+        child->setPriority(tpSystem);
     }
   };
 

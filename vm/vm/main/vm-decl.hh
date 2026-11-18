@@ -562,6 +562,7 @@ public:
 public:
   enum ExecutionMode {
     Normal = 0,
+    OnlySystem,
     LimitedSchedules,
     LimitedOperations,
     UntilTrackingTriggered
@@ -603,6 +604,7 @@ public:
 
     switch (_executionMode) {
       case Normal: break;
+      case OnlySystem: break;
       case LimitedSchedules: {
         if (_executionCounter > 0) _executionCounter--;
         break;
@@ -636,6 +638,7 @@ public:
 
     switch (_executionMode) {
       case Normal: return SIZE_MAX;
+      case OnlySystem: return SIZE_MAX;
       case LimitedOperations: return _executionCounter;
       case LimitedSchedules: return SIZE_MAX;
       case UntilTrackingTriggered: return SIZE_MAX;
@@ -649,9 +652,12 @@ public:
 
   bool testEarlyPreemptionRequested() {
     assert(_currentThread != nullptr);
-    return _currentThread->isPreemptible()
-      && _currentThread->getPriority() != tpSystem
-      && (_executionMode == UntilTrackingTriggered && isTrackingTriggered());
+    bool isNotSystem = _currentThread->getPriority() != tpSystem;
+    if (isNotSystem && _executionMode == OnlySystem) return true;
+    else if (isNotSystem && _currentThread->isPreemptible()
+      && (_executionMode == UntilTrackingTriggered && isTrackingTriggered()))
+      return true;
+    else return false;
   }
 
 public:

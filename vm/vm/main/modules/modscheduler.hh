@@ -85,6 +85,15 @@ public:
   //   }
   // };
 
+  class SetOnlySystemExecutionMode: public Builtin<SetOnlySystemExecutionMode> {
+  public:
+    SetOnlySystemExecutionMode(): Builtin("setOnlySystemExecutionMode") {}
+
+    static void call(VM vm) {
+      vm->setExecutionMode(ExecutionMode::OnlySystem);
+    }
+  };
+
   class Reset: public Builtin<Reset> {
   public:
     Reset(): Builtin("reset") {}
@@ -102,6 +111,7 @@ public:
       std::string executionMode;
       switch (vm->getExecutionMode()) {
         case ExecutionMode::Normal: executionMode = "normal"; break;
+        case ExecutionMode::OnlySystem: executionMode = "onlySystem"; break;
         case ExecutionMode::LimitedSchedules: executionMode = "limitedSchedules"; break;
         case ExecutionMode::LimitedOperations: executionMode = "limitedOperations"; break;
         case ExecutionMode::UntilTrackingTriggered: executionMode = "untilTrackingTriggered"; break;
