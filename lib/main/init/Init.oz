@@ -190,15 +190,18 @@ prepare
    import
       System
       Property
+      Boot        at 'x-oz://boot/Boot'
       Debugger at 'x-oz://system/Debugger'
       DebuggerGUI at 'x-oz://system/DebuggerGUI'
    define
-      {System.showInfo "Hello from init debugger functor"}
+      Boot_Thread = {Boot.getInternal 'Thread'}
 
+      {System.showInfo "Hello from init debugger functor"}
+         
       case {Property.get 'oz.debugger'} of 'on' then
          case {Property.get 'oz.debugger.gui'} of 'on' then
             {System.showInfo "Debugger GUI activated"}
-            {Debugger.start {DebuggerGUI.new $}}
+            {Debugger.start DebuggerGUI.agent}
          else
             {System.showInfo "Debugger GUI not activated"}
             {Debugger.start none}
