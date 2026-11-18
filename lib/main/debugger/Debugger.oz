@@ -85,8 +85,16 @@ define
       {PrintPrefix}
       
       local
-        Input = {Boot_System.inputVSLine $}
+        Input %= {Boot_System.inputVSLine $}
       in
+        case DebuggerGUIAgent of none then
+          Input = {Boot_System.inputVSLine $}
+        else
+          Input = {DebuggerGUIAgent input($)}
+          {Wait Input}
+          {PrintLn Input}
+        end
+
         if Input == "" then % Considered as a continue
           case ExecutionMode of untilTrackingTriggered then
             {ContinueReturn nil}
@@ -173,6 +181,16 @@ define
       {Boot_Thread.preempt This}
       {Loop true WatchedListIds DebuggerGUIAgent}
     end
+
+    proc {SystemReturn}
+      {PrintLn "SYSTEM"}
+      NewWatchedListIds
+      PreemptionDone
+    in
+      {ProcessCommand ExecutionMode WatchedListIds PreemptionDone NewWatchedListIds}
+      {Boot_Thread.preempt This}
+      {Loop PreemptionDone NewWatchedListIds DebuggerGUIAgent}
+    end
   in
     if {Boot_Thread.isPreemptible This $} == false then
       {Boot_Thread.setPreemptible This false}
@@ -182,11 +200,12 @@ define
       {Boot_Thread.setPriority This system}
     end
 
-    % {PrintInfo "Execution mode: "#ExecutionMode}
-    % {PrintInfo "Is tracking triggered: "#{Bool.toString IsTrackingTriggered $}}
-    % {PrintInfo "Watched list ids: "#{ListToString WatchedListIds $}}
+    if DebuggerGUIAgent \= none then
+      {Boot_Scheduler.setOnlySystemExecutionMode}
+    end
 
     case ExecutionMode of normal then {CommandReturn}
+    [] onlySystem then {SystemReturn}
     [] limitedSchedules then {DefaultReturn}
     [] limitedOperations then {DefaultReturn}
     [] untilTrackingTriggered then
@@ -236,12 +255,35 @@ define
 
   proc {Start DebuggerGUIAgent}
     thread
+      This = {Boot_Thread.this $}
+    in
+      {Boot_Thread.setPreemptible This false}
+      {Boot_Thread.setPriority This system}
+
       {Loop true nil DebuggerGUIAgent}
     end
   end
 in
   skip
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
