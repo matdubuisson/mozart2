@@ -1,22 +1,54 @@
 functor
 import
-  OS
-  System
-  QTk at 'x-oz://system/wp/QTk'
-
   Boot at 'x-oz://boot/Boot'
-
-  DynamicGridAgent
-  DynamicGraphAgent
+  System
+  Module
+  % QTk at 'x-oz://system/wp/QTk'
 export
-  new: NewDebuggerGUIAgent
+  Agent
 define
+  Boot_Thread = {Boot.getInternal 'Thread'}
+  Boot_Scheduler = {Boot.getInternal 'Scheduler'}
   Boot_Introspection = {Boot.getInternal 'Introspection'}
+
+  CommandsStream
+  CommandsPort = {NewPort CommandsStream $}
+
+  proc {Execute Command}
+    {Send CommandsPort Command}
+  end
+
+  InputText
+  InputTextWidget = entry(
+    glue: we
+    init: "help"
+    handle: InputText
+  )
+
+  OutputText
+  OutputTextWidget = text(
+    glue: we
+    height: 10
+    tdscrollbar: true
+    lrscrollbar: true
+    init: ""
+    handle: OutputText
+  )
+  
+  proc {ResetOutputText}
+    {OutputText set("")}
+  end
+
+  proc {InsertInOutputText String}
+    {OutputText insert('end' String)}
+  end
+  
+  Board
 
   FileMenu = menu(
     command(
       text: "Help"
-      action: proc {$} {System.show help} end
+      action: proc {$} {Execute "help"} end
     )
     command(
       text: "Exit"
@@ -24,77 +56,205 @@ define
     )
   )
 
-  IntrospectionMenu = menu(
-    command(
-      text: "count"
-      action: proc {$} {System.show count} end
+  proc {GenerateMenu Tree Path ?Result}
+    proc {ForEach I Keys Tree Accumulated Make ?Result}
+      case Keys of nil then Result = Accumulated
+      [] Key|NextKeys then
+        NewAccumulated = {Make I Key Path Tree.Key Accumulated $}
+      in
+        {ForEach (I + 1) NextKeys Tree NewAccumulated Make Result}
+      end
+    end
+  in
+    case Tree of tree(...) then
+      Arity = {Record.arity Tree $}
+    in
+      Result = {ForEach 1 Arity Tree menu()
+        proc {$ I Key Path Value Accumulated ?NewAccumulated}
+          if {List.is Value $} then
+            ReversedPath = {List.reverse Key|Path $}
+            NewPath = {List.append ReversedPath Value $}
+          in
+            NewAccumulated = {Record.adjoin Accumulated menu(
+              I: command(
+                text: {Atom.toString Key $}
+                action: proc {$}
+                  {Execute NewPath}
+                end
+              )
+            )}
+          else
+            NewAccumulated = {Record.adjoin Accumulated menu(
+              I: cascade(
+                text: {Atom.toString Key $}
+                menu: {GenerateMenu Value Key|Path $}
+              )
+            )}
+          end
+        end
+      $}
+    [] askIdentityTree(...) then
+      NewTree = {Record.adjoin Tree tree() $}
+    in
+      Result = {GenerateMenu NewTree askIdentity|Path $}
+    end
+  end
+
+  IntrospectionTree = tree(
+    'count': tree(
+      'vm': tree(
+        'schedules': nil
+        'operations': nil
+        'nonSystemSchedules': nil
+        'nonSystemOperations': nil
+        'systemSchedules': nil
+        'systemOperations': nil
+        'gcSchedules': nil
+        'all': nil
+      )
+
+      'threads': tree(
+        'active': nil
+        'passive': nil
+        'total': nil
+        'all': nil
+      )
+
+      'variables': tree(
+        'bound': nil
+        'unbound': nil
+        'total': nil
+        'all': nil
+      )
+
+      'nodes': tree(
+        'variable': nil
+        'value': nil
+        'structural': nil
+        'token': nil
+        'stable': nil
+        'unstable': nil
+        'x': nil
+        'y': nil
+        'g': nil
+        'k': nil
+        'stackDepth': nil
+        'total': nil
+        'all': nil
+      )
     )
-    command(
-      text: "vm"
-      action: proc {$} {System.show count} end
+
+    'vm': tree(
+      'state': nil
+      'statistics': nil
+      'nodes': nil
     )
-    command(
-      text: "thread"
-      action: proc {$} {System.show count} end
+
+    'thread': askIdentityTree(
+      'state': nil
+      'statistics': nil
+      'nodes': nil
+      'all': nil
+      'depth': nil
+      'register': [
+        askAtom("Register type (x, y, g or k)")
+        askInt("Stack depth where to locate register")
+      ]
+      'registers': nil
+      'abstractions': nil
     )
-    command(
-      text: "threads"
-      action: proc {$} {System.show count} end
+
+    'threads': tree(
+      'state': [askCondition]
+      'statistics': [askCondition]
+      'nodes': [askCondition]
     )
-    command(
-      text: "variable"
-      action: proc {$} {System.show count} end
+
+    'variable': askIdentityTree(
+      'state': nil
+      'candidates': nil
+      'pendings': nil
     )
-    command(
-      text: "variables"
-      action: proc {$} {System.show count} end
+
+    'variables': tree(
+      'state': [askCondition]
+      'candidates': [askCondition]
+      'pendings': [askCondition]
     )
   )
 
-  EventManagerMenu = menu(
-    command(
-      text: "journal"
-      action: proc {$} {System.show event} end
+  IntrospectionMenu = {GenerateMenu IntrospectionTree nil $}
+
+  EventManagerTree = tree(
+    'journal': [askCondition]
+    'tracks': [askCondition]
+
+    'track': tree(
+      'runnable': tree(
+        'created': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'updated': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'collected': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'scheduled': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'unscheduled': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'rescheduled': [askOptionalInt("Author id") askIntList("Victim ids")]
+      )
+
+      'variable': tree(
+        'created': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'collected': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'needed': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'waited': [askOptionalInt("Author id") askIntList("Victim ids")]
+        'bound': [askOptionalInt("Author id") askIntList("Victim ids")]
+      )
     )
-    command(
-      text: "tracks"
-      action: proc {$} {System.show event} end
-    )
-    command(
-      text: "track"
-      action: proc {$} {System.show event} end
-    )
-    command(
-      text: "untrack"
-      action: proc {$} {System.show event} end
+
+    'untrack': tree(
+      'runnable': tree(
+        'created': [askInt("Rule index")]
+        'updated': [askInt("Rule index")]
+        'collected': [askInt("Rule index")]
+        'scheduled': [askInt("Rule index")]
+        'unscheduled': [askInt("Rule index")]
+        'rescheduled': [askInt("Rule index")]
+      )
+
+      'variable': tree(
+        'created': [askInt("Rule index")]
+        'collected': [askInt("Rule index")]
+        'needed': [askInt("Rule index")]
+        'waited': [askInt("Rule index")]
+        'bound': [askInt("Rule index")]
+      )
     )
   )
 
-  ReachabilityMenu = menu(
-    command(
-      text: "graph"
-      action: proc {$} {System.show graph} end
+  EventManagerMenu = {GenerateMenu EventManagerTree nil $}
+
+  ReachabilityTree = tree(
+    'graph': nil
+  )
+
+  ReachabilityMenu = {GenerateMenu ReachabilityTree nil $}
+
+  ControlTree = tree(
+    'run': tree(
+      'schedules': [askInt("Number of thread schedules")]
+      'operations': [askInt("Number of bytecode operations")]
+      'until': nil
+      'steps': [askIdentityList("Identities of the threads or streams or variables to run a step by step on")]
+    )
+
+    'reset': nil
+    
+    'continue': nil
+    
+    'gc': tree(
+      'on': nil
+      'off': nil
     )
   )
 
-  ControlMenu = menu(
-    command(
-      text: "run"
-      action: proc {$} {System.show control} end
-    )
-    command(
-      text: "reset"
-      action: proc {$} {System.show control} end
-    )
-    command(
-      text: "continue"
-      action: proc {$} {System.show control} end
-    )
-    command(
-      text: "gc"
-      action: proc {$} {System.show control} end
-    )
-  )
+  ControlMenu = {GenerateMenu ControlTree nil $}
 
   SettingsMenu = menu(
     command(
@@ -102,13 +262,7 @@ define
       action: proc {$} {System.showInfo "Hello world"} end
     )
   )
-
-  InputText
-  OutputText
-  Board
-  TotalThreadsCanvas
-  ActiveVsPassiveThreadsCanvas
-
+  
   Menus = lr(
     glue: nw
 
@@ -164,52 +318,53 @@ define
       )
 
 
-      td(
-        glue: nswe
+      % td(
+      %   glue: nswe
 
-        td(
-          glue: nswe
+      %   td(
+      %     glue: nswe
 
-          label(
-            glue: w
-            text: "Total threads"
-            foreground: red
-          )
+      %     label(
+      %       glue: w
+      %       text: "Total threads"
+      %       foreground: red
+      %     )
  
-          canvas(
-            handle: TotalThreadsCanvas
-          )
-        )
+      %     canvas(
+      %       handle: TotalThreadsCanvas
+      %     )
+      %   )
 
-        td(
-          glue: nswe
+      %   td(
+      %     glue: nswe
 
-          label(
-            glue: w
-            text: "Active threads"
-            foreground: orange
-          )
+      %     label(
+      %       glue: w
+      %       text: "Active threads"
+      %       foreground: orange
+      %     )
 
-          label(
-            glue: w
-            text: "Passive threads"
-            foreground: blue
-          )
+      %     label(
+      %       glue: w
+      %       text: "Passive threads"
+      %       foreground: blue
+      %     )
 
-          canvas(
-            handle: ActiveVsPassiveThreadsCanvas
-          )
-        )
-      )
+      %     canvas(
+      %       handle: ActiveVsPassiveThreadsCanvas
+      %     )
+      %   )
+      % )
     )
     
-    text(
-      glue: we
-      height: 10
-      tdscrollbar: true
-      lrscrollbar: false
-      init: "Test retest"
-      handle: OutputText
+    td(
+      button(
+        glue: w
+        text: "Clear"
+        action: proc {$} {ResetOutputText} end
+      )
+
+      OutputTextWidget
     )
 
     lr(
@@ -221,121 +376,82 @@ define
         foreground: red
       )
 
-      entry(
-        glue: we
-        init: "help"
-        handle: InputText
-      )
+      InputTextWidget
 
       button(
         glue: e
         text: "Execute"
-        action: proc {$} {System.show input({InputText get($)})} end
+        action: proc {$}
+          Command = {InputText get($)}
+        in
+          {Execute Command}
+        end
       )
     )
   )
 
-  Window = {QTk.build td(Description)}
-
-  BoardAgent = {DynamicGridAgent.new Board config() $}
-
-  TotalThreadsDynamicGraphAgent = {DynamicGraphAgent.new TotalThreadsCanvas config(
-    nDots: 10
-    nLabels: 5
-    color: red
-    traitsEnabled: false
-    digitsEnabled: true
-    statisticsEnabled: true
-  ) $}
-
-  ActiveThreadsDynamicGraphAgent = {DynamicGraphAgent.new ActiveVsPassiveThreadsCanvas config(
-    nDots: 20
-    nLabels: 5
-    color: orange
-    traitsEnabled: false
-    digitsEnabled: true
-    statisticsEnabled: false
-  ) $}
-
-  PassiveThreadsDynamicGraphAgent = {DynamicGraphAgent.new ActiveVsPassiveThreadsCanvas config(
-    nDots: 20
-    nLabels: 5
-    color: blue
-    traitsEnabled: false
-    digitsEnabled: true
-    statisticsEnabled: false
-  ) $}
-
+  Window
   thread
-    proc {Loop}
-      {TotalThreadsDynamicGraphAgent newDot({Boot_Introspection.getThreadsCount $})}
-      {ActiveThreadsDynamicGraphAgent newDot({Boot_Introspection.getActiveThreadsCount $})}
-      {PassiveThreadsDynamicGraphAgent newDot({Boot_Introspection.getPassiveThreadsCount $})}
-      {TotalThreadsDynamicGraphAgent draw()}
-      {ActiveThreadsDynamicGraphAgent draw()}
-      {PassiveThreadsDynamicGraphAgent draw()}
-
-      {Time.delay 1000}
-      {Loop}
-    end
+    This = {Boot_Thread.this $}
   in
-    {Loop}
+    {Boot_Thread.setPriority This system}
+
+    local QTk in
+      [QTk] = {Module.link ["x-oz://system/wp/QTk.ozf"]}
+      Window = {QTk.build td(Description)}
+    end
   end
 
-  proc {NewDebuggerGUIAgent ?Agent}
-    Port Stream
+  ControllerStream
+  ControllerPort = {NewPort ControllerStream $}
 
-    proc {Loop Messages}
-      case Messages of nil then skip
-      [] Message|NextMessages then
-        case Message of print(S _ NewLine) then
-          String = if NewLine then {List.append S "\n" $} else S end
-        in
-          {OutputText insert('end' String)}
-        [] display(Data) then
-          {BoardAgent display(Data)}
-        [] displayCSV(Labels Rows) then
-          {BoardAgent displayCSV(Labels Rows)}
+  RequestsStream
+  RequestsPort = {NewPort RequestsStream $}
+
+  proc {Loop Requests Commands}
+    This = {Boot_Thread.this $}
+
+    proc {Return}
+      {Boot_Thread.setPreemptible This true}
+      {Boot_Thread.preempt This}
+    end
+  in
+    if {Boot_Thread.isPreemptible This $} then
+      {Boot_Thread.setPreemptible This false}
+    end
+
+    if {Boot_Thread.getPriority This $} \= system then
+      {Boot_Thread.setPriority This system}
+    end
+
+    case Requests of nil then {Return}
+    [] Request|NextRequests then
+      case Request of input(?Input) then
+        case Commands of nil then {Return}
+        [] Command|NextCommands then
+          Input = Command
+          {Loop NextRequests NextCommands}
         end
-
-        {Loop NextMessages}
       end
     end
-  in
-    {NewPort Stream Port}
-    {Window show}
+  end
 
-    thread {Loop Stream} end
-
-    Agent = proc {$ Message} {Send Port Message} end
+  Agent = proc {$ Request}
+    {Send RequestsPort Request}
   end
 in
-  % local
-  %   Agent = {NewDebuggerGUIAgent $}
+  {Window show}
+  thread {Loop RequestsStream CommandsStream} end
 
-  %   proc {Test I}
-  %     {Agent displayCSV(
-  %       ["Label0" "Label1" "Label2" "Label3" "Label4" "LastVeryVeryLongLabelThatIsVeryBoring"]
-  %       [
-  %         ["00000000000000000000" "1" "2" "3" "4" "5" "6"]
-  %         ["01" "1" "2" "3" "4" "5" "6"]
-  %         ["02" "1" "2" "3" "4" "5" "6"]
-  %         ["03" "1" "2" "3" "4" "5" "6"]
-  %       ]
-  %     )}
-
-  %     {Time.delay 500}
-  %     {Agent print("This is a wonderful string" false false)}
-  %     {Time.delay 1000}
-  %     {Agent print(".... New string" false false)}
-  %     {Agent print({Int.toString I $} false true)}
-
-  %     {Agent display({Thread.getState {Thread.this $} $})}
-  %     {Time.delay 1000}
-  %     {Test (I + 1)}
+  % thread
+  %   proc {Loop}
+  %     Input = {Agent input($)}
+  %   in
+  %     {Wait Input}
+  %     {System.show got(Input)}
+  %     {Loop}
   %   end
   % in
-  %   {Test 0}
+  %   {Loop}
   % end
-  skip
 end
