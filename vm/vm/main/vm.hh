@@ -76,7 +76,6 @@ void registerCoreModules(VM vm);
 VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
                                VirtualMachineOptions options):
   VirtualMachineEventManager(this),
-  VirtualMachineDebugInfoManager(this),
   rootGlobalNode(nullptr), environment(environment),
   _propertyRegistry(options),
   // One garbage collector and one space cloner dedicated to this VM
@@ -85,7 +84,8 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
   _preemptRequestedNot{},
   _exitRunRequestedNot{},
   _gcRequestedNot{},
-  _referenceTime(0) {
+  _referenceTime(0),
+  debugInfoManager(VirtualMachineDebugInfoManager()) {
 
   // One memory manager dedicated to this VM
   memoryManager.init(this);
