@@ -85,7 +85,7 @@ VirtualMachine::VirtualMachine(VirtualMachineEnvironment& environment,
   _exitRunRequestedNot{},
   _gcRequestedNot{},
   _referenceTime(0),
-  debugInfoManager(VirtualMachineDebugInfoManager()) {
+  debugInfoManager(DebugInfoManager()) {
 
   // One memory manager dedicated to this VM
   memoryManager.init(this);

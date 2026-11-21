@@ -33,30 +33,30 @@
 namespace mozart {
 
 template<class Value>
-UnstableNode VirtualMachineDebugInfoManager::build(VM vm, Value value) {
+UnstableNode DebugInfoManager::build(VM vm, Value value) {
   return mozart::build(vm, value);
 }
 
-void VirtualMachineDebugInfoManager::insertStack(Id threadId) {
+void DebugInfoManager::insertStack(Id threadId) {
   msm.insert({threadId, SourceNamesMapStack()});
 }
 
-void VirtualMachineDebugInfoManager::removeStack(Id threadId) {
+void DebugInfoManager::removeStack(Id threadId) {
   if (msm.contains(threadId))
     msm.erase(threadId);
 }
 
-void VirtualMachineDebugInfoManager::pushMap(Id threadId) {
+void DebugInfoManager::pushMap(Id threadId) {
   assert(msm.contains(threadId));
   msm.at(threadId).push_back(SourceNamesMap());
 }
 
-void VirtualMachineDebugInfoManager::popMap(Id threadId) {
+void DebugInfoManager::popMap(Id threadId) {
   assert(msm.contains(threadId));
   msm.at(threadId).pop_back();
 }
 
-void VirtualMachineDebugInfoManager::insertIdentity(Id threadId, Id objectId, SourceName name) {
+void DebugInfoManager::insertIdentity(Id threadId, Id objectId, SourceName name) {
   assert(msm.contains(threadId));
   
   SourceNamesMapStack& stack = msm.at(threadId);
@@ -69,7 +69,7 @@ void VirtualMachineDebugInfoManager::insertIdentity(Id threadId, Id objectId, So
   map.at(objectId).push_back(name);
 }
 
-const SourceNames VirtualMachineDebugInfoManager::identify(Id threadId, Id objectId) {
+const SourceNames DebugInfoManager::identify(Id threadId, Id objectId) {
   assert(msm.contains(threadId));
   SourceNames names;
   SourceNamesMapStack& stack = msm.at(threadId);

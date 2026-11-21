@@ -42,7 +42,7 @@
 #include "uuid-decl.hh"
 #include "vmallocatedlist-decl.hh"
 #include "vmeventmanager-decl.hh"
-#include "vmdebuginfomanager-decl.hh"
+#include "debuginfomanager-decl.hh"
 
 #include "atomtable.hh"
 #include "bigintimplem-decl.hh"
@@ -486,12 +486,16 @@ public:
   }
 
 public:
+  VirtualMachineEventManager& getEventManager() {
+    return *static_cast<VirtualMachineEventManager*>(this);
+  }
+
   Introspection& getIntrospection() {
     return introspection;
   }
 
-  VirtualMachineEventManager& getEventManager() {
-    return *static_cast<VirtualMachineEventManager*>(this);
+  DebugInfoManager& getDebugInfoManager() {
+    return debugInfoManager;
   }
 public:
   /**
@@ -797,6 +801,7 @@ private:
   SpaceCloner sc;
 
   Introspection introspection;
+  DebugInfoManager debugInfoManager;
 
   VMAllocatedList<AlarmRecord> _alarms;
   StableNode* _pickleTypesRecord;
@@ -829,8 +834,6 @@ private:
 
   // During GC, we need a SpaceRef version of the top-level space
   SpaceRef _topLevelSpaceRef;
-
-  VirtualMachineDebugInfoManager debugInfoManager;
 };
 
 }

@@ -31,7 +31,7 @@
 
 namespace mozart {
 
-class VirtualMachineDebugInfoManager: public BuildSupport<VirtualMachineDebugInfoManager> {
+class DebugInfoManager: public BuildSupport<DebugInfoManager> {
 public:
   template<class Value>
   static inline
@@ -49,7 +49,7 @@ public:
   using SourceNamesMapStacksMap = Map<Id, SourceNamesMapStack>;
 
 public:
-  VirtualMachineDebugInfoManager() : msm({}) {}
+  DebugInfoManager() : msm({}) {}
 
 public:
   inline
@@ -76,11 +76,11 @@ private:
   SourceNamesMapStacksMap msm;
 };
 
-using SourceName = VirtualMachineDebugInfoManager::SourceName;
-using SourceNames = VirtualMachineDebugInfoManager::SourceNames;
-using SourceNamesMap = VirtualMachineDebugInfoManager::SourceNamesMap;
-using SourceNamesMapStack = VirtualMachineDebugInfoManager::SourceNamesMapStack;
-using SourceNamesMapStacksMap = VirtualMachineDebugInfoManager::SourceNamesMapStacksMap;
+using SourceName = DebugInfoManager::SourceName;
+using SourceNames = DebugInfoManager::SourceNames;
+using SourceNamesMap = DebugInfoManager::SourceNamesMap;
+using SourceNamesMapStack = DebugInfoManager::SourceNamesMapStack;
+using SourceNamesMapStacksMap = DebugInfoManager::SourceNamesMapStacksMap;
 
 }
 

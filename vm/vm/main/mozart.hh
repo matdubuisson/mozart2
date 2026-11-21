@@ -55,7 +55,7 @@
 #include "vm.hh"
 #include "vmallocatedlist.hh"
 #include "vmeventmanager.hh"
-#include "vmdebuginfomanager.hh"
+#include "debuginfomanager.hh"
 #include "introspection.hh"
 
 #include "emulate.hh"
