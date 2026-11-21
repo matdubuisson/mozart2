@@ -38,11 +38,49 @@ public:
   UnstableNode build(VM vm, Value value);
 
 public:
-  VirtualMachineDebugInfoManager(VM vm) : vm(vm) {}
+  struct SourceName {
+    std::string name, filename;
+    size_t line, column;
+  };
+
+  using SourceNames = Vector<SourceName>;
+  using SourceNamesMap = Map<Id, SourceNames>;
+  using SourceNamesMapStack = Vector<SourceNamesMap>;
+  using SourceNamesMapStacksMap = Map<Id, SourceNamesMapStack>;
+
+public:
+  VirtualMachineDebugInfoManager() : msm({}) {}
+
+public:
+  inline
+  void insertStack(Id threadId);
+
+  inline
+  void removeStack(Id threadId);
+
+public:
+  inline
+  void pushMap(Id threadId);
+
+  inline
+  void popMap(Id threadId);
+
+public:
+  inline
+  void insertIdentity(Id threadId, Id objectId, SourceName name);
+
+  inline
+  const SourceNames identify(Id threadId, Id objectId);
 
 private:
-  VM vm;
+  SourceNamesMapStacksMap msm;
 };
+
+using SourceName = VirtualMachineDebugInfoManager::SourceName;
+using SourceNames = VirtualMachineDebugInfoManager::SourceNames;
+using SourceNamesMap = VirtualMachineDebugInfoManager::SourceNamesMap;
+using SourceNamesMapStack = VirtualMachineDebugInfoManager::SourceNamesMapStack;
+using SourceNamesMapStacksMap = VirtualMachineDebugInfoManager::SourceNamesMapStacksMap;
 
 }
 

@@ -37,6 +37,53 @@ UnstableNode VirtualMachineDebugInfoManager::build(VM vm, Value value) {
   return mozart::build(vm, value);
 }
 
+void VirtualMachineDebugInfoManager::insertStack(Id threadId) {
+  msm.insert({threadId, SourceNamesMapStack()});
+}
+
+void VirtualMachineDebugInfoManager::removeStack(Id threadId) {
+  if (msm.contains(threadId))
+    msm.erase(threadId);
+}
+
+void VirtualMachineDebugInfoManager::pushMap(Id threadId) {
+  assert(msm.contains(threadId));
+  msm.at(threadId).push_back(SourceNamesMap());
+}
+
+void VirtualMachineDebugInfoManager::popMap(Id threadId) {
+  assert(msm.contains(threadId));
+  msm.at(threadId).pop_back();
+}
+
+void VirtualMachineDebugInfoManager::insertIdentity(Id threadId, Id objectId, SourceName name) {
+  assert(msm.contains(threadId));
+  
+  SourceNamesMapStack& stack = msm.at(threadId);
+  assert(!stack.empty());
+  
+  SourceNamesMap& map = stack.back();
+  if (!map.contains(objectId))
+    map.insert({objectId, SourceNames()});
+  
+  map.at(objectId).push_back(name);
+}
+
+const SourceNames VirtualMachineDebugInfoManager::identify(Id threadId, Id objectId) {
+  assert(msm.contains(threadId));
+  SourceNames names;
+  SourceNamesMapStack& stack = msm.at(threadId);
+
+  for (SourceNamesMap& map : stack) {
+    if (map.contains(objectId)) {
+      SourceNames& otherNames = map.at(objectId);
+      names.insert(names.begin(), otherNames.begin(), otherNames.end());
+    }
+  }
+
+  return names;
+}
+
 }
 
 #endif // MOZART_GENERATOR
