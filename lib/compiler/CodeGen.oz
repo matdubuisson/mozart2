@@ -793,7 +793,7 @@ define
 
    class CodeGenArgDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         VHd = vArgDebugInfo(_ @name @coord @pname @pcoord VTl)
+         VHd = vArgDebugInfo(_ @name @coord VTl)
       end
    end
 

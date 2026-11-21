@@ -331,15 +331,13 @@ define
    class ArgDebugInfo
       from Statement Annotate.debugInfo StaticAnalysis.debugInfo CodeGen.argDebugInfo
       prop final
-      attr name: unit coord: unit pname: unit pcoord: unit
-      meth init(Name Coord PName PCoord)
+      attr name: unit coord: unit
+      meth init(Name Coord)
          name <- Name
          coord <- Coord
-         pname <- Name
-         pcoord <- PCoord
       end
       meth output(R $)
-         '% argDebugInfo '#@name#' '#@coord#' '#@pname#' '#@pcoord
+         '% argDebugInfo '#@name#' '#@coord
       end
    end
 

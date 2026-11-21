@@ -508,7 +508,7 @@ define
             PrintName = {V getPrintName($)}
             Coord = {V getCoord($)}
          else
-            PrintName = 'none'
+            PrintName = unit
             Coord = unit
          end
       end
@@ -520,8 +520,12 @@ define
                PrintName Coord
             in
                Unnester, UnnestPrintNameAndCoord(FE PrintName Coord)
-               {New Core.argDebugInfo init(PrintName Coord PPrintName PCoord)}|
+
+               if PrintName == unit orelse Coord == unit then
                   {Aux NextFEs}
+               else
+                  {New Core.argDebugInfo init(PrintName Coord)}|{Aux NextFEs}
+               end
             end
          end
       in
@@ -530,20 +534,32 @@ define
 
       meth UnnestProcDebugInfo(FE1 FEs End $) PrintName Coord in
          Unnester, UnnestPrintNameAndCoord(FE1 PrintName Coord)
-         {New Core.procDebugInfo init(PrintName Coord)}|
-            Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+
+         if PrintName == unit orelse Coord == unit then End
+         else
+            {New Core.procDebugInfo init(PrintName Coord)}|
+               Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+         end
       end
 
       meth UnnestFunDebugInfo(FE1 FEs End $) PrintName Coord in
          Unnester, UnnestPrintNameAndCoord(FE1 PrintName Coord)
-         {New Core.funDebugInfo init(PrintName Coord)}|
-            Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+
+         if PrintName == unit orelse Coord == unit then End
+         else
+            {New Core.funDebugInfo init(PrintName Coord)}|
+               Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+         end
       end
 
       meth UnnestLazyFunDebugInfo(FE1 FEs End $) PrintName Coord in
          Unnester, UnnestPrintNameAndCoord(FE1 PrintName Coord)
-         {New Core.lazyFunDebugInfo init(PrintName Coord)}|
-            Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+
+         if PrintName == unit orelse Coord == unit then End
+         else
+            {New Core.lazyFunDebugInfo init(PrintName Coord)}|
+               Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+         end
       end
 
       meth UnnestToVar(FE Origin ?GEqs ?GVO)

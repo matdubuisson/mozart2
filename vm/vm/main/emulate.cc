@@ -435,7 +435,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
         }
 
         case OpArgDebugInfo: {
-          advancePC(8);
+          advancePC(4);
           break;
         }
         

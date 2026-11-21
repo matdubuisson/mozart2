@@ -305,8 +305,8 @@ define
       [] procDebugInfo(Name FileName Line Column) then procDebugInfo(k(Name) k(FileName) Line Column)
       [] funDebugInfo(Name FileName Line Column) then funDebugInfo(k(Name) k(FileName) Line Column)
       [] lazyFunDebugInfo(Name FileName Line Column) then lazyFunDebugInfo(k(Name) k(FileName) Line Column)
-      [] argDebugInfo(Name FileName Line Column PName PFileName PLine PColumn) then
-         argDebugInfo(k(Name) k(FileName) Line Column k(PName) k(PFileName) PLine PColumn)
+      [] argDebugInfo(Name FileName Line Column) then
+         argDebugInfo(k(Name) k(FileName) Line Column)
       [] optimizedDebugInfo(Type) then optimizedDebugInfo(k(Type))
 
       else
