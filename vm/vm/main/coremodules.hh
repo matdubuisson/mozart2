@@ -60,6 +60,7 @@
 #include "modules/modscheduler.hh"
 #include "modules/modeventmanager.hh"
 #include "modules/modintrospection.hh"
+#include "modules/moddebuginfomanager.hh"
 #include "modules/modthread.hh"
 #include "modules/modtime.hh"
 #include "modules/modtuple.hh"

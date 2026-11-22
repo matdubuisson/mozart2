@@ -76,6 +76,7 @@ void registerCoreModules(VM vm) {
   registerBuiltinModScheduler(vm);
   registerBuiltinModEventManager(vm);
   registerBuiltinModIntrospection(vm);
+  registerBuiltinModDebugInfoManager(vm);
   registerBuiltinModExample(vm);
 }
 
