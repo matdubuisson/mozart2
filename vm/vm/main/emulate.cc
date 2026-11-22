@@ -420,21 +420,33 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
         }
 
         case OpProcDebugInfo: {
+          vm->getDebugInfoManager().signalSourceName(vm, getId(),
+            DebugInfoManager::Type::Proc,
+            KPC(1), KPC(2), IntPC(3), IntPC(4));
           advancePC(4);
           break;
         }
 
         case OpFunDebugInfo: {
+          vm->getDebugInfoManager().signalSourceName(vm, getId(),
+            DebugInfoManager::Type::Fun,
+            KPC(1), KPC(2), IntPC(3), IntPC(4));
           advancePC(4);
           break;
         }
 
         case OpLazyFunDebugInfo: {
+          vm->getDebugInfoManager().signalSourceName(vm, getId(),
+            DebugInfoManager::Type::LazyFun,
+            KPC(1), KPC(2), IntPC(3), IntPC(4));
           advancePC(4);
           break;
         }
 
         case OpArgDebugInfo: {
+          vm->getDebugInfoManager().signalSourceName(vm, getId(),
+            DebugInfoManager::Type::Arg,
+            KPC(1), KPC(2), IntPC(3), IntPC(4));
           advancePC(4);
           break;
         }
@@ -991,6 +1003,7 @@ size_t Thread::doRun(size_t maxInstructionsNumber) {
               case OpCreateStructAbstraction: {
                 createdStruct = Abstraction::build(vm, length, KPC(1));
                 array = RichNode(createdStruct).as<Abstraction>().getElementsArray();
+                vm->getDebugInfoManager().signalAbstraction(vm, getId(), createdStruct);
                 break;
               }
 
@@ -1442,6 +1455,22 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
 
   vm->announceRunnable(this,
     VirtualMachineEventManager::RunnableAnnounce::Calling);
+
+  DebugInfoManager& manager = vm->getDebugInfoManager();
+  Id abstractionId = Identifiable(*abstraction).getId(vm);
+  if (manager.containsAbstractionSourceNames(getId(), abstractionId)) {
+    const SourceNames& names = manager.getAbstractionSourceNames(getId(), abstractionId);
+    size_t index = 0;
+    for (const SourceName& name : names) {
+      #define XPC(offset) (*xregs)[PC[offset]]
+
+      Identifiable identifiable = Identifiable(XPC(index++));
+      if (identifiable.is(vm))
+        manager.attachSourceName(getId(), identifiable.getId(vm), name);
+
+      #undef XPC
+    }
+  }
 }
 
 void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,

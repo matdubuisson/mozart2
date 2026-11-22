@@ -38,18 +38,59 @@ public:
   UnstableNode build(VM vm, Value value);
 
 public:
+  enum Type {
+    Proc,
+    Fun,
+    LazyFun,
+    Arg
+  };
+
   struct SourceName {
+    SourceName(Type type, atom_t& name,
+      atom_t& filename, size_t line, size_t column) :
+      type(type), line(line), column(column) {
+      this->name = std::string(name.contents());
+      this->filename = std::string(filename.contents());
+    }
+
+    Type type;
     std::string name, filename;
     size_t line, column;
   };
 
+  static inline
+  UnstableNode buildSourceName(VM vm, const SourceName& name);
+
   using SourceNames = Vector<SourceName>;
   using SourceNamesMap = Map<Id, SourceNames>;
-  using SourceNamesMapStack = Vector<SourceNamesMap>;
-  using SourceNamesMapStacksMap = Map<Id, SourceNamesMapStack>;
+  
+  struct SourceNamesMaps {
+    SourceNamesMap abstractionsMap;
+    SourceNamesMap variablesMap;
+  };
+
+  static inline
+  UnstableNode buildSourceNamesMaps(VM vm, const SourceNamesMaps& snms);
+
+  using SourceNamesMapsStack = Vector<SourceNamesMaps>;
+
+  struct ThreadSourceNames {
+    SourceNames currentNames;
+    SourceNamesMapsStack stack;
+  };
+
+  static inline
+  UnstableNode buildThreadSourceNames(VM vm, const ThreadSourceNames& tsns);
+
+  using ThreadSourceNamesMap = Map<Id, ThreadSourceNames>;
 
 public:
-  DebugInfoManager() : msm({}) {}
+  DebugInfoManager() : tsnm(ThreadSourceNamesMap()) {}
+
+public:
+  const ThreadSourceNamesMap& getThreadSourceNamesMap() {
+    return tsnm;
+  }
 
 public:
   inline
@@ -57,6 +98,9 @@ public:
 
   inline
   void removeStack(Id threadId);
+
+  inline
+  size_t getStackSize(Id threadId);
 
 public:
   inline
@@ -67,20 +111,32 @@ public:
 
 public:
   inline
-  void insertIdentity(Id threadId, Id objectId, SourceName name);
+  void attachSourceName(Id threadId, Id objectId, SourceName name);
 
   inline
-  const SourceNames identify(Id threadId, Id objectId);
+  const SourceNames getSourceNames(Id threadId, Id objectId);
+
+public:
+  inline
+  bool containsAbstractionSourceNames(Id threadId, Id objectId);
+
+  inline
+  const SourceNames& getAbstractionSourceNames(Id threadId, Id objectId);
+
+public:
+  inline
+  void signalSourceName(VM vm, Id threadId, Type type,
+    StableNode& name, StableNode& filename, size_t line, size_t column);
+
+  inline
+  void signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction);
 
 private:
-  SourceNamesMapStacksMap msm;
+  ThreadSourceNamesMap tsnm;
 };
 
 using SourceName = DebugInfoManager::SourceName;
 using SourceNames = DebugInfoManager::SourceNames;
-using SourceNamesMap = DebugInfoManager::SourceNamesMap;
-using SourceNamesMapStack = DebugInfoManager::SourceNamesMapStack;
-using SourceNamesMapStacksMap = DebugInfoManager::SourceNamesMapStacksMap;
 
 }
 
