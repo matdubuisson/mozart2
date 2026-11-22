@@ -1324,6 +1324,11 @@ void Thread::pushFrame(VM vm, StableNode* abstraction,
                        DebugEntry&& debugEntry) {
   stack.push_front_new(vm, abstraction, PC, yregCount, yregs, gregs, kregs,
                        getGroupIdentity(), std::move(debugEntry));
+
+  Id id = getId();
+  DebugInfoManager& manager = vm->getDebugInfoManager();
+  while (manager.getStackSize(id) < stack.size())
+    manager.pushMap(id);
 }
 
 void Thread::popFrame(VM vm, StableNode*& abstraction,
@@ -1346,6 +1351,11 @@ void Thread::popFrame(VM vm, StableNode*& abstraction,
   debugEntry = std::move(entry.debugEntry);
 
   stack.remove_front(vm);
+
+  Id id = getId();
+  DebugInfoManager& manager = vm->getDebugInfoManager();
+  while (manager.getStackSize(id) > stack.size())
+    manager.popMap(id);
 }
 
 void Thread::getFrame(VM vm, StableNode*& abstraction,

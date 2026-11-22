@@ -107,6 +107,7 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
   _space->notifyThreadCreated();
 
   vm->threads.insert(this);
+  vm->getDebugInfoManager().insertStack(getId());
   vm->announceRunnable(this,
     VirtualMachineEventManager::RunnableAnnounce::Created);
 }
@@ -131,6 +132,8 @@ Runnable::Runnable(GR gr, Runnable& from) :
 
   if (!_dead) {
     vm->threads.insert(this);
+  } else {
+    vm->getDebugInfoManager().removeStack(getId());
   }
 }
 
@@ -277,8 +280,9 @@ void Runnable::dispose() {
   _dead = true;
 
   // vm->threads.remove(this);
+  vm->getDebugInfoManager().removeStack(getId());
   vm->announceRunnable(this,
-    VirtualMachineEventManager::RunnableAnnounce::Updated);
+    VirtualMachineEventManager::RunnableAnnounce::Collected);
 }
 
 }
