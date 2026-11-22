@@ -37,6 +37,7 @@ define
   Boot_Identity = {Boot.getInternal 'Identity'}
   Boot_Introspection = {Boot.getInternal 'Introspection'}
   Boot_EventManager = {Boot.getInternal 'EventManager'}
+  Boot_DebugInfoManager = {Boot.getInternal 'DebugInfoManager'}
   Boot_Scheduler = {Boot.getInternal 'Scheduler'}
 
   TAB = "\t"
@@ -148,6 +149,11 @@ define
             \insert ./commands/tracking/TracksCommand
             {DefaultReturn}
 
+          % Debuginfo analysis
+          [] "debuginfo" then
+            \insert ./commands/DebugInfoCommand
+            {DefaultReturn}
+
           % Program execution control
           [] "run" then
             \insert ./commands/execution/RunCommand
@@ -202,6 +208,14 @@ define
 
     if DebuggerGUIAgent \= none then
       {Boot_Scheduler.setOnlySystemExecutionMode}
+    end
+
+    if {Boot_Scheduler.isGCReady $} then
+      {PrintWarning "GC READY"}
+    end
+
+    if {Boot_Scheduler.isGCDone $} then
+      {PrintWarning "GC DONE"}
     end
 
     case ExecutionMode of normal then {CommandReturn}
@@ -266,6 +280,7 @@ define
 in
   skip
 end
+
 
 
 
