@@ -39,12 +39,15 @@ UnstableNode DebugInfoManager::buildSourceName(VM vm, const SourceName& name) {
       "column",
       "filename",
       "line",
-      "name"
+      "name",
+      "type"
     ),
     mozart::build(vm, name.column),
     mozart::build(vm, name.filename.c_str()),
     mozart::build(vm, name.line),
-    mozart::build(vm, name.name.c_str())
+    mozart::build(vm, name.name.c_str()),
+    name.type == Proc ? mozart::build(vm, "proc") :
+      name.type == Fun ? mozart::build(vm, "fun") : mozart::build(vm, "lazyFun")
   );
 }
 
@@ -77,12 +80,13 @@ UnstableNode DebugInfoManager::build(VM vm, Value value) {
 }
 
 void DebugInfoManager::insertStack(Id threadId) {
-  // tsnm.insert({threadId, ThreadSourceNames()});
+  tsnm.insert({threadId, ThreadSourceNames()});
+  pushMap(threadId);
 }
 
 void DebugInfoManager::removeStack(Id threadId) {
-  // if (tsnm.contains(threadId))
-  //   tsnm.erase(threadId);
+  if (tsnm.contains(threadId))
+    tsnm.erase(threadId);
 }
 
 size_t DebugInfoManager::getStackSize(Id threadId) {
@@ -92,25 +96,25 @@ size_t DebugInfoManager::getStackSize(Id threadId) {
 }
 
 void DebugInfoManager::pushMap(Id threadId) {
-  // assert(tsnm.contains(threadId));
-  // tsnm.at(threadId).stack.push_back(SourceNamesMaps());
+  assert(tsnm.contains(threadId));
+  tsnm.at(threadId).stack.push_back(SourceNamesMaps());
 }
 
 void DebugInfoManager::popMap(Id threadId) {
-  // assert(tsnm.contains(threadId));
-  // tsnm.at(threadId).stack.pop_back();
+  assert(tsnm.contains(threadId));
+  tsnm.at(threadId).stack.pop_back();
 }
 
 void DebugInfoManager::attachSourceName(Id threadId, Id objectId, SourceName name) {
-  // assert(tsnm.contains(threadId));
+  assert(tsnm.contains(threadId));
   
-  // SourceNamesMapsStack& stack = tsnm.at(threadId).stack;
-  // assert(!stack.empty());
+  SourceNamesMapsStack& stack = tsnm.at(threadId).stack;
+  assert(!stack.empty());
   
-  // SourceNamesMap& map = stack.back().variablesMap;
-  // if (!map.contains(objectId))
-  //   map.insert({objectId, SourceNames()});
-  // map.at(objectId).push_back(name);
+  SourceNamesMap& map = stack.back().variablesMap;
+  if (!map.contains(objectId))
+    map.insert({objectId, SourceNames()});
+  map.at(objectId).push_back(name);
 }
 
 const DebugInfoManager::SourceNames DebugInfoManager::getSourceNames(Id threadId, Id objectId) {
@@ -161,8 +165,8 @@ void DebugInfoManager::signalSourceName(VM vm, Id threadId, Type type,
   atom_t atomName = AtomLike(name).getValue(vm);
   atom_t atomFilename = AtomLike(filename).getValue(vm);
 
-  // tsnm.at(threadId).currentNames.push_back(
-  //   SourceName(type, atomName, atomFilename, line, column));
+  tsnm.at(threadId).currentNames.push_back(
+    SourceName(type, atomName, atomFilename, line, column));
 
   // switch (type) {
   //   case Proc: {
@@ -183,18 +187,24 @@ void DebugInfoManager::signalAbstraction(VM vm, Id threadId, UnstableNode& abstr
   ThreadSourceNames& tsn = tsnm.at(threadId);
   SourceNames& names = tsn.currentNames;
 
-  // if (!tsn.stack.empty()) {
-  //   SourceNamesMap& abstractionsMap = tsn.stack.back().abstractionsMap;
+  if (!names.empty() && !tsn.stack.empty()) {
+    SourceNamesMap& abstractionsMap = tsn.stack.back().abstractionsMap;
 
-  //   Id abstractionId = Identifiable(abstraction).getId(vm);
+    Id abstractionId = Identifiable(abstraction).getId(vm);
 
-  //   if (abstractionsMap.contains(abstractionId))
-  //     abstractionsMap.at(abstractionId) = names;
-  //   else
-  //     abstractionsMap.insert({abstractionId, SourceNames(names)});
+    if (abstractionsMap.contains(abstractionId))
+      abstractionsMap.at(abstractionId) = names;
+    else
+      abstractionsMap.insert({abstractionId, SourceNames(names)});
 
-  //   names.clear();
-  // }
+    std::printf("New abstraction %ld: ", abstractionId);
+    for (SourceName& name : names) {
+      std::printf("%s ", name.name.c_str());
+    }
+    std::printf("\n");
+    
+    names.clear();
+  } // else std::printf("ALERT EMPTY\n");
 }
 
 }

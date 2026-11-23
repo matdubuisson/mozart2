@@ -1338,10 +1338,14 @@ void Thread::pushFrame(VM vm, StableNode* abstraction,
   stack.push_front_new(vm, abstraction, PC, yregCount, yregs, gregs, kregs,
                        getGroupIdentity(), std::move(debugEntry));
 
+  // std::printf("A0\n");
   Id id = getId();
   DebugInfoManager& manager = vm->getDebugInfoManager();
-  while (manager.getStackSize(id) < stack.size())
+  // while (manager.getStackSize(id) < stack.size()) {
+  //   // std::printf("PUSH: %ld vs %ld\n", manager.getStackSize(id), stack.size());
     manager.pushMap(id);
+  // }
+  // std::printf("B0\n");
 }
 
 void Thread::popFrame(VM vm, StableNode*& abstraction,
@@ -1365,10 +1369,14 @@ void Thread::popFrame(VM vm, StableNode*& abstraction,
 
   stack.remove_front(vm);
 
+  // std::printf("A1\n");
   Id id = getId();
   DebugInfoManager& manager = vm->getDebugInfoManager();
-  while (manager.getStackSize(id) > stack.size())
+  // while (manager.getStackSize(id) > stack.size()) {
+  //   // std::printf("POP: %ld vs %ld\n", manager.getStackSize(id), stack.size());
     manager.popMap(id);
+  // }
+  // std::printf("B1\n");
 }
 
 void Thread::getFrame(VM vm, StableNode*& abstraction,
@@ -1456,21 +1464,21 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
   vm->announceRunnable(this,
     VirtualMachineEventManager::RunnableAnnounce::Calling);
 
-  DebugInfoManager& manager = vm->getDebugInfoManager();
-  Id abstractionId = Identifiable(*abstraction).getId(vm);
-  if (manager.containsAbstractionSourceNames(getId(), abstractionId)) {
-    const SourceNames& names = manager.getAbstractionSourceNames(getId(), abstractionId);
-    size_t index = 0;
-    for (const SourceName& name : names) {
-      #define XPC(offset) (*xregs)[PC[offset]]
+  // DebugInfoManager& manager = vm->getDebugInfoManager();
+  // Id abstractionId = Identifiable(*abstraction).getId(vm);
+  // if (manager.containsAbstractionSourceNames(getId(), abstractionId)) {
+  //   const SourceNames& names = manager.getAbstractionSourceNames(getId(), abstractionId);
+  //   size_t index = 0;
+  //   for (const SourceName& name : names) {
+  //     #define XPC(offset) (*xregs)[PC[offset]]
 
-      Identifiable identifiable = Identifiable(XPC(index++));
-      if (identifiable.is(vm))
-        manager.attachSourceName(getId(), identifiable.getId(vm), name);
+  //     Identifiable identifiable = Identifiable(XPC(index++));
+  //     if (identifiable.is(vm))
+  //       manager.attachSourceName(getId(), identifiable.getId(vm), name);
 
-      #undef XPC
-    }
-  }
+  //     #undef XPC
+  //   }
+  // }
 }
 
 void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,
