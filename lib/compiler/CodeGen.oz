@@ -769,37 +769,49 @@ define
 
    class CodeGenDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         VHd = vDebugInfo(_ @name @coord @type @data VTl)
+         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+            VHd = vDebugInfo(_ @name @coord @type @data VTl)
+         else VHd = VTl end
       end
    end
 
    class CodeGenProcDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         VHd = vProcDebugInfo(_ @name @coord VTl)
+         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+            VHd = vProcDebugInfo(_ @name @coord VTl)
+         else VHd = VTl end
       end
    end
 
    class CodeGenFunDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         VHd = vFunDebugInfo(_ @name @coord VTl)
+         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+            VHd = vFunDebugInfo(_ @name @coord VTl)
+         else VHd = VTl end
       end
    end
 
    class CodeGenLazyFunDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         VHd = vLazyFunDebugInfo(_ @name @coord VTl)
+         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+            VHd = vLazyFunDebugInfo(_ @name @coord VTl)
+         else VHd = VTl end
       end
    end
 
    class CodeGenArgDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         VHd = vArgDebugInfo(_ @name @coord VTl)
+         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+            VHd = vArgDebugInfo(_ @name @coord VTl)
+         else VHd = VTl end
       end
    end
 
    class CodeGenOptimizedDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         VHd = vOptimizedDebugInfo(_ @type VTl)
+         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+            VHd = vOptimizedDebugInfo(_ @type VTl)
+         else VHd = VTl end
       end
    end
 
