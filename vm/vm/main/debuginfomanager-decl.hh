@@ -123,6 +123,9 @@ public:
   inline
   const SourceNames& getAbstractionSourceNames(Id threadId, Id objectId);
 
+  inline
+  const SourceNamesMap getAbstractions();
+
 public:
   inline
   void signalSourceName(VM vm, Id threadId, Type type,

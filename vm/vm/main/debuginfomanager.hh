@@ -158,6 +158,29 @@ const DebugInfoManager::SourceNames& DebugInfoManager::getAbstractionSourceNames
   return tsnm.at(threadId).currentNames;
 }
 
+const DebugInfoManager::SourceNamesMap DebugInfoManager::getAbstractions() {
+  SourceNamesMap map;
+
+  for (auto iter = tsnm.begin(); iter != tsnm.end(); ++iter) {
+    Id threadId = iter->first;
+    const SourceNamesMapsStack& stack = iter->second.stack;
+    
+    for (const SourceNamesMaps& maps : stack) {
+      const SourceNamesMap& abstractionsMap = maps.abstractionsMap;
+
+      for (auto subiter = abstractionsMap.begin(); subiter != abstractionsMap.end(); ++subiter) {
+        Id abstractionId = subiter->first;
+
+        if (!map.contains(abstractionId)) {
+          map.insert({abstractionId, subiter->second});
+        }
+      }
+    }
+  }
+
+  return map;
+}
+
 void DebugInfoManager::signalSourceName(VM vm, Id threadId, Type type,
   StableNode& name, StableNode& filename, size_t line, size_t column) {
   assert(tsnm.contains(threadId));

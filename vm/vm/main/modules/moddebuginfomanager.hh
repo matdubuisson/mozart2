@@ -41,13 +41,13 @@ class ModDebugInfoManager: public Module {
 public:
   ModDebugInfoManager(): Module("DebugInfoManager") {}
 
-  class GetSourceNames: public Builtin<GetSourceNames> {
+  class GetAbstractions: public Builtin<GetAbstractions> {
   public:
-    GetSourceNames(): Builtin("getSourceNames") {}
+    GetAbstractions(): Builtin("getAbstractions") {}
 
     static void call(VM vm, Out result) {
       result = DebugInfoManager::buildMap(vm,
-        vm->getDebugInfoManager().getThreadSourceNamesMap());
+        vm->getDebugInfoManager().getAbstractions());
     }
   };
 
