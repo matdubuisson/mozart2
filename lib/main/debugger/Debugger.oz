@@ -210,13 +210,13 @@ define
       {Boot_Scheduler.setOnlySystemExecutionMode}
     end
 
-    if {Boot_Scheduler.isGCReady $} then
-      {PrintWarning "GC READY"}
-    end
+    % if {Boot_Scheduler.isGCReady $} then
+    %   {PrintWarning "GC READY"}
+    % end
 
-    if {Boot_Scheduler.isGCDone $} then
-      {PrintWarning "GC DONE"}
-    end
+    % if {Boot_Scheduler.isGCDone $} then
+    %   {PrintWarning "GC DONE"}
+    % end
 
     case ExecutionMode of normal then {CommandReturn}
     [] onlySystem then {SystemReturn}
@@ -280,6 +280,17 @@ define
 in
   skip
 end
+
+
+
+
+
+
+
+
+
+
+
 
 
 
