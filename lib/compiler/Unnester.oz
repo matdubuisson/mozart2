@@ -547,8 +547,10 @@ define
 
          if PrintName == unit orelse Coord == unit then End
          else
+            NewEnd = {New Core.argDebugInfo init('$' Coord)}|End
+         in
             {New Core.funDebugInfo init(PrintName Coord)}|
-               Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+               Unnester, UnnestArgDebugInfos(PrintName Coord FEs NewEnd $)
          end
       end
 
@@ -557,8 +559,10 @@ define
 
          if PrintName == unit orelse Coord == unit then End
          else
+            NewEnd = {New Core.argDebugInfo init('$' Coord)}|End
+         in
             {New Core.lazyFunDebugInfo init(PrintName Coord)}|
-               Unnester, UnnestArgDebugInfos(PrintName Coord FEs End $)
+               Unnester, UnnestArgDebugInfos(PrintName Coord FEs NewEnd $)
          end
       end
 
