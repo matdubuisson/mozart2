@@ -7,68 +7,52 @@ local
   end
 
   proc {DisplayAbstractions}
-    SourceNames = {Boot_DebugInfoManager.getSourceNames $}
-    ThreadIds = {Record.arity SourceNames $}
-
-    proc {ForEachStackFrame Frames}
-      case Frames of nil then skip
-      [] Frame|NextFrames then
-        case Frame of sourceNamesMaps(
-          abstractionsMap: AbstractionsMap
-          variablesMap: _
-        ) then
-          ObjectIds = {Record.arity AbstractionsMap $}
-        in
-          {DisplayCSV
-            [
-              "Id      " "Type  "
-              flexible("Source Name                     ")
-              flexible("Filename                        ")
-              "Line    " "Column  "
-              flexible("Parameters' Source Names")
-            ]
-            ObjectIds
-            proc {$ ObjectId ?Tuple} Tuple = ObjectId#AbstractionsMap.ObjectId end
-            proc {$ Tuple ?Result} Result = true end
-            proc {$ Tuple ?Result}
-              case Tuple of ObjectId#(Head|Tail) then
-                case Head of sourceName(
-                  type: Type
-                  name: Name
-                  filename: Filename
-                  line: Line
-                  column: Column
-                ) then
-                  Result = [
-                    {Int.toString ObjectId $}
-                    {Atom.toString Type $}
-                    {Atom.toString Name $}
-                    {Atom.toString Filename $}
-                    {Int.toString Line $}
-                    {Int.toString Column $}
-                    ""
-                  ]
-                end
-              end
-            end}
-          {Boot_System.printRepr AbstractionsMap false true}
-        end
-
-        {ForEachStackFrame NextFrames}
-      end
-    end
-    
-    proc {ForEachThreadId ThreadIds}
-      case ThreadIds of nil then skip
-      [] ThreadId|NextThreadIds then
-        Stack = SourceNames.ThreadId
-      in
-        {ForEachStackFrame Stack}
-        {ForEachThreadId NextThreadIds}
-      end
-    end
+    AbstractionsMap = {Boot_DebugInfoManager.getAbstractions $}
+    ObjectIds = {Record.arity AbstractionsMap $}
   in
-    {ForEachThreadId ThreadIds}
+    {DisplayCSV
+      [
+        "Id      " "Type    "
+        flexible("Source Name                     ")
+        flexible("Filename                        ")
+        "Line    " "Column  "
+        flexible("Parameters' Source Names")
+      ]
+      ObjectIds
+      proc {$ ObjectId ?Tuple} Tuple = ObjectId#AbstractionsMap.ObjectId end
+      proc {$ Tuple ?Result} Result = true end
+      proc {$ Tuple ?Result}
+        case Tuple of ObjectId#(Head|Tail) then
+          case Head of sourceName(
+            type: Type
+            name: Name
+            filename: Filename
+            line: Line
+            column: Column
+          ) then
+            Result = [
+              {Int.toString ObjectId $}
+              {Atom.toString Type $}
+              {Atom.toString Name $}
+              {Atom.toString Filename $}
+              {Int.toString Line $}
+              {Int.toString Column $}
+              {List.foldL Tail
+                proc {$ AccumulatedString SourceName ?Result}
+                  Name = {Atom.toString SourceName.name $}
+                in
+                  if AccumulatedString == "" then Result = Name
+                  else
+                    SubString = {List.append AccumulatedString ", " $}
+                  in
+                    Result = {List.append SubString Name $}
+                  end
+                end
+                "" $}
+            ]
+          end
+        end
+      end}
   end
 in
   case Arguments of nil then
