@@ -188,20 +188,14 @@ void DebugInfoManager::signalSourceName(VM vm, Id threadId, Type type,
   atom_t atomName = AtomLike(name).getValue(vm);
   atom_t atomFilename = AtomLike(filename).getValue(vm);
 
-  tsnm.at(threadId).currentNames.push_back(
-    SourceName(type, atomName, atomFilename, line, column));
+  SourceNames& currentNames = tsnm.at(threadId).currentNames;
 
-  // switch (type) {
-  //   case Proc: {
-  //     break;
-  //   } case Fun: {
-  //     break;
-  //   } case LazyFun: {
-  //     break;
-  //   } case Arg: {
-  //     break;
-  //   }
-  // }
+  // Sometimes Mozart procedures can be inlined but the debug info is still present
+  // and so must be ignored to not interfere with the next definition
+  if (type != Arg && !currentNames.empty()) currentNames.clear();
+
+  currentNames.push_back(
+    SourceName(type, atomName, atomFilename, line, column));
 }
 
 void DebugInfoManager::signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction) {
@@ -220,11 +214,11 @@ void DebugInfoManager::signalAbstraction(VM vm, Id threadId, UnstableNode& abstr
     else
       abstractionsMap.insert({abstractionId, SourceNames(names)});
 
-    std::printf("New abstraction %ld: ", abstractionId);
-    for (SourceName& name : names) {
-      std::printf("%s ", name.name.c_str());
-    }
-    std::printf("\n");
+    // std::printf("New abstraction %ld: ", abstractionId);
+    // for (SourceName& name : names) {
+    //   std::printf("%s ", name.name.c_str());
+    // }
+    // std::printf("\n");
     
     names.clear();
   } // else std::printf("ALERT EMPTY\n");
