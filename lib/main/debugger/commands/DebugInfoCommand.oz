@@ -6,7 +6,7 @@ local
     ]}
   end
 
-  proc {DisplayAbstractions}
+  proc {DisplayAbstractions Conditions}
     AbstractionsMap = {Boot_DebugInfoManager.getAbstractions $}
     ObjectIds = {Record.arity AbstractionsMap $}
   in
@@ -20,7 +20,13 @@ local
       ]
       ObjectIds
       proc {$ ObjectId ?Tuple} Tuple = ObjectId#AbstractionsMap.ObjectId end
-      proc {$ Tuple ?Result} Result = true end
+      proc {$ Tuple ?Result}
+        case Tuple of ObjectId#(Head|Tail) then
+          Value = {Record.adjoin Head value(id: ObjectId) $}
+        in
+          Result = {CheckConditions Conditions Value $}
+        end
+      end
       proc {$ Tuple ?Result}
         case Tuple of ObjectId#(Head|Tail) then
           case Head of sourceName(
@@ -61,7 +67,11 @@ in
     case Argument of "help" then
       {DisplayOptions}
     [] "abstractions" then
-      {DisplayAbstractions}
+      Conditions = {ExtractConditions NextArguments $}
+    in
+      if Conditions \= none then
+        {DisplayAbstractions Conditions}
+      end
     else
       {PrintUnexpectedOptionError Argument}
     end
