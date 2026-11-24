@@ -769,7 +769,7 @@ define
 
    class CodeGenDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+         if {CS.state getSwitch(debugInfo $)} then
             VHd = vDebugInfo(_ @name @coord @type @data VTl)
          else VHd = VTl end
       end
@@ -777,7 +777,7 @@ define
 
    class CodeGenProcDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+         if {CS.state getSwitch(debugInfo $)} then
             VHd = vProcDebugInfo(_ @name @coord VTl)
          else VHd = VTl end
       end
@@ -785,7 +785,7 @@ define
 
    class CodeGenFunDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+         if {CS.state getSwitch(debugInfo $)} then
             VHd = vFunDebugInfo(_ @name @coord VTl)
          else VHd = VTl end
       end
@@ -793,7 +793,7 @@ define
 
    class CodeGenLazyFunDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+         if {CS.state getSwitch(debugInfo $)} then
             VHd = vLazyFunDebugInfo(_ @name @coord VTl)
          else VHd = VTl end
       end
@@ -801,7 +801,7 @@ define
 
    class CodeGenArgDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+         if {CS.state getSwitch(debugInfo $)} then
             VHd = vArgDebugInfo(_ @name @coord VTl)
          else VHd = VTl end
       end
@@ -809,7 +809,7 @@ define
 
    class CodeGenOptimizedDebugInfo from CodeGenStatement
       meth codeGen(CS VHd VTl)
-         if {CS.state getSwitch(controlflowinfo $)} andthen {CS.state getSwitch(staticvarnames $)} then
+         if {CS.state getSwitch(debugInfo $)} then
             VHd = vOptimizedDebugInfo(_ @type VTl)
          else VHd = VTl end
       end

@@ -1402,9 +1402,9 @@ define
             [] coarseStep(F L C _ _ _) then
                FileName = F Line = L Column = C Kind = 'c'
             end
-            Emitter,
-            Emit(debugEntry(FileName Line Column
-                            {VirtualString.toAtom Comment#'/'#Kind}))
+
+            
+            
          end
       end
       meth DebugExit(Coord Comment)
