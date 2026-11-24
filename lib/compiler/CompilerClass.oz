@@ -103,7 +103,7 @@ local
                               controlflowinfo: false
                               staticvarnames: false
                               dynamicvarnames: false
-                              debugInfo: true)
+                              debugInfo: false)
 
    DefaultOptions = options(maxNumberOfErrors: 17
                             baseURL: unit
