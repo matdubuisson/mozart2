@@ -237,8 +237,7 @@ Identity& DelegatedIdentity::getIdentity(RichNode self, VM vm) {
 }
 
 bool DelegatedIdentity::is(RichNode self, VM vm) {
-  becomeIdentifiable(self, vm);
-  return Identifiable(self).is(vm);
+  return true;
 }
 
 size_t DelegatedIdentity::getId(RichNode self, VM vm) {
