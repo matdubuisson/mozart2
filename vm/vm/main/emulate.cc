@@ -1464,21 +1464,41 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
   vm->announceRunnable(this,
     VirtualMachineEventManager::RunnableAnnounce::Calling);
 
-  // DebugInfoManager& manager = vm->getDebugInfoManager();
-  // Id abstractionId = Identifiable(*abstraction).getId(vm);
-  // if (manager.containsAbstractionSourceNames(getId(), abstractionId)) {
-  //   const SourceNames& names = manager.getAbstractionSourceNames(getId(), abstractionId);
-  //   size_t index = 0;
-  //   for (const SourceName& name : names) {
-  //     #define XPC(offset) (*xregs)[PC[offset]]
+  DebugInfoManager& manager = vm->getDebugInfoManager();
+  Id abstractionId = Identifiable(*abstraction).getId(vm);
+  if (manager.containsAbstractionSourceNames(getId(), abstractionId)) {
+    const SourceNames& names = manager.getAbstractionSourceNames(getId(), abstractionId);
+    size_t index = 0;
+    for (const SourceName& name : names) {
+      #define XPC(offset) (*xregs)[PC[offset]]
 
-  //     Identifiable identifiable = Identifiable(XPC(index++));
-  //     if (identifiable.is(vm))
-  //       manager.attachSourceName(getId(), identifiable.getId(vm), name);
+      // std::printf("Name %s: ", name.name.c_str());
+      // switch (name.type) {
+      //   case DebugInfoManager::Proc: std::printf("proc"); break;
+      //   case DebugInfoManager::Fun: std::printf("fun"); break;
+      //   case DebugInfoManager::LazyFun: std::printf("lazy fun"); break;
+      //   case DebugInfoManager::Arg: std::printf("arg"); break;
+      // }
+      // std::printf("\n");
 
-  //     #undef XPC
-  //   }
-  // }
+      UnstableNode& node = XPC(index++);
+
+      AdvancedIdentifiable advancedIdentifiable = AdvancedIdentifiable(node);
+      if (advancedIdentifiable.is(vm))
+        manager.attachSourceName(getId(),
+          advancedIdentifiable.getId(vm),
+          advancedIdentifiable.getKindId(vm),
+          advancedIdentifiable.getGenerationId(vm),
+          name);
+      else {
+        Identifiable identifiable = Identifiable(node);
+        if (identifiable.is(vm))
+          manager.attachSourceName(getId(), identifiable.getId(vm), name);
+      }
+
+      #undef XPC
+    }
+  }
 }
 
 void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,
