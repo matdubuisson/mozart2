@@ -31,6 +31,8 @@
 
 namespace mozart {
 
+class XRegArray;
+
 class DebugInfoManager: public BuildSupport<DebugInfoManager> {
 public:
   template<class Value>
@@ -166,6 +168,10 @@ public:
 
   inline
   void signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction);
+
+public:
+  inline
+  void attachSourceNames(VM vm, Id threadId, StableNode*& abstraction, ProgramCounter& PC, XRegArray*& xregs);
 
 private:
   bool enabled;

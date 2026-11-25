@@ -1471,31 +1471,7 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
     manager.pushMap(getId());
   }
 
-  Id abstractionId = Identifiable(*abstraction).getId(vm);
-  if (manager.containsAbstractionSourceNames(getId(), abstractionId)) {
-    const SourceNames& names = manager.getAbstractionSourceNames(getId(), abstractionId);
-    size_t index = 0;
-    for (const SourceName& name : names) {
-      #define XPC(offset) (*xregs)[PC[offset]]
-
-      UnstableNode& node = XPC(index++);
-
-      AdvancedIdentifiable advancedIdentifiable = AdvancedIdentifiable(node);
-      if (advancedIdentifiable.is(vm))
-        manager.attachSourceName(getId(),
-          advancedIdentifiable.getId(vm),
-          advancedIdentifiable.getKindId(vm),
-          advancedIdentifiable.getGenerationId(vm),
-          name);
-      else {
-        Identifiable identifiable = Identifiable(node);
-        if (identifiable.is(vm))
-          manager.attachSourceName(getId(), identifiable.getId(vm), name);
-      }
-
-      #undef XPC
-    }
-  }
+  manager.attachSourceNames(vm, getId(), abstraction, PC, xregs);
 }
 
 void Thread::sendMsg(RichNode target, RichNode labelOrArity, size_t width,

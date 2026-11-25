@@ -285,6 +285,35 @@ void DebugInfoManager::signalAbstraction(VM vm, Id threadId, UnstableNode& abstr
   } // else std::printf("ALERT EMPTY\n");
 }
 
+void DebugInfoManager::attachSourceNames(VM vm, Id threadId, StableNode*& abstraction, ProgramCounter& PC, XRegArray*& xregs) {
+  Id abstractionId = Identifiable(*abstraction).getId(vm);
+  
+  if (containsAbstractionSourceNames(threadId, abstractionId)) {
+    const SourceNames& names = getAbstractionSourceNames(threadId, abstractionId);
+    size_t index = 0;
+    for (const SourceName& name : names) {
+      #define XPC(offset) (*xregs)[PC[offset]]
+
+      UnstableNode& node = XPC(index++);
+
+      AdvancedIdentifiable advancedIdentifiable = AdvancedIdentifiable(node);
+      if (advancedIdentifiable.is(vm)) {
+        attachSourceName(threadId,
+          advancedIdentifiable.getId(vm),
+          advancedIdentifiable.getKindId(vm),
+          advancedIdentifiable.getGenerationId(vm),
+          name);
+      } else {
+        Identifiable identifiable = Identifiable(node);
+        if (identifiable.is(vm))
+          attachSourceName(threadId, identifiable.getId(vm), name);
+      }
+
+      #undef XPC
+    }
+  }
+}
+
 }
 
 #endif // MOZART_GENERATOR
