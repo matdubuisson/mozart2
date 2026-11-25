@@ -43,6 +43,7 @@ local
               {Atom.toString Filename $}
               {Int.toString Line $}
               {Int.toString Column $}
+
               {List.foldL Tail
                 proc {$ AccumulatedString SourceName ?Result}
                   Name = {Atom.toString SourceName.name $}
@@ -60,6 +61,61 @@ local
         end
       end}
   end
+
+  proc {DisplayVariables Conditions}
+    VariablesMap = {Boot_DebugInfoManager.getVariables $}
+    Values = {Record.foldLInd VariablesMap
+      proc {$ Id AccumulatedList SourceNames ?Result}
+        NewSourceNames = {List.map SourceNames
+          proc {$ Element ?Result}
+            Result = {Record.adjoin Element sourceName(id: Id) $}
+          end
+          $}
+      in
+        Result = {List.append AccumulatedList NewSourceNames $}
+      end
+      nil $}
+  in
+    {DisplayCSV
+      [
+        "Id      " "KindId  " "GenerationId"
+        
+        "Type    "
+        flexible("Source Name                     ")
+        flexible("Filename                        ")
+        "Line    " "Column  "
+      ]
+      Values
+      proc {$ Value ?Result} Result = Value end
+      proc {$ Value ?Result}
+        Result = {CheckConditions Conditions Value $}
+      end
+      proc {$ Value ?Result}
+        case Value of sourceName(
+          id: Id
+          kindId: KindId
+          generationId: GenerationId
+
+          type: Type
+          name: Name
+          filename: Filename
+          line: Line
+          column: Column
+        ) then
+          Result = [
+            {Int.toString Id $}
+            {Int.toString KindId $}
+            {Int.toString GenerationId $}
+
+            {Atom.toString Type $}
+            {Atom.toString Name $}
+            {Atom.toString Filename $}
+            {Int.toString Line $}
+            {Int.toString Column $}
+          ]
+        end
+      end}
+  end
 in
   case Arguments of nil then
     {DisplayOptions}
@@ -71,6 +127,12 @@ in
     in
       if Conditions \= none then
         {DisplayAbstractions Conditions}
+      end
+    [] "variables" then
+      Conditions = {ExtractConditions NextArguments $}
+    in
+      if Conditions \= none then
+        {DisplayVariables Conditions}
       end
     else
       {PrintUnexpectedOptionError Argument}
