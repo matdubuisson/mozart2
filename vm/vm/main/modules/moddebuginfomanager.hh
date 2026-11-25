@@ -41,6 +41,34 @@ class ModDebugInfoManager: public Module {
 public:
   ModDebugInfoManager(): Module("DebugInfoManager") {}
 
+  class Enable: public Builtin<Enable> {
+  public:
+    Enable(): Builtin("enable") {}
+
+    static void call(VM vm) {
+      vm->getDebugInfoManager().enable();
+    }
+  };
+
+  class Disable: public Builtin<Disable> {
+  public:
+    Disable(): Builtin("disable") {}
+
+    static void call(VM vm) {
+      vm->getDebugInfoManager().disable();
+    }
+  };
+
+  class GetVariables: public Builtin<GetVariables> {
+  public:
+    GetVariables(): Builtin("getVariables") {}
+
+    static void call(VM vm, Out result) {
+      result = DebugInfoManager::buildMap(vm,
+        vm->getDebugInfoManager().getVariables());
+    }
+  };
+
   class GetAbstractions: public Builtin<GetAbstractions> {
   public:
     GetAbstractions(): Builtin("getAbstractions") {}
@@ -50,7 +78,6 @@ public:
         vm->getDebugInfoManager().getAbstractions());
     }
   };
-
 };
 
 }

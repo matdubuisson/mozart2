@@ -53,6 +53,10 @@ public:
       this->filename = std::string(filename.contents());
     }
 
+    SourceName(const SourceName& other):
+      name(other.name), filename(other.filename),
+      type(other.type), line(other.line), column(other.column) {}
+
     Type type;
     std::string name, filename;
     size_t line, column;
@@ -61,12 +65,25 @@ public:
   static inline
   UnstableNode buildSourceName(VM vm, const SourceName& name);
 
+  struct IdentifiedSourceName : public SourceName {
+    IdentifiedSourceName(SourceName sourceName, GroupIdentity group) :
+      SourceName(sourceName), group(group) {}
+
+    GroupIdentity group;
+  };
+
+  static inline
+  UnstableNode buildIdentifiedSourceName(VM vm, const IdentifiedSourceName& name);
+
   using SourceNames = Vector<SourceName>;
   using SourceNamesMap = Map<Id, SourceNames>;
+
+  using IdentifiedSourceNames = Vector<IdentifiedSourceName>;
+  using IdentifiedSourceNamesMap = Map<Id, IdentifiedSourceNames>;
   
   struct SourceNamesMaps {
     SourceNamesMap abstractionsMap;
-    SourceNamesMap variablesMap;
+    IdentifiedSourceNamesMap variablesMap;
   };
 
   static inline
@@ -85,9 +102,17 @@ public:
   using ThreadSourceNamesMap = Map<Id, ThreadSourceNames>;
 
 public:
-  DebugInfoManager() : tsnm(ThreadSourceNamesMap()) {}
+  DebugInfoManager() : enabled(false), tsnm(ThreadSourceNamesMap()) {}
 
 public:
+  void enable() {
+    enabled = true;
+  }
+
+  void disable() {
+    enabled = false;
+  }
+
   const ThreadSourceNamesMap& getThreadSourceNamesMap() {
     return tsnm;
   }
@@ -111,10 +136,18 @@ public:
 
 public:
   inline
-  void attachSourceName(Id threadId, Id objectId, SourceName name);
+  void attachSourceName(Id threadId, Id objectId, Id objectKindId, Id objectGenerationId, SourceName name);
 
   inline
-  const SourceNames getSourceNames(Id threadId, Id objectId);
+  void attachSourceName(Id threadId, Id objectId, SourceName name) {
+    attachSourceName(threadId, objectId, SIZE_MAX, SIZE_MAX, name);
+  }
+
+  inline
+  const IdentifiedSourceNames getSourceNames(Id threadId, Id objectId);
+
+  inline
+  const IdentifiedSourceNamesMap getVariables();
 
 public:
   inline
@@ -135,6 +168,7 @@ public:
   void signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction);
 
 private:
+  bool enabled;
   ThreadSourceNamesMap tsnm;
 };
 

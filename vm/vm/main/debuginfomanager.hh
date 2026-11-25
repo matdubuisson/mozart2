@@ -51,6 +51,31 @@ UnstableNode DebugInfoManager::buildSourceName(VM vm, const SourceName& name) {
   );
 }
 
+UnstableNode DebugInfoManager::buildIdentifiedSourceName(VM vm, const IdentifiedSourceName& name) {
+  return buildRecord(vm,
+    buildArity(vm,
+      "sourceName",
+      "column",
+      "filename",
+      "generationId",
+      "kindId",
+      "line",
+      "name",
+      "type"
+    ),
+    mozart::build(vm, name.column),
+    mozart::build(vm, name.filename.c_str()),
+    mozart::build(vm, name.group.generationId),
+    mozart::build(vm, name.group.kindId),
+    mozart::build(vm, name.line),
+    mozart::build(vm, name.name.c_str()),
+    name.type == Proc ? mozart::build(vm, "proc") :
+      name.type == Fun ? mozart::build(vm, "fun") :
+      name.type == LazyFun ? mozart::build(vm, "lazyFun") :
+      mozart::build(vm, "arg")
+  );
+}
+
 UnstableNode DebugInfoManager::buildSourceNamesMaps(VM vm, const SourceNamesMaps& snms) {
   return buildRecord(vm,
     buildArity(vm,
@@ -69,11 +94,13 @@ UnstableNode DebugInfoManager::buildThreadSourceNames(VM vm, const ThreadSourceN
 
 template<class Value>
 UnstableNode DebugInfoManager::build(VM vm, Value value) {
-  if constexpr (std::is_same_v<Value, DebugInfoManager::SourceName>)
+  if constexpr (std::is_same_v<Value, SourceName>)
     return buildSourceName(vm, value);
-  else if constexpr (std::is_same_v<Value, DebugInfoManager::SourceNamesMaps>)
+  else if constexpr (std::is_same_v<Value, IdentifiedSourceName>)
+    return buildIdentifiedSourceName(vm, value);
+  else if constexpr (std::is_same_v<Value, SourceNamesMaps>)
     return buildSourceNamesMaps(vm, value);
-  else if constexpr (std::is_same_v<Value, DebugInfoManager::ThreadSourceNames>)
+  else if constexpr (std::is_same_v<Value, ThreadSourceNames>)
     return buildThreadSourceNames(vm, value);
   else
     return mozart::build(vm, value);
@@ -105,27 +132,32 @@ void DebugInfoManager::popMap(Id threadId) {
   tsnm.at(threadId).stack.pop_back();
 }
 
-void DebugInfoManager::attachSourceName(Id threadId, Id objectId, SourceName name) {
+void DebugInfoManager::attachSourceName(Id threadId, Id objectId, Id objectKindId, Id objectGenerationId, SourceName name) {
+  if (!enabled) return;
+
   assert(tsnm.contains(threadId));
   
   SourceNamesMapsStack& stack = tsnm.at(threadId).stack;
   assert(!stack.empty());
   
-  SourceNamesMap& map = stack.back().variablesMap;
+  IdentifiedSourceNamesMap& map = stack.back().variablesMap;
   if (!map.contains(objectId))
-    map.insert({objectId, SourceNames()});
-  map.at(objectId).push_back(name);
+    map.insert({objectId, IdentifiedSourceNames()});
+  map.at(objectId).push_back(IdentifiedSourceName(name,
+    GroupIdentity(objectKindId, objectGenerationId)));
+
+  std::printf("Link %ld to %s\n", objectId, name.name.c_str());
 }
 
-const DebugInfoManager::SourceNames DebugInfoManager::getSourceNames(Id threadId, Id objectId) {
+const DebugInfoManager::IdentifiedSourceNames DebugInfoManager::getSourceNames(Id threadId, Id objectId) {
   assert(tsnm.contains(threadId));
-  SourceNames names;
+  IdentifiedSourceNames names;
   SourceNamesMapsStack& stack = tsnm.at(threadId).stack;
 
   for (SourceNamesMaps& maps : stack) {
-    SourceNamesMap& map = maps.variablesMap;
+    IdentifiedSourceNamesMap& map = maps.variablesMap;
     if (map.contains(objectId)) {
-      SourceNames& otherNames = map.at(objectId);
+      IdentifiedSourceNames& otherNames = map.at(objectId);
       names.insert(names.begin(), otherNames.begin(), otherNames.end());
     }
   }
@@ -133,7 +165,32 @@ const DebugInfoManager::SourceNames DebugInfoManager::getSourceNames(Id threadId
   return names;
 }
 
+const DebugInfoManager::IdentifiedSourceNamesMap DebugInfoManager::getVariables() {
+  IdentifiedSourceNamesMap map;
+
+  for (auto iter = tsnm.begin(); iter != tsnm.end(); ++iter) {
+    Id threadId = iter->first;
+    const SourceNamesMapsStack& stack = iter->second.stack;
+    
+    for (const SourceNamesMaps& maps : stack) {
+      const IdentifiedSourceNamesMap& variablesMap = maps.variablesMap;
+
+      for (auto subiter = variablesMap.begin(); subiter != variablesMap.end(); ++subiter) {
+        Id variableId = subiter->first;
+
+        if (!map.contains(variableId)) {
+          map.insert({variableId, subiter->second});
+        }
+      }
+    }
+  }
+
+  return map;
+}
+
 bool DebugInfoManager::containsAbstractionSourceNames(Id threadId, Id objectId) {
+  if (!enabled) return false;
+
   SourceNamesMapsStack& stack = tsnm.at(threadId).stack;
 
   for (SourceNamesMaps& maps : stack) {
@@ -183,6 +240,8 @@ const DebugInfoManager::SourceNamesMap DebugInfoManager::getAbstractions() {
 
 void DebugInfoManager::signalSourceName(VM vm, Id threadId, Type type,
   StableNode& name, StableNode& filename, size_t line, size_t column) {
+  if (!enabled) return;
+
   assert(tsnm.contains(threadId));
 
   atom_t atomName = AtomLike(name).getValue(vm);
@@ -199,6 +258,8 @@ void DebugInfoManager::signalSourceName(VM vm, Id threadId, Type type,
 }
 
 void DebugInfoManager::signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction) {
+  if (!enabled) return;
+
   assert(tsnm.contains(threadId));
 
   ThreadSourceNames& tsn = tsnm.at(threadId);
