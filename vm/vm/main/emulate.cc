@@ -1465,21 +1465,18 @@ void Thread::call(RichNode target, size_t actualArity, bool isTailCall,
     VirtualMachineEventManager::RunnableAnnounce::Calling);
 
   DebugInfoManager& manager = vm->getDebugInfoManager();
+
+  if (isTailCall) {
+    manager.popMap(getId());
+    manager.pushMap(getId());
+  }
+
   Id abstractionId = Identifiable(*abstraction).getId(vm);
   if (manager.containsAbstractionSourceNames(getId(), abstractionId)) {
     const SourceNames& names = manager.getAbstractionSourceNames(getId(), abstractionId);
     size_t index = 0;
     for (const SourceName& name : names) {
       #define XPC(offset) (*xregs)[PC[offset]]
-
-      // std::printf("Name %s: ", name.name.c_str());
-      // switch (name.type) {
-      //   case DebugInfoManager::Proc: std::printf("proc"); break;
-      //   case DebugInfoManager::Fun: std::printf("fun"); break;
-      //   case DebugInfoManager::LazyFun: std::printf("lazy fun"); break;
-      //   case DebugInfoManager::Arg: std::printf("arg"); break;
-      // }
-      // std::printf("\n");
 
       UnstableNode& node = XPC(index++);
 
