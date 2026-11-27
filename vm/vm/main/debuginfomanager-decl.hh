@@ -138,6 +138,14 @@ public:
 
 public:
   inline
+  void signalSourceName(VM vm, Id threadId, Type type,
+    StableNode& name, StableNode& filename, size_t line, size_t column);
+
+  inline
+  void signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction);
+
+public:
+  inline
   void attachSourceName(Id threadId, Id objectId, Id objectKindId, Id objectGenerationId, SourceName name);
 
   inline
@@ -145,6 +153,10 @@ public:
     attachSourceName(threadId, objectId, SIZE_MAX, SIZE_MAX, name);
   }
 
+  inline
+  void attachSourceNames(VM vm, Id threadId, StableNode*& abstraction, ProgramCounter& PC, XRegArray*& xregs);
+
+public:
   inline
   const IdentifiedSourceNames getSourceNames(Id threadId, Id objectId);
 
@@ -160,18 +172,6 @@ public:
 
   inline
   const SourceNamesMap getAbstractions();
-
-public:
-  inline
-  void signalSourceName(VM vm, Id threadId, Type type,
-    StableNode& name, StableNode& filename, size_t line, size_t column);
-
-  inline
-  void signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction);
-
-public:
-  inline
-  void attachSourceNames(VM vm, Id threadId, StableNode*& abstraction, ProgramCounter& PC, XRegArray*& xregs);
 
 private:
   bool enabled;
