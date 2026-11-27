@@ -497,7 +497,7 @@ public:
   }
 
 private:
-  VariableTrackingVector variableTrackingVector;
+  VariableTrackingVector variableTrackingVector;  
 
   /** ================ Other ================ */
 public:

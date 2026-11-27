@@ -132,6 +132,47 @@ void DebugInfoManager::popMap(Id threadId) {
   tsnm.at(threadId).stack.pop_back();
 }
 
+void DebugInfoManager::signalSourceName(VM vm, Id threadId, Type type,
+  StableNode& name, StableNode& filename, size_t line, size_t column) {
+  if (!enabled) return;
+
+  assert(tsnm.contains(threadId));
+
+  atom_t atomName = AtomLike(name).getValue(vm);
+  atom_t atomFilename = AtomLike(filename).getValue(vm);
+
+  SourceNames& currentNames = tsnm.at(threadId).currentNames;
+
+  // Sometimes Mozart procedures can be inlined but the debug info is still present
+  // and so must be ignored to not interfere with the next definition
+  if (type != Arg && !currentNames.empty()) currentNames.clear();
+
+  currentNames.push_back(
+    SourceName(type, atomName, atomFilename, line, column));
+}
+
+void DebugInfoManager::signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction) {
+  if (!enabled) return;
+
+  assert(tsnm.contains(threadId));
+
+  ThreadSourceNames& tsn = tsnm.at(threadId);
+  SourceNames& names = tsn.currentNames;
+
+  if (!names.empty() && !tsn.stack.empty()) {
+    SourceNamesMap& abstractionsMap = tsn.stack.back().abstractionsMap;
+
+    Id abstractionId = Identifiable(abstraction).getId(vm);
+
+    if (abstractionsMap.contains(abstractionId))
+      abstractionsMap.at(abstractionId) = names;
+    else
+      abstractionsMap.insert({abstractionId, SourceNames(names)});
+
+    names.clear();
+  }
+}
+
 void DebugInfoManager::attachSourceName(Id threadId, Id objectId, Id objectKindId, Id objectGenerationId, SourceName name) {
   if (!enabled) return;
 
@@ -145,8 +186,37 @@ void DebugInfoManager::attachSourceName(Id threadId, Id objectId, Id objectKindI
     map.insert({objectId, IdentifiedSourceNames()});
   map.at(objectId).push_back(IdentifiedSourceName(name,
     GroupIdentity(objectKindId, objectGenerationId)));
+}
 
-  std::printf("Link %ld to %s\n", objectId, name.name.c_str());
+void DebugInfoManager::attachSourceNames(VM vm, Id threadId, StableNode*& abstraction, ProgramCounter& PC, XRegArray*& xregs) {
+  if (!enabled) return;
+
+  Id abstractionId = Identifiable(*abstraction).getId(vm);
+  
+  if (containsAbstractionSourceNames(threadId, abstractionId)) {
+    const SourceNames& names = getAbstractionSourceNames(threadId, abstractionId);
+    size_t index = 0;
+    for (const SourceName& name : names) {
+      #define XPC(offset) (*xregs)[PC[offset]]
+
+      UnstableNode& node = XPC(index++);
+
+      AdvancedIdentifiable advancedIdentifiable = AdvancedIdentifiable(node);
+      if (advancedIdentifiable.is(vm)) {
+        attachSourceName(threadId,
+          advancedIdentifiable.getId(vm),
+          advancedIdentifiable.getKindId(vm),
+          advancedIdentifiable.getGenerationId(vm),
+          name);
+      } else {
+        Identifiable identifiable = Identifiable(node);
+        if (identifiable.is(vm))
+          attachSourceName(threadId, identifiable.getId(vm), name);
+      }
+
+      #undef XPC
+    }
+  }
 }
 
 const DebugInfoManager::IdentifiedSourceNames DebugInfoManager::getSourceNames(Id threadId, Id objectId) {
@@ -210,7 +280,6 @@ const DebugInfoManager::SourceNames& DebugInfoManager::getAbstractionSourceNames
       return map.at(objectId);
   }
 
-  std::printf("ALERT\n");
   assert(false);
   return tsnm.at(threadId).currentNames;
 }
@@ -236,82 +305,6 @@ const DebugInfoManager::SourceNamesMap DebugInfoManager::getAbstractions() {
   }
 
   return map;
-}
-
-void DebugInfoManager::signalSourceName(VM vm, Id threadId, Type type,
-  StableNode& name, StableNode& filename, size_t line, size_t column) {
-  if (!enabled) return;
-
-  assert(tsnm.contains(threadId));
-
-  atom_t atomName = AtomLike(name).getValue(vm);
-  atom_t atomFilename = AtomLike(filename).getValue(vm);
-
-  SourceNames& currentNames = tsnm.at(threadId).currentNames;
-
-  // Sometimes Mozart procedures can be inlined but the debug info is still present
-  // and so must be ignored to not interfere with the next definition
-  if (type != Arg && !currentNames.empty()) currentNames.clear();
-
-  currentNames.push_back(
-    SourceName(type, atomName, atomFilename, line, column));
-}
-
-void DebugInfoManager::signalAbstraction(VM vm, Id threadId, UnstableNode& abstraction) {
-  if (!enabled) return;
-
-  assert(tsnm.contains(threadId));
-
-  ThreadSourceNames& tsn = tsnm.at(threadId);
-  SourceNames& names = tsn.currentNames;
-
-  if (!names.empty() && !tsn.stack.empty()) {
-    SourceNamesMap& abstractionsMap = tsn.stack.back().abstractionsMap;
-
-    Id abstractionId = Identifiable(abstraction).getId(vm);
-
-    if (abstractionsMap.contains(abstractionId))
-      abstractionsMap.at(abstractionId) = names;
-    else
-      abstractionsMap.insert({abstractionId, SourceNames(names)});
-
-    // std::printf("New abstraction %ld: ", abstractionId);
-    // for (SourceName& name : names) {
-    //   std::printf("%s ", name.name.c_str());
-    // }
-    // std::printf("\n");
-    
-    names.clear();
-  } // else std::printf("ALERT EMPTY\n");
-}
-
-void DebugInfoManager::attachSourceNames(VM vm, Id threadId, StableNode*& abstraction, ProgramCounter& PC, XRegArray*& xregs) {
-  Id abstractionId = Identifiable(*abstraction).getId(vm);
-  
-  if (containsAbstractionSourceNames(threadId, abstractionId)) {
-    const SourceNames& names = getAbstractionSourceNames(threadId, abstractionId);
-    size_t index = 0;
-    for (const SourceName& name : names) {
-      #define XPC(offset) (*xregs)[PC[offset]]
-
-      UnstableNode& node = XPC(index++);
-
-      AdvancedIdentifiable advancedIdentifiable = AdvancedIdentifiable(node);
-      if (advancedIdentifiable.is(vm)) {
-        attachSourceName(threadId,
-          advancedIdentifiable.getId(vm),
-          advancedIdentifiable.getKindId(vm),
-          advancedIdentifiable.getGenerationId(vm),
-          name);
-      } else {
-        Identifiable identifiable = Identifiable(node);
-        if (identifiable.is(vm))
-          attachSourceName(threadId, identifiable.getId(vm), name);
-      }
-
-      #undef XPC
-    }
-  }
 }
 
 }
