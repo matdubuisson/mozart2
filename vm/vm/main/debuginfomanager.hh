@@ -307,6 +307,65 @@ const DebugInfoManager::SourceNamesMap DebugInfoManager::getAbstractions() {
   return map;
 }
 
+DebugInfoManager::Vector<Id> DebugInfoManager::resoleName(const atom_t& name) {
+  Vector<Id> vector;
+  std::string stringName = std::string(name.contents());
+  
+  for (auto iter = tsnm.begin(); iter != tsnm.end(); ++iter) {
+    Id threadId = iter->first;
+    const SourceNamesMapsStack& stack = iter->second.stack;
+    
+    for (const SourceNamesMaps& maps : stack) {
+      const IdentifiedSourceNamesMap& variablesMap = maps.variablesMap;
+
+      for (auto subiter = variablesMap.begin(); subiter != variablesMap.end(); ++subiter) {
+        Id variableId = subiter->first;
+        const IdentifiedSourceNames& sourceNames = subiter->second;
+
+        for (const IdentifiedSourceName& sourceName : sourceNames) {
+          if (stringName == sourceName.name) {
+            vector.push_back(variableId);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return vector;
+}
+
+DebugInfoManager::Vector<Id> DebugInfoManager::resoleName(const atom_t& name, const atom_t& filename,
+  const size_t line, const size_t column) {
+  Vector<Id> vector;
+  std::string stringName = std::string(name.contents());
+  std::string stringFilename = std::string(filename.contents());
+  
+  for (auto iter = tsnm.begin(); iter != tsnm.end(); ++iter) {
+    Id threadId = iter->first;
+    const SourceNamesMapsStack& stack = iter->second.stack;
+    
+    for (const SourceNamesMaps& maps : stack) {
+      const IdentifiedSourceNamesMap& variablesMap = maps.variablesMap;
+
+      for (auto subiter = variablesMap.begin(); subiter != variablesMap.end(); ++subiter) {
+        Id variableId = subiter->first;
+        const IdentifiedSourceNames& sourceNames = subiter->second;
+
+        for (const IdentifiedSourceName& sourceName : sourceNames) {
+          if (stringName == sourceName.name && stringFilename == sourceName.filename
+            && line == sourceName.line && column == sourceName.column) {
+            vector.push_back(variableId);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return vector;
+}
+
 }
 
 #endif // MOZART_GENERATOR

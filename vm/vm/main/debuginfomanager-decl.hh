@@ -173,6 +173,14 @@ public:
   inline
   const SourceNamesMap getAbstractions();
 
+public:
+  inline
+  Vector<Id> resoleName(const atom_t& name);
+
+  inline
+  Vector<Id> resoleName(const atom_t& name, const atom_t& filename,
+    const size_t line, const size_t column);
+
 private:
   bool enabled;
   ThreadSourceNamesMap tsnm;
