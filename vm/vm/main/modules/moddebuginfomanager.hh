@@ -78,6 +78,33 @@ public:
         vm->getDebugInfoManager().getAbstractions());
     }
   };
+
+  class ResolveName: public Builtin<ResolveName> {
+  public:
+    ResolveName(): Builtin("resolveName") {}
+
+    static void call(VM vm, In name, Out result) {
+      atom_t atomName = AtomLike(name).getValue(vm);
+      
+      result = DebugInfoManager::buildVector(vm,
+        vm->getDebugInfoManager().resoleName(atomName));
+    }
+  };
+
+  class ResolveCompleteName: public Builtin<ResolveCompleteName> {
+  public:
+    ResolveCompleteName(): Builtin("resolveCompleteName") {}
+
+    static void call(VM vm, In name, In filename, In line, In column, Out result) {
+      atom_t atomName = AtomLike(name).getValue(vm);
+      atom_t atomFilename = AtomLike(filename).getValue(vm);
+      size_t intLine = getArgument<size_t>(vm, line);
+      size_t intColumn = getArgument<size_t>(vm, column);
+
+      result = DebugInfoManager::buildVector(vm,
+        vm->getDebugInfoManager().resoleName(atomName, atomFilename, intLine, intColumn));
+    }
+  };
 };
 
 }
