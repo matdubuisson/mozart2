@@ -116,6 +116,51 @@ local
         end
       end}
   end
+
+  proc {DisplayResolved Arguments}
+    Name
+    Ids
+  in
+    case Arguments of [N] then
+      Name = {ExtractInput atom N none $}
+
+      if Name == none then
+        {PrintError "Provided name "#Name#" is not a string"}
+        Ids = nil
+      else
+        Ids = {Boot_DebugInfoManager.resolveName Name $}
+      end
+    [] [N F L C] then
+      Filename = {ExtractInput atom F none $}
+      Line = {ExtractInput int L none $}
+      Column = {ExtractInput int C none $}
+    in
+      Name = {ExtractInput atom N none $}
+
+      if Name == none then
+        {PrintError "Provided name "#Name#" is not a string"}
+        Ids = nil
+      elseif Filename == none then
+        {PrintError "Provided filename "#Filename#" is not a string"}
+        Ids = nil
+      elseif Line == none then
+        {PrintError "Provided line "#Line#" is not a string"}
+        Ids = nil
+      elseif Column == none then
+        {PrintError "Provided column "#Column#" is not a string"}
+        Ids = nil
+      else
+        Ids = {Boot_DebugInfoManager.resolveCompleteName Name Filename Line Column $}
+      end
+    end
+
+    if Name \= none then
+      if Ids == nil then {PrintInfo "Name "#Name#" has no associated ids"}
+      else
+        {PrintInfo "Name "#Name#" is associated to these ids: "#{ListToString Ids $}}
+      end
+    end
+  end
 in
   case Arguments of nil then
     {DisplayOptions}
@@ -133,6 +178,14 @@ in
     in
       if Conditions \= none then
         {DisplayVariables Conditions}
+      end
+    [] "resolve" then
+      N = {List.length NextArguments $}
+    in
+      if N \= 1 andthen N \= 4 then
+        {DisplayOptions}
+      elseif N == 1 then
+        {DisplayResolved NextArguments}
       end
     else
       {PrintUnexpectedOptionError Argument}
