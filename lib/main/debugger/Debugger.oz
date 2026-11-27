@@ -40,6 +40,8 @@ define
   Boot_DebugInfoManager = {Boot.getInternal 'DebugInfoManager'}
   Boot_Scheduler = {Boot.getInternal 'Scheduler'}
 
+  {Boot_DebugInfoManager.enable}
+
   TAB = "\t"
   TRYHELP = ", try help to get more details"
 
